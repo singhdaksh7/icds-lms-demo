@@ -1,0 +1,139 @@
+<!-- FEATURED COURSES -->
+<section class="section-space course-section" id="courses">
+
+    <div class="container">
+
+        <div class="section-heading reveal-element">
+
+            <div class="section-tag">
+                Popular Courses
+            </div>
+
+            <h2 class="section-title">
+                Learn from courses students love
+            </h2>
+
+            <p class="section-description">
+                Practical, structured and professionally designed video courses
+                created to help you develop real-world skills.
+            </p>
+
+        </div>
+
+
+        <% if (featuredCourses.length === 0) { %>
+
+            <p class="text-center text-muted">
+                No featured courses are published yet. Check back soon.
+            </p>
+
+        <% } else { %>
+
+            <div class="row g-4">
+
+                <% featuredCourses.forEach(function (course) { %>
+
+                    <div class="col-md-6 col-xl-4 reveal-element">
+
+                        <div class="course-card">
+
+                            <div class="course-thumbnail">
+
+                                <img
+                                    src="<%= course.thumbnailUrl || '/assets/images/course-placeholder.jpg' %>"
+                                    alt="<%= course.title %>">
+
+                                <% if (course.level === 'BEGINNER') { %>
+                                    <span class="course-badge">Bestseller</span>
+                                <% } else if (course.level === 'ADVANCED') { %>
+                                    <span class="course-badge">Advanced</span>
+                                <% } else { %>
+                                    <span class="course-badge">Featured</span>
+                                <% } %>
+
+                                <button class="course-wishlist">
+                                    <i class="bi bi-heart"></i>
+                                </button>
+
+                            </div>
+
+                            <div class="course-content">
+
+                                <div class="course-category">
+                                    <%= course.category ? course.category.name : 'General' %>
+                                </div>
+
+                                <h3 class="course-title">
+                                    <%= course.title %>
+                                </h3>
+
+                                <div class="course-rating">
+
+                                    <span class="course-stars">
+                                        ★★★★★
+                                    </span>
+
+                                    <strong>&mdash;</strong>
+
+                                    <span>
+                                        (no reviews yet)
+                                    </span>
+
+                                </div>
+
+                                <div class="course-meta">
+
+                                    <span>
+                                        <i class="bi bi-play-btn"></i>
+                                        <%= course._count ? course._count.lessons : 0 %> Lessons
+                                    </span>
+
+                                    <span>
+                                        <i class="bi bi-clock"></i>
+                                        <%= course.duration || 'TBD' %>
+                                    </span>
+
+                                </div>
+
+                                <div class="course-footer">
+
+                                    <div class="course-price">
+                                        <%= course.currency %> <%= Number(course.salePrice || course.price).toLocaleString('en-IN') %>
+
+                                        <% if (course.salePrice) { %>
+                                            <del><%= course.currency %> <%= Number(course.price).toLocaleString('en-IN') %></del>
+                                        <% } %>
+                                    </div>
+
+                                    <a href="#" class="course-view-btn">
+                                        View Course
+                                        <i class="bi bi-arrow-right"></i>
+                                    </a>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                <% }); %>
+
+            </div>
+
+        <% } %>
+
+
+        <div class="text-center mt-5">
+
+            <a href="#" class="hero-primary-btn d-inline-block">
+                View All Courses
+                <i class="bi bi-arrow-right ms-2"></i>
+            </a>
+
+        </div>
+
+    </div>
+
+</section>

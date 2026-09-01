@@ -1,0 +1,8 @@
+<%# Shared page shell: <head> + header partial, page content, footer partial.
+    Every top-level view (public/admin/student) renders through this by
+    passing its own content view path in `contentView`. #%>
+<%- include('../partials/header', { pageTitle, metaDescription }) %>
+
+<%- include(contentView, locals) %>
+
+<%- include('../partials/footer') %>

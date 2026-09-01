@@ -1,0 +1,81 @@
+<!-- INSTRUCTORS -->
+<section class="section-space" id="instructors">
+
+    <div class="container">
+
+        <div class="section-heading reveal-element">
+
+            <div class="section-tag">
+                Meet Your Mentors
+            </div>
+
+            <h2 class="section-title">
+                Learn from experienced professionals
+            </h2>
+
+            <p class="section-description">
+                Our instructors bring practical knowledge and
+                professional experience into every lesson.
+            </p>
+
+        </div>
+
+
+        <% if (instructors.length === 0) { %>
+
+            <p class="text-center text-muted">
+                Instructor profiles will appear here once they are added.
+            </p>
+
+        <% } else { %>
+
+            <div class="row g-4">
+
+                <% instructors.forEach(function (instructor) { %>
+
+                    <div class="col-md-6 col-lg-3 reveal-element">
+
+                        <div class="instructor-card">
+
+                            <div class="instructor-image-wrap">
+
+                                <img
+                                    class="instructor-image"
+                                    src="<%= instructor.photoUrl || '/assets/images/instructor-placeholder.jpg' %>"
+                                    alt="<%= instructor.name %>">
+
+                                <div class="instructor-social">
+
+                                    <a href="<%= instructor.linkedinUrl || '#' %>">
+                                        <i class="bi bi-linkedin"></i>
+                                    </a>
+
+                                    <a href="<%= instructor.instagramUrl || '#' %>">
+                                        <i class="bi bi-instagram"></i>
+                                    </a>
+
+                                </div>
+
+                            </div>
+
+                            <h3 class="instructor-name">
+                                <%= instructor.name %>
+                            </h3>
+
+                            <div class="instructor-role">
+                                <%= instructor.title || '' %>
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                <% }); %>
+
+            </div>
+
+        <% } %>
+
+    </div>
+
+</section>

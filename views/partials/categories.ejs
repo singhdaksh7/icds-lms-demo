@@ -1,0 +1,79 @@
+<%
+/* Presentation-only icon lookup (icon isn't stored in the DB). Falls back to
+   a generic icon for any category slug not listed here. */
+const categoryIcons = {
+    cosmetology: 'bi-scissors',
+    aesthetics: 'bi-stars',
+    'dental-sciences': 'bi-heart-pulse',
+    'skin-hair': 'bi-person-hearts',
+};
+%>
+
+<!-- CATEGORIES -->
+<section class="section-space" id="categories">
+
+    <div class="container">
+
+        <div class="section-heading reveal-element">
+
+            <div class="section-tag">
+                Learn by Category
+            </div>
+
+            <h2 class="section-title">
+                Choose your area of expertise
+            </h2>
+
+            <p class="section-description">
+                Explore structured courses across beauty, aesthetics,
+                cosmetology and dental sciences.
+            </p>
+
+        </div>
+
+
+        <% if (categories.length === 0) { %>
+
+            <p class="text-center text-muted">
+                Categories will appear here once they are added.
+            </p>
+
+        <% } else { %>
+
+            <div class="row g-4">
+
+                <% categories.forEach(function (category) { %>
+
+                    <div class="col-6 col-lg-3 reveal-element">
+
+                        <a href="/#courses" class="text-decoration-none">
+
+                            <div class="category-card">
+
+                                <div class="category-icon">
+                                    <i class="bi <%= categoryIcons[category.slug] || 'bi-mortarboard' %>"></i>
+                                </div>
+
+                                <h3 class="category-title">
+                                    <%= category.name %>
+                                </h3>
+
+                                <div class="category-count">
+                                    <%= category._count.courses %> Course<%= category._count.courses === 1 ? '' : 's' %>
+                                </div>
+
+                            </div>
+
+                        </a>
+
+                    </div>
+
+                <% }); %>
+
+            </div>
+
+        <% } %>
+
+    </div>
+
+</section>

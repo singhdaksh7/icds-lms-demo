@@ -1,0 +1,361 @@
+// Prisma schema for the ICDS LMS platform.
+// Target database: MySQL (Hostinger-hosted). No Postgres-only features used.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+// Enums
+// ---------------------------------------------------------------------------
+
+enum UserRole {
+  STUDENT
+  ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+}
+
+enum CourseStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum CourseLevel {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+}
+
+enum LessonStatus {
+  DRAFT
+  PUBLISHED
+}
+
+enum EnrollmentStatus {
+  ACTIVE
+  EXPIRED
+  CANCELLED
+}
+
+enum OrderStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+  CANCELLED
+}
+
+enum ReviewStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum EntityStatus {
+  ACTIVE
+  INACTIVE
+}
+
+// ---------------------------------------------------------------------------
+// Core identity
+// ---------------------------------------------------------------------------
+
+model User {
+  id           Int        @id @default(autoincrement())
+  name         String
+  email        String     @unique
+  passwordHash String
+  role         UserRole   @default(STUDENT)
+  status       UserStatus @default(ACTIVE)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  enrollments        Enrollment[]
+  orders             Order[]
+  wishlistItems      WishlistItem[]
+  reviews            Review[]
+  lessonProgress     LessonProgress[]
+  certificates       Certificate[]
+  passwordResetTokens PasswordResetToken[]
+
+  @@map("users")
+}
+
+// ---------------------------------------------------------------------------
+// Catalog
+// ---------------------------------------------------------------------------
+
+model Category {
+  id          Int          @id @default(autoincrement())
+  name        String
+  slug        String       @unique
+  description String?      @db.Text
+  status      EntityStatus @default(ACTIVE)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  courses Course[]
+
+  @@map("categories")
+}
+
+model Instructor {
+  id           Int          @id @default(autoincrement())
+  name         String
+  slug         String       @unique
+  title        String?
+  bio          String?      @db.Text
+  photoUrl     String?
+  email        String?
+  linkedinUrl  String?
+  instagramUrl String?
+  status       EntityStatus @default(ACTIVE)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  courses Course[]
+
+  @@map("instructors")
+}
+
+model Course {
+  id               Int          @id @default(autoincrement())
+  title            String
+  slug             String       @unique
+  shortDescription String?      @db.Text
+  description      String?      @db.Text
+  thumbnailUrl     String?
+  categoryId       Int?
+  instructorId     Int?
+  price            Decimal      @db.Decimal(10, 2)
+  salePrice        Decimal?     @db.Decimal(10, 2)
+  currency         String       @default("INR")
+  level            CourseLevel  @default(BEGINNER)
+  status           CourseStatus @default(DRAFT)
+  featured         Boolean      @default(false)
+  duration         String?
+  publishedAt      DateTime?
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  category   Category?   @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  instructor Instructor? @relation(fields: [instructorId], references: [id], onDelete: SetNull)
+
+  lessons        Lesson[]
+  enrollments    Enrollment[]
+  orderItems     OrderItem[]
+  wishlistItems  WishlistItem[]
+  reviews        Review[]
+  certificates   Certificate[]
+
+  @@index([categoryId])
+  @@index([instructorId])
+  @@index([status])
+  @@map("courses")
+}
+
+model Lesson {
+  id               Int          @id @default(autoincrement())
+  courseId         Int
+  title            String
+  slug             String
+  description      String?      @db.Text
+  videoUrl         String?
+  externalVideoId  String?
+  duration         String?
+  sortOrder        Int          @default(0)
+  preview          Boolean      @default(false)
+  status           LessonStatus @default(DRAFT)
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  course         Course            @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  lessonProgress LessonProgress[]
+
+  @@unique([courseId, slug])
+  @@index([courseId])
+  @@map("lessons")
+}
+
+// ---------------------------------------------------------------------------
+// Commerce
+// ---------------------------------------------------------------------------
+
+model Enrollment {
+  id              Int              @id @default(autoincrement())
+  userId          Int
+  courseId        Int
+  orderId         Int?
+  status          EnrollmentStatus @default(ACTIVE)
+  progressPercent Int              @default(0)
+  enrolledAt      DateTime         @default(now())
+  accessExpiresAt DateTime?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  user  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  order  Order? @relation(fields: [orderId], references: [id], onDelete: SetNull)
+
+  @@unique([userId, courseId])
+  @@index([courseId])
+  @@map("enrollments")
+}
+
+// Orders are financial records: never cascade-delete them when a user or
+// course row disappears. Restrict instead, and let the app layer handle
+// soft-deletes / anonymization if that's ever required.
+model Order {
+  id                Int         @id @default(autoincrement())
+  userId            Int
+  amount            Decimal     @db.Decimal(10, 2)
+  currency          String      @default("INR")
+  status            OrderStatus @default(PENDING)
+  paymentProvider   String?
+  providerOrderId   String?
+  providerPaymentId String?
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+
+  user        User         @relation(fields: [userId], references: [id], onDelete: Restrict)
+  items       OrderItem[]
+  enrollments Enrollment[]
+
+  @@index([userId])
+  @@map("orders")
+}
+
+// An order can contain one or more courses (bundle/cart-friendly), so course
+// pricing is captured at purchase time rather than only referencing Course.
+model OrderItem {
+  id       Int     @id @default(autoincrement())
+  orderId  Int
+  courseId Int
+  price    Decimal @db.Decimal(10, 2)
+
+  order  Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  course Course @relation(fields: [courseId], references: [id], onDelete: Restrict)
+
+  @@index([orderId])
+  @@index([courseId])
+  @@map("order_items")
+}
+
+// ---------------------------------------------------------------------------
+// Student engagement
+// ---------------------------------------------------------------------------
+
+model WishlistItem {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  courseId  Int
+  createdAt DateTime @default(now())
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, courseId])
+  @@map("wishlist_items")
+}
+
+model Review {
+  id        Int          @id @default(autoincrement())
+  userId    Int
+  courseId  Int
+  rating    Int
+  comment   String?      @db.Text
+  status    ReviewStatus @default(PENDING)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, courseId])
+  @@index([courseId])
+  @@map("reviews")
+}
+
+// Lesson-level completion is the source of truth; course-level progress
+// percentage (Enrollment.progressPercent) is a derived/cached value updated
+// whenever a LessonProgress row changes.
+model LessonProgress {
+  id            Int       @id @default(autoincrement())
+  userId        Int
+  lessonId      Int
+  completed     Boolean   @default(false)
+  watchedSeconds Int      @default(0)
+  completedAt   DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lesson Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, lessonId])
+  @@index([lessonId])
+  @@map("lesson_progress")
+}
+
+// Model prepared now; PDF generation is a later phase.
+model Certificate {
+  id         Int      @id @default(autoincrement())
+  userId     Int
+  courseId   Int
+  issuedAt   DateTime @default(now())
+  fileUrl    String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, courseId])
+  @@map("certificates")
+}
+
+// ---------------------------------------------------------------------------
+// Marketing / support
+// ---------------------------------------------------------------------------
+
+model NewsletterSubscriber {
+  id           Int      @id @default(autoincrement())
+  email        String   @unique
+  subscribedAt DateTime @default(now())
+
+  @@map("newsletter_subscribers")
+}
+
+model ContactMessage {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String
+  message   String   @db.Text
+  createdAt DateTime @default(now())
+
+  @@map("contact_messages")
+}
+
+model PasswordResetToken {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  token     String   @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("password_reset_tokens")
+}
