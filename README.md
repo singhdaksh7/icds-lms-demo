@@ -586,3 +586,36 @@ confirm current retention in the TiDB Cloud console for this cluster.
 Local videos under `VIDEO_STORAGE_ROOT` are **not** covered by that and
 have no automated backup — periodically archive that directory via File
 Manager/SFTP once real course videos exist.
+
+### Temporary Network Diagnostics
+
+`GET /internal/diagnostics/network` is a temporary, non-public route added
+to root-cause why DB-backed pages hung on Hostinger even after switching to
+the TiDB HTTPS adapter. It tests, independently and with individual
+timeouts: DNS resolution of the TiDB gateway host, a generic external HTTPS
+request (unrelated public host), a bare unauthenticated HTTPS request to
+the TiDB gateway itself, the official `@tidbcloud/serverless` driver
+running `SELECT 1` directly, and the Prisma Client (via the adapter)
+running the equivalent query — so a failure can be attributed to a specific
+layer instead of "the database doesn't work."
+
+- Gated by the `DIAGNOSTIC_TOKEN` environment variable, checked with a
+  timing-safe comparison against an `Authorization: Bearer <token>` header.
+  **Not** admin-session-gated — admin login itself needs a working DB
+  write, so during the exact outage this route diagnoses, session auth
+  would be unreachable too. The route 404s (not 401/403) on a missing or
+  wrong token, and 404s unconditionally if `DIAGNOSTIC_TOKEN` is unset.
+- Never logs or returns `DATABASE_URL`, the DB password, or the token
+  itself — only sanitized error name/code/message and elapsed time per
+  layer.
+- **Remove this route (and unset `DIAGNOSTIC_TOKEN`) once the connectivity
+  issue is resolved.** It is a network probe endpoint and should not stay
+  live in production indefinitely.
+- Known local-testing quirk: the bare-HTTPS-to-TiDB-gateway test alone
+  times out even when everything else works, because TiDB's Data Service
+  gateway doesn't respond to a plain unauthenticated `GET /` — it's only
+  meaningful in combination with the other layers, not on its own.
+
+`/api/health` itself also now bounds its DB check to ~9 seconds (logging
+`TIDB_HEALTH_TIMEOUT` server-side on timeout) so a hung query can't hang
+the health check indefinitely; the public response shape is unchanged.

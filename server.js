@@ -22,6 +22,7 @@ const webhookRoutes = require('./src/routes/webhook.routes');
 const studentRoutes = require('./src/routes/student.routes');
 const adminRoutes = require('./src/routes/admin.routes');
 const mediaRoutes = require('./src/routes/media.routes');
+const internalRoutes = require('./src/routes/internal.routes');
 const healthRoutes = require('./src/routes/api/health.routes');
 const notFound = require('./src/middleware/notFound');
 const errorHandler = require('./src/middleware/errorHandler');
@@ -69,6 +70,12 @@ app.use('/webhooks', webhookRoutes);
 
 app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: true, limit: '1mb' }));
+
+// Deliberately mounted before the session/DB-dependent middleware stack
+// below — token-authenticated, not session-authenticated, so it stays
+// reachable even during the exact DB outage it exists to diagnose. See
+// README "Production Operations — Temporary Network Diagnostics".
+app.use('/internal', internalRoutes);
 
 // Only public/ is ever web-servable. Local lesson videos live in
 // storage/videos/ (outside this directory entirely) and are reachable only

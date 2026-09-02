@@ -83,12 +83,22 @@ if (IS_PRODUCTION && (!RAZORPAY_KEY_ID || !RAZORPAY_KEY_SECRET || !RAZORPAY_WEBH
 // regardless of this flag; see README "Production Operations".
 const USE_TIDB_HTTP_ADAPTER = process.env.USE_TIDB_HTTP_ADAPTER === '1';
 
+// Temporary: gates the /internal/diagnostics/network route (see
+// src/routes/internal.routes.js). Deliberately NOT admin-session-gated —
+// admin login itself needs a working DB write, so during exactly the
+// outage this route exists to diagnose, session-based auth would be
+// unreachable. Unset/empty disables the route entirely. Remove this and
+// the route together once the Hostinger DB connectivity issue is resolved
+// (see README "Production Operations — Temporary Network Diagnostics").
+const DIAGNOSTIC_TOKEN = process.env.DIAGNOSTIC_TOKEN || '';
+
 module.exports = {
   NODE_ENV,
   IS_PRODUCTION,
   PORT,
   DATABASE_URL,
   USE_TIDB_HTTP_ADAPTER,
+  DIAGNOSTIC_TOKEN,
   SESSION_SECRET: SESSION_SECRET || 'dev-only-insecure-secret-do-not-use-in-production',
   SESSION_COOKIE_NAME: process.env.SESSION_COOKIE_NAME || 'icds.sid',
   SESSION_MAX_AGE_MS: 7 * 24 * 60 * 60 * 1000, // 7 days
