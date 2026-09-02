@@ -440,3 +440,16 @@ See the report delivered alongside this implementation for the full Phase 6+
 scope (coupons/discount codes, subscriptions, refunds UI, invoices/GST,
 PDF certificates, real video DRM/upload storage, SMTP email, notifications,
 analytics, instructor accounts, instructor payouts).
+# Phase 6 — student accounts, certificates, and support
+
+- Student account routes: `/student/profile`, `/student/security`, and `/student/certificates`.
+- Certificates are issued only after an active student completes every published lesson. `LessonProgress` is the source of truth; `Enrollment.progressPercent` is never trusted for eligibility.
+- Issuance is idempotent by the unique user/course record. PDFs are generated on demand with pure-JS `pdf-lib`; no certificate files are stored on the Hostinger filesystem. Public verification is at `/certificates/verify/:certificateNumber`.
+- Contact submissions and newsletter signups are database-backed, CSRF-protected and rate-limited. SMTP delivery is intentionally pending.
+- Public contact and branding values are centralized through `SITE_NAME`, `SUPPORT_EMAIL`, `CONTACT_EMAIL`, `CONTACT_PHONE`, and `WHATSAPP_NUMBER` in `.env`; see `.env.example`.
+- `/privacy` and `/terms` are clearly marked placeholder pages and require client/legal review before production.
+- Hostinger compatibility is preserved: Node, Express, MySQL/Prisma, MySQL sessions and pure-JS dependencies only.
+
+## Payment launch warning
+
+Razorpay architecture is **IMPLEMENTED: YES**. **REAL PROVIDER VERIFIED: NO**. **PRODUCTION READY: NO**. Real Razorpay TEST/LIVE verification remains mandatory before launch. SMTP, final legal text, and real contact/branding details are also required before production.

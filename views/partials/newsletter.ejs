@@ -22,12 +22,11 @@
                         resources, special offers and upcoming learning programs.
                     </p>
 
-                    <!-- NOTE: submit is still a client-side placeholder (public/js/main.js).
-                         Wiring to NewsletterSubscriber via a real endpoint is a later phase. -->
-                    <form class="newsletter-form">
+                    <form class="newsletter-form" method="POST" action="/newsletter/subscribe">
+                        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
 
                         <input
-                            type="email"
+                            type="email" name="email"
                             placeholder="Enter your email address"
                             required>
 

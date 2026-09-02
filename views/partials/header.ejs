@@ -42,12 +42,12 @@
             </div>
 
             <div class="d-flex gap-3">
-                <a href="tel:+911234567890">
-                    <i class="bi bi-telephone me-1"></i> +91 12345 67890
-                </a>
+                <% if (site.phoneHref) { %><a href="<%= site.phoneHref %>">
+                    <i class="bi bi-telephone me-1"></i> <%= site.contactPhone %>
+                </a><% } %>
 
-                <a href="mailto:info@icds.example">
-                    <i class="bi bi-envelope me-1"></i> info@icds.example
+                <a href="mailto:<%= site.contactEmail %>">
+                    <i class="bi bi-envelope me-1"></i> <%= site.contactEmail %>
                 </a>
             </div>
         </div>

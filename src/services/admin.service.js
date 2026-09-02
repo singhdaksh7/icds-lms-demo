@@ -14,6 +14,10 @@ async function getDashboardStats() {
     totalCategories,
     totalInstructors,
     totalEnrollments,
+    totalMessages,
+    newMessages,
+    newsletterSubscribers,
+    certificatesIssued,
   ] = await Promise.all([
     prisma.user.count({ where: { role: 'STUDENT' } }),
     prisma.course.count(),
@@ -22,6 +26,10 @@ async function getDashboardStats() {
     prisma.category.count(),
     prisma.instructor.count(),
     prisma.enrollment.count(),
+    prisma.contactMessage.count(),
+    prisma.contactMessage.count({ where: { status: 'NEW' } }),
+    prisma.newsletterSubscriber.count(),
+    prisma.certificate.count(),
   ]);
 
   return {
@@ -32,6 +40,7 @@ async function getDashboardStats() {
     totalCategories,
     totalInstructors,
     totalEnrollments,
+    totalMessages, newMessages, newsletterSubscribers, certificatesIssued,
   };
 }
 

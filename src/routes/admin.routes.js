@@ -11,6 +11,7 @@ const instructorController = require('../controllers/admin/instructor.controller
 const lessonController = require('../controllers/admin/lesson.controller');
 const studentController = require('../controllers/admin/student.controller');
 const orderController = require('../controllers/admin/order.controller');
+const engagementController = require('../controllers/admin/engagement.controller');
 
 // Every route in this file is admin-only — enforced once here rather than
 // repeated per-route, so it's impossible to accidentally add an
@@ -61,5 +62,10 @@ router.post('/students/:id/unenroll', doubleCsrfProtection, studentController.un
 // Razorpay events, never a manual admin override) ---------------------------
 router.get('/orders', orderController.listOrders);
 router.get('/orders/:id', orderController.getOrderDetail);
+router.get('/certificates', engagementController.certificates);
+router.get('/newsletter', engagementController.newsletter);
+router.get('/messages', engagementController.messages);
+router.get('/messages/:id', engagementController.messageDetail);
+router.post('/messages/:id/status', doubleCsrfProtection, engagementController.updateMessage);
 
 module.exports = router;

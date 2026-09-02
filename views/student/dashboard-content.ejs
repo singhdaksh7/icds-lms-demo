@@ -11,6 +11,7 @@
             <a href="/student/orders" class="hero-secondary-btn">
                 <i class="bi bi-receipt me-1"></i> My Orders
             </a>
+            <a href="/student/profile" class="hero-secondary-btn"><i class="bi bi-person me-1"></i> Account</a>
         </div>
 
         <% if (enrollments.length === 0) { %>
@@ -23,7 +24,7 @@
 
         <% } else { %>
 
-            <div class="row g-4">
+            <div class="row g-3 mb-4"><% [['Enrolled courses', dashboardCounts.enrolledCourses], ['Completed courses', dashboardCounts.completedCourses], ['Certificates', dashboardCounts.certificates], ['Orders', dashboardCounts.orders]].forEach(item => { %><div class="col-6 col-lg-3"><div class="p-3 border rounded text-center"><strong class="fs-4 d-block"><%= item[1] %></strong><span class="small text-muted"><%= item[0] %></span></div></div><% }) %></div><div class="row g-4">
                 <% enrollments.forEach(function (enrollment) { %>
                     <% const course = enrollment.course; %>
                     <div class="col-md-6 col-xl-4">
@@ -64,6 +65,7 @@
                                     <a href="/learn/<%= course.slug %>" class="auth-submit d-block text-center text-decoration-none">
                                         Continue Learning
                                     </a>
+                                    <% if (enrollment.certificateEligible && enrollment.certificate) { %><a class="hero-secondary-btn d-block text-center mt-2" href="/student/certificates/<%= enrollment.certificate.id %>/download">Download Certificate</a><% } else if (enrollment.certificateEligible) { %><form method="POST" action="/student/courses/<%= course.id %>/certificate" class="mt-2"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="hero-secondary-btn w-100">Generate Certificate</button></form><% } %>
                                 <% } else { %>
                                     <a href="/courses/<%= course.slug %>" class="hero-secondary-btn d-block text-center">
                                         View Course

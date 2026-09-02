@@ -1,0 +1,1 @@
+<h1 class="mb-4">Newsletter Subscribers</h1><div class="admin-card table-responsive"><table class="table"><thead><tr><th>Email</th><th>Subscribed</th></tr></thead><tbody><% subscribers.forEach(s => { %><tr><td><%= s.email %></td><td><%= s.subscribedAt.toLocaleDateString('en-IN') %></td></tr><% }) %></tbody></table></div>

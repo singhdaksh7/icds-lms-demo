@@ -66,6 +66,12 @@ enum EntityStatus {
   INACTIVE
 }
 
+enum ContactMessageStatus {
+  NEW
+  READ
+  RESOLVED
+}
+
 // ---------------------------------------------------------------------------
 // Core identity
 // ---------------------------------------------------------------------------
@@ -315,6 +321,7 @@ model Certificate {
   id         Int      @id @default(autoincrement())
   userId     Int
   courseId   Int
+  certificateNumber String @unique @db.VarChar(100)
   issuedAt   DateTime @default(now())
   fileUrl    String?  @db.VarChar(500)
   createdAt  DateTime @default(now())
@@ -343,7 +350,9 @@ model ContactMessage {
   id        Int      @id @default(autoincrement())
   name      String
   email     String
+  subject   String
   message   String   @db.Text
+  status    ContactMessageStatus @default(NEW)
   createdAt DateTime @default(now())
 
   @@map("contact_messages")

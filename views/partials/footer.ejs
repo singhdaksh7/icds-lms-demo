@@ -140,14 +140,13 @@
                     </li>
 
                     <li>
-                        <!-- Certificates not implemented yet (Phase 7+) -->
-                        <a href="#">
+                        <a href="<%= (typeof currentUser !== 'undefined' && currentUser) ? '/student/certificates' : '/login?returnTo=' + encodeURIComponent('/student/certificates') %>">
                             Certificates
                         </a>
                     </li>
 
                     <li>
-                        <a href="#">
+                        <a href="/contact">
                             Help Center
                         </a>
                     </li>
@@ -166,20 +165,20 @@
                 <ul class="footer-links">
 
                     <li>
-                        <a href="tel:+911234567890">
-                            +91 12345 67890
+                        <% if (site.phoneHref) { %><a href="<%= site.phoneHref %>">
+                            <%= site.contactPhone %>
+                        </a>
+                        <% } %>
+                    </li>
+
+                    <li>
+                        <a href="mailto:<%= site.contactEmail %>">
+                            <%= site.contactEmail %>
                         </a>
                     </li>
 
                     <li>
-                        <a href="mailto:info@icds.example">
-                            info@icds.example
-                        </a>
-                    </li>
-
-                    <li>
-                        <!-- Contact form not implemented yet (Phase 7+) -->
-                        <a href="#">
+                        <a href="/contact">
                             Contact Us
                         </a>
                     </li>
@@ -202,12 +201,11 @@
 
                 <div class="col-md-6 text-md-end mt-2 mt-md-0">
 
-                    <!-- Legal pages not implemented yet (Phase 7+) -->
-                    <a href="#" class="text-white-50 text-decoration-none me-3">
+                    <a href="/privacy" class="text-white-50 text-decoration-none me-3">
                         Privacy Policy
                     </a>
 
-                    <a href="#" class="text-white-50 text-decoration-none">
+                    <a href="/terms" class="text-white-50 text-decoration-none">
                         Terms & Conditions
                     </a>
 
@@ -645,7 +643,7 @@
 
                 <a class="d-flex gap-3 p-3 rounded-3 mb-3 text-decoration-none"
                    style="background:#eeefff;"
-                   href="https://wa.me/911234567890"
+                   href="<%= site.whatsappHref || '/contact' %>"
                    target="_blank"
                    rel="noopener">
 
@@ -667,7 +665,7 @@
 
                 <a class="d-flex gap-3 p-3 rounded-3 text-decoration-none"
                    style="background:#eeefff;"
-                   href="mailto:support@icds.example">
+                   href="mailto:<%= site.supportEmail %>">
 
                     <i class="bi bi-envelope fs-4"
                        style="color:#565acf;"></i>
@@ -678,7 +676,7 @@
                         </strong>
 
                         <small class="text-muted">
-                            support@icds.example
+                            <%= site.supportEmail %>
                         </small>
                     </div>
 

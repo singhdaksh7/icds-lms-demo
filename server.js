@@ -10,6 +10,7 @@ const { sessionMiddleware, sessionStore } = require('./src/config/session');
 const { exposeCsrfToken } = require('./src/config/csrf');
 const flashMiddleware = require('./src/lib/flash');
 const currentUser = require('./src/middleware/currentUser.middleware');
+const siteMiddleware = require('./src/middleware/site.middleware');
 const indexRoutes = require('./src/routes/index.routes');
 const authRoutes = require('./src/routes/auth.routes');
 const courseRoutes = require('./src/routes/course.routes');
@@ -71,6 +72,7 @@ app.use(sessionMiddleware);
 app.use(flashMiddleware);
 app.use(exposeCsrfToken);
 app.use(currentUser);
+app.use(siteMiddleware);
 
 app.use('/api/health', healthRoutes);
 app.use('/', authRoutes);
