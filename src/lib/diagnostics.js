@@ -41,7 +41,8 @@ async function withTimeout(promiseFactory, ms, label) {
   });
 
   try {
-    const attempt = promiseFactory()
+    const attempt = Promise.resolve()
+      .then(() => promiseFactory())
       .then((value) => ({ ok: true, value }))
       .catch((err) => ({ ok: false, timedOut: false, error: summarizeError(err) }));
     const result = await Promise.race([attempt, timeout]);
