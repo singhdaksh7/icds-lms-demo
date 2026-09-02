@@ -1,9 +1,16 @@
 // Local (Hostinger-hosted) lesson video storage helpers.
 //
-// Videos live under storage/videos/<course-slug>/<uuid>.<ext> — a directory
+// Videos live under STORAGE_ROOT/<course-slug>/<uuid>.<ext> — a directory
 // outside the Express static root (public/), so nothing here is ever
 // reachable by a direct URL. The only way to read a video's bytes is through
 // the authorized /media/lessons/:lessonId/video route (see media.controller).
+//
+// STORAGE_ROOT itself defaults to <project root>/storage/videos for local
+// dev, but MUST be overridden via VIDEO_STORAGE_ROOT to an absolute path
+// OUTSIDE the deployment directory in production — Hostinger's Node.js
+// build pipeline replaces the whole app directory (hbuilds/current/nodejs)
+// on every redeploy, which would silently wipe any videos stored inside it.
+// See README "Production Operations" for the exact path used.
 //
 // `videoPath` as stored in the DB is always a relative path of the exact
 // shape built here (never taken verbatim from user input as a filesystem
@@ -12,7 +19,9 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 
-const STORAGE_ROOT = path.join(__dirname, '..', '..', 'storage', 'videos');
+const STORAGE_ROOT = process.env.VIDEO_STORAGE_ROOT
+  ? path.resolve(process.env.VIDEO_STORAGE_ROOT)
+  : path.join(__dirname, '..', '..', 'storage', 'videos');
 
 // extension -> MIME type. Only these are ever accepted or served — never
 // trust a client-supplied Content-Type/extension beyond this whitelist.
