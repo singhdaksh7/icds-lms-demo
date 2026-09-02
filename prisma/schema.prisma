@@ -115,10 +115,10 @@ model Instructor {
   slug         String       @unique
   title        String?
   bio          String?      @db.Text
-  photoUrl     String?
+  photoUrl     String?      @db.VarChar(500)
   email        String?
-  linkedinUrl  String?
-  instagramUrl String?
+  linkedinUrl  String?      @db.VarChar(500)
+  instagramUrl String?      @db.VarChar(500)
   status       EntityStatus @default(ACTIVE)
   createdAt    DateTime     @default(now())
   updatedAt    DateTime     @updatedAt
@@ -134,7 +134,7 @@ model Course {
   slug             String       @unique
   shortDescription String?      @db.Text
   description      String?      @db.Text
-  thumbnailUrl     String?
+  thumbnailUrl     String?      @db.VarChar(500)
   categoryId       Int?
   instructorId     Int?
   price            Decimal      @db.Decimal(10, 2)
@@ -170,7 +170,7 @@ model Lesson {
   title            String
   slug             String
   description      String?      @db.Text
-  videoUrl         String?
+  videoUrl         String?      @db.VarChar(500)
   externalVideoId  String?
   duration         String?
   sortOrder        Int          @default(0)
@@ -313,7 +313,7 @@ model Certificate {
   userId     Int
   courseId   Int
   issuedAt   DateTime @default(now())
-  fileUrl    String?
+  fileUrl    String?  @db.VarChar(500)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
