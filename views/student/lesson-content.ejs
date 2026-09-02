@@ -15,7 +15,14 @@
                     <%= lesson.title %>
                 </h1>
 
-                <% if (videoEmbed) { %>
+                <% if (lesson.videoType === 'LOCAL' && lesson.videoPath) { %>
+                    <div class="ratio ratio-16x9 mb-4 rounded-4 overflow-hidden bg-dark">
+                        <video controls preload="metadata" playsinline controlsList="nodownload">
+                            <source src="/media/lessons/<%= lesson.id %>/video" type="<%= lesson.videoPath.endsWith('.webm') ? 'video/webm' : 'video/mp4' %>">
+                            Your browser does not support the video tag.
+                        </video>
+                    </div>
+                <% } else if (videoEmbed) { %>
                     <div class="ratio ratio-16x9 mb-4 rounded-4 overflow-hidden bg-dark">
                         <iframe
                             src="<%= videoEmbed.embedUrl %>"

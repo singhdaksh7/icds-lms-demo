@@ -3,6 +3,7 @@ const router = express.Router();
 
 const { requireRole } = require('../middleware/auth.middleware');
 const { doubleCsrfProtection } = require('../config/csrf');
+const { loadLessonForVideo, uploadLessonVideo } = require('../middleware/videoUpload.middleware');
 
 const dashboardController = require('../controllers/admin/dashboard.controller');
 const courseController = require('../controllers/admin/course.controller');
@@ -37,6 +38,25 @@ router.post('/courses/:courseId/lessons', doubleCsrfProtection, lessonController
 router.get('/lessons/:id/edit', lessonController.editLessonForm);
 router.post('/lessons/:id', doubleCsrfProtection, lessonController.updateLesson);
 router.post('/lessons/:id/delete', doubleCsrfProtection, lessonController.deleteLesson);
+
+// --- Local (Hostinger-hosted) lesson video ----------------------------------
+router.post(
+  '/lessons/:id/video/upload',
+  loadLessonForVideo,
+  uploadLessonVideo,
+  doubleCsrfProtection,
+  lessonController.uploadLessonVideo
+);
+router.post(
+  '/lessons/:id/video/register',
+  doubleCsrfProtection,
+  lessonController.registerLessonVideo
+);
+router.post(
+  '/lessons/:id/video/remove',
+  doubleCsrfProtection,
+  lessonController.removeLessonVideo
+);
 
 // --- Categories --------------------------------------------------------------
 router.get('/categories', categoryController.listCategories);

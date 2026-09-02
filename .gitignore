@@ -16,5 +16,12 @@ Thumbs.db
 public/uploads/*
 !public/uploads/.gitkeep
 
+# Local lesson video storage — never committed, never web-served directly.
+# Outside the Express static root; served only via the protected
+# /media/lessons/:lessonId/video route. Must survive redeploys (see README
+# "Production Operations" for the persistence requirement).
+storage/videos/*
+!storage/videos/.gitkeep
+
 # Prisma keeps schema + migrations tracked; only ignore generated/query engine noise if present
 prisma/*.db

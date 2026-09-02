@@ -41,6 +41,11 @@ enum LessonStatus {
   PUBLISHED
 }
 
+enum VideoType {
+  EXTERNAL
+  LOCAL
+}
+
 enum EnrollmentStatus {
   ACTIVE
   EXPIRED
@@ -176,8 +181,14 @@ model Lesson {
   title            String
   slug             String
   description      String?      @db.Text
+  videoType        VideoType    @default(EXTERNAL)
   videoUrl         String?      @db.VarChar(500)
   externalVideoId  String?
+  // Server-side-only relative path under storage/videos/ for LOCAL videos
+  // (e.g. "course-slug/<uuid>.mp4"). Never rendered to the client directly —
+  // only used server-side to stream via the protected /media route. Not an
+  // absolute filesystem path, so it carries no meaningful info if leaked.
+  videoPath        String?      @db.VarChar(500)
   duration         String?
   sortOrder        Int          @default(0)
   preview          Boolean      @default(false)
