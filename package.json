@@ -18,14 +18,15 @@
     "postinstall": "prisma generate"
   },
   "dependencies": {
-    "@prisma/client": "^5.20.0",
+    "@prisma/client": "5.20.0",
+    "@tidbcloud/prisma-adapter": "5.20.0",
+    "@tidbcloud/serverless": "^0.3.0",
     "bcryptjs": "^3.0.3",
     "cookie-parser": "^1.4.7",
     "csrf-csrf": "^4.0.3",
     "dotenv": "^16.4.5",
     "ejs": "^3.1.10",
     "express": "^4.21.0",
-    "express-mysql-session": "^3.0.3",
     "express-rate-limit": "^7.4.1",
     "express-session": "^1.19.0",
     "helmet": "^7.1.0",
@@ -35,14 +36,9 @@
   },
   "devDependencies": {
     "nodemon": "^3.1.7",
-    "prisma": "^5.20.0"
+    "prisma": "5.20.0"
   },
   "prisma": {
     "seed": "node prisma/seed.js"
-  },
-  "overrides": {
-    "express-mysql-session": {
-      "mysql2": "^3.24.3"
-    }
   }
 }

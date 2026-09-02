@@ -1,48 +1,12 @@
-// Server-side session middleware, backed by MySQL (no Redis, no external
-// store dependency beyond the database we already have on Hostinger).
+// Server-side session middleware, backed by Prisma (the `Session` model) —
+// no Redis, no external store dependency, and no raw MySQL TCP connection
+// (see src/lib/prismaSessionStore.js for why that matters on Hostinger).
 const session = require('express-session');
-const MySQLStore = require('express-mysql-session')(session);
+const { PrismaSessionStore } = require('../lib/prismaSessionStore');
 
-const {
-  DATABASE_URL,
-  IS_PRODUCTION,
-  SESSION_SECRET,
-  SESSION_COOKIE_NAME,
-  SESSION_MAX_AGE_MS,
-} = require('./env');
+const { IS_PRODUCTION, SESSION_SECRET, SESSION_COOKIE_NAME, SESSION_MAX_AGE_MS } = require('./env');
 
-// Reuse DATABASE_URL rather than asking for separate DB_HOST/DB_USER/... env
-// vars — Prisma already gives us one connection string to maintain.
-function parseDatabaseUrl(url) {
-  const parsed = new URL(url);
-  return {
-    host: parsed.hostname,
-    port: parsed.port ? Number(parsed.port) : 3306,
-    user: decodeURIComponent(parsed.username),
-    password: decodeURIComponent(parsed.password),
-    database: parsed.pathname.replace(/^\//, ''),
-  };
-}
-
-const sessionStore = new MySQLStore({
-  ...parseDatabaseUrl(DATABASE_URL),
-  createDatabaseTable: true,
-  clearExpired: true,
-  checkExpirationInterval: 15 * 60 * 1000, // sweep expired sessions every 15 min
-  expiration: SESSION_MAX_AGE_MS,
-  schema: {
-    tableName: 'sessions',
-    columnNames: {
-      session_id: 'session_id',
-      expires: 'expires',
-      data: 'data',
-    },
-  },
-});
-
-sessionStore.onReady().catch((err) => {
-  console.error('Session store failed to initialize:', err.message);
-});
+const sessionStore = new PrismaSessionStore();
 
 const sessionMiddleware = session({
   name: SESSION_COOKIE_NAME,

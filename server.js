@@ -11,6 +11,7 @@ const { exposeCsrfToken } = require('./src/config/csrf');
 const flashMiddleware = require('./src/lib/flash');
 const currentUser = require('./src/middleware/currentUser.middleware');
 const siteMiddleware = require('./src/middleware/site.middleware');
+const site = require('./src/config/site');
 const indexRoutes = require('./src/routes/index.routes');
 const authRoutes = require('./src/routes/auth.routes');
 const courseRoutes = require('./src/routes/course.routes');
@@ -35,6 +36,11 @@ app.set('trust proxy', 1);
 
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
+
+// Fallback so views never crash on a missing `site` local, even for an
+// error raised by middleware that runs before siteMiddleware (e.g. the
+// session store) — siteMiddleware still overrides this per-request below.
+app.locals.site = site;
 
 app.use(
   helmet({

@@ -72,11 +72,23 @@ if (IS_PRODUCTION && (!RAZORPAY_KEY_ID || !RAZORPAY_KEY_SECRET || !RAZORPAY_WEBH
   );
 }
 
+// Hostinger's Node.js Web App runtime cannot reach raw MySQL TCP (verified
+// against both Hostinger's own MySQL and an external TiDB Cloud database),
+// so production instead routes Prisma queries through TiDB Cloud's HTTPS
+// serverless driver (see src/config/db.js). This flag is separate from
+// IS_PRODUCTION so the adapter path can also be exercised locally against
+// the real TiDB database (point DATABASE_URL at it and set this to "1") —
+// day-to-day local dev keeps using a plain TCP connection to the local
+// MySQL container. Prisma Migrate always uses a normal TCP connection
+// regardless of this flag; see README "Production Operations".
+const USE_TIDB_HTTP_ADAPTER = process.env.USE_TIDB_HTTP_ADAPTER === '1';
+
 module.exports = {
   NODE_ENV,
   IS_PRODUCTION,
   PORT,
   DATABASE_URL,
+  USE_TIDB_HTTP_ADAPTER,
   SESSION_SECRET: SESSION_SECRET || 'dev-only-insecure-secret-do-not-use-in-production',
   SESSION_COOKIE_NAME: process.env.SESSION_COOKIE_NAME || 'icds.sid',
   SESSION_MAX_AGE_MS: 7 * 24 * 60 * 60 * 1000, // 7 days

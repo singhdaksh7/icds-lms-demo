@@ -11,19 +11,15 @@ function getSessionStore() {
   return require('../config/session').sessionStore;
 }
 
-// Best-effort: walk the MySQL-backed session store and destroy every
-// session belonging to this user, so a password reset can't be undone by
-// an attacker who still holds an old session cookie.
+// Best-effort: destroy every session belonging to this user (via the
+// Prisma-backed session store's indexed userId column — see
+// src/lib/prismaSessionStore.js), so a password reset can't be undone by an
+// attacker who still holds an old session cookie.
 async function invalidateUserSessions(userId) {
   const sessionStore = getSessionStore();
 
   try {
-    const sessions = (await sessionStore.all()) || {};
-    const destroyTasks = Object.entries(sessions)
-      .filter(([, data]) => data && data.userId === userId)
-      .map(([sessionId]) => sessionStore.destroy(sessionId));
-
-    await Promise.all(destroyTasks);
+    await sessionStore.destroyUserSessions(userId);
   } catch (err) {
     // Best-effort: a failure here shouldn't block the password reset itself.
     console.error('Failed to invalidate existing sessions after password reset:', err.message);

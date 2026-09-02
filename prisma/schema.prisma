@@ -1,8 +1,16 @@
 // Prisma schema for the ICDS LMS platform.
 // Target database: MySQL (Hostinger-hosted). No Postgres-only features used.
 
+// driverAdapters lets PrismaClient be constructed with an external adapter
+// (see src/config/db.js) — required to run Prisma queries over TiDB Cloud's
+// HTTPS serverless driver instead of a raw MySQL TCP connection, which the
+// Hostinger Node.js Web App runtime cannot reach. Prisma Migrate is
+// unaffected by this and continues to use a normal TCP connection (must be
+// run from a machine/CI environment that can reach the database directly —
+// see README "Production Operations").
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
 }
 
 datasource db {
@@ -367,6 +375,26 @@ model ContactMessage {
   createdAt DateTime @default(now())
 
   @@map("contact_messages")
+}
+
+// Express-session storage, backed by Prisma/TiDB instead of
+// express-mysql-session (which used a raw MySQL TCP connection the
+// Hostinger Node.js runtime cannot reach) — see src/lib/prismaSessionStore.js.
+// `userId` is a denormalized copy of the value inside the serialized
+// `data` payload (set once a user logs in), purely so password-reset
+// invalidation can target a user's sessions with an indexed query instead
+// of loading and JSON-parsing every row.
+model Session {
+  id        String   @id @db.VarChar(191)
+  userId    Int?
+  data      String   @db.Text
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("sessions")
 }
 
 model PasswordResetToken {

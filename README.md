@@ -448,8 +448,141 @@ analytics, instructor accounts, instructor payouts).
 - Contact submissions and newsletter signups are database-backed, CSRF-protected and rate-limited. SMTP delivery is intentionally pending.
 - Public contact and branding values are centralized through `SITE_NAME`, `SUPPORT_EMAIL`, `CONTACT_EMAIL`, `CONTACT_PHONE`, and `WHATSAPP_NUMBER` in `.env`; see `.env.example`.
 - `/privacy` and `/terms` are clearly marked placeholder pages and require client/legal review before production.
-- Hostinger compatibility is preserved: Node, Express, MySQL/Prisma, MySQL sessions and pure-JS dependencies only.
+- Hostinger compatibility is preserved: Node, Express, MySQL/Prisma (via the TiDB HTTPS adapter in production — see "Production Operations" below), Prisma-backed sessions, and pure-JS dependencies only.
 
 ## Payment launch warning
 
 Razorpay architecture is **IMPLEMENTED: YES**. **REAL PROVIDER VERIFIED: NO**. **PRODUCTION READY: NO**. Real Razorpay TEST/LIVE verification remains mandatory before launch. SMTP, final legal text, and real contact/branding details are also required before production.
+
+## Production Operations
+
+### Runtime database: Hostinger → HTTPS → TiDB Cloud
+
+Hostinger's Node.js Web App runtime cannot reach raw MySQL over TCP (verified
+against both Hostinger's own managed MySQL and an external TiDB Cloud
+database — every DB-backed route returned 500 until this was worked
+around). Production therefore uses **TiDB Cloud Serverless** as the
+database, accessed at runtime through **TiDB's official HTTPS serverless
+driver** (`@tidbcloud/serverless` + `@tidbcloud/prisma-adapter`) instead of
+a normal TCP connection:
+
+```
+Hostinger Node.js app → HTTPS → TiDB Cloud Data Service → lms_production
+```
+
+This is wired up in `src/config/db.js`: when the `USE_TIDB_HTTP_ADAPTER=1`
+environment variable is set, the shared `PrismaClient` is constructed with
+a `PrismaTiDBCloud` adapter built from the same `DATABASE_URL` (no separate
+credential). When unset (local day-to-day dev against a local MySQL
+container), Prisma uses its normal TCP query engine. Hostinger's
+environment has `USE_TIDB_HTTP_ADAPTER=1` set permanently.
+
+`generator client` in `prisma/schema.prisma` has `previewFeatures =
+["driverAdapters"]` enabled to support this. The `datasource` block is
+still plain `provider = "mysql"` — the schema itself is unchanged.
+
+**Known adapter limitation:** unique-constraint violations do not come back
+as Prisma's normal `P2002` error code through this adapter — only the raw
+driver error, with the underlying MySQL error embedded in the message text.
+`src/lib/prismaErrors.js` (`isUniqueConstraintError`) checks both forms;
+use it anywhere idempotent-on-conflict logic is needed. Verified separately
+that `P2025` (record not found on update/delete) *is* still synthesized
+correctly by Prisma's own engine even through the adapter, so no equivalent
+workaround was needed there. Both interactive (`prisma.$transaction(async
+tx => ...)`) and sequential-array transactions were verified working
+end-to-end (order/certificate/password-reset flows) against the adapter.
+
+### Migrations: TCP only, run from a machine that can reach the database
+
+**Prisma Migrate always uses a normal MySQL TCP connection — it does not
+go through the HTTPS adapter, regardless of `USE_TIDB_HTTP_ADAPTER`.**
+Since Hostinger cannot make that TCP connection, `prisma migrate deploy`
+must **never** be run from Hostinger. Instead:
+
+```
+# From a developer machine or CI runner that can reach TiDB directly:
+DATABASE_URL="mysql://...tidbcloud.com:4000/lms_production?sslaccept=strict" \
+  npx prisma migrate deploy
+```
+
+Apply new migrations this way **before** deploying application code that
+depends on them, then deploy the code to Hostinger separately (code
+deployment does not run migrations).
+
+### Sessions: Prisma-backed, not express-mysql-session
+
+`express-mysql-session` needed the same raw MySQL TCP connection that's
+unavailable on Hostinger, so it has been replaced with a custom store
+(`src/lib/prismaSessionStore.js`) backed by the `Session` Prisma model —
+reads/writes go through the same TiDB HTTPS adapter as everything else.
+No Redis, no in-memory store, no background worker: expired rows are
+opportunistically swept (at most once per 30 minutes per running process)
+during normal `set`/`touch` calls, but correctness never depends on that
+sweep running — `get()` always re-checks `expiresAt` itself. Password-reset
+session invalidation (`invalidateUserSessions` in `auth.service.js`) uses
+the store's `destroyUserSessions(userId)` method, an indexed query against
+`Session.userId` rather than a full-table scan.
+
+### Local video storage & persistence
+
+Local (Hostinger-hosted) lesson videos live under the path in
+`VIDEO_STORAGE_ROOT` (`src/lib/videoStorage.js`) — **not** inside
+`public/`, and not web-servable. In production this **must** point outside
+the app's deployment directory (`hbuilds/current/nodejs` on Hostinger,
+which is replaced wholesale on every redeploy); it's currently set to a
+dot-prefixed directory under `public_html/` (Hostinger's build pipeline
+does not touch `public_html` itself, and the dotfile-blocking `.htaccess`
+rule keeps it inaccessible over HTTP). Locally it defaults to
+`./storage/videos`.
+
+Admin attaches a local video to a lesson two ways (lesson edit page):
+upload directly (multer, capped at 200MB, streamed to disk), or register a
+filename already placed into `storage/videos/<course-slug>/` via Hostinger
+File Manager/SFTP — the latter is the recommended path for real
+full-length course videos, since Hostinger's actual HTTP upload limits for
+large files were never independently confirmed. Videos are served only
+through the authorized `GET /media/lessons/:lessonId/video` route
+(enrollment/preview checked server-side; HTTP Range support for seeking).
+
+### Production admin
+
+Use `scripts/create-admin.js`, not the dev-only seed admin (which is
+guarded off in production by design). Reads `ADMIN_EMAIL` / `ADMIN_PASSWORD`
+/ optional `ADMIN_NAME` from the environment, requires `NODE_ENV=production`
+(or `ALLOW_ADMIN_SCRIPT_OUTSIDE_PRODUCTION=1` to override), hashes with
+bcryptjs, upserts by email, and never logs the password:
+
+```
+ADMIN_EMAIL=owner@example.com ADMIN_PASSWORD='...' node scripts/create-admin.js
+```
+
+Run this from a machine that can reach the database directly (same
+constraint as migrations), then remove `ADMIN_PASSWORD` from wherever it
+was set once the account is created.
+
+### Manual enrollment (until Razorpay is verified)
+
+Razorpay is implemented but not production-verified, so **admin manual
+enrollment is the production access-grant method**: `/admin/students` →
+select a student → enroll/unenroll into a course. No payment record is
+created for a manual enrollment (`Enrollment.orderId` stays `null`),
+identical to a genuinely free course.
+
+### Deployment / redeploy steps
+
+1. Apply any new migrations from a TCP-capable machine (see above) —
+   **before** deploying code that depends on them.
+2. `git archive HEAD` → upload via Hostinger's Node.js build pipeline
+   (equivalent to `npm ci` → `postinstall` runs `prisma generate` →
+   restart).
+3. Local lesson videos are unaffected — they live outside the directory
+   this build step replaces (see "Local video storage" above).
+4. Verify `GET /api/health` returns `"database": "connected"`.
+
+### Backups
+
+TiDB Cloud Serverless includes automatic backups on its standard plan;
+confirm current retention in the TiDB Cloud console for this cluster.
+Local videos under `VIDEO_STORAGE_ROOT` are **not** covered by that and
+have no automated backup — periodically archive that directory via File
+Manager/SFTP once real course videos exist.

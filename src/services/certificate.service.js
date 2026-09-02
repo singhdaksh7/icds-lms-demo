@@ -1,6 +1,7 @@
 const { prisma } = require('../config/db');
 const { PDFDocument, StandardFonts, rgb } = require('pdf-lib');
 const crypto = require('crypto');
+const { isUniqueConstraintError } = require('../lib/prismaErrors');
 
 async function isCertificateEligible(userId, courseId) {
   const enrollment = await prisma.enrollment.findUnique({ where: { userId_courseId: { userId, courseId } } });
@@ -23,7 +24,7 @@ async function issueCertificate(userId, courseId) {
       return tx.certificate.update({ where: { id: created.id }, data: { certificateNumber: `ICDS-CERT-${new Date().getFullYear()}-${String(created.id).padStart(6, '0')}` } });
     });
   } catch (error) {
-    if (error.code === 'P2002') return prisma.certificate.findUnique({ where: { userId_courseId: { userId, courseId } } });
+    if (isUniqueConstraintError(error)) return prisma.certificate.findUnique({ where: { userId_courseId: { userId, courseId } } });
     throw error;
   }
 }
