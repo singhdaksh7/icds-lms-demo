@@ -7,10 +7,12 @@ original static HTML page (preserved in `backup/original/`) with a
 Node.js + Express + EJS application backed by MySQL via Prisma, while
 keeping the original Bootstrap-based visual design.
 
-This is a phased build. **Phases 1-3 are implemented:** project foundation,
-MySQL/Prisma foundation + dynamic homepage, and server-side session
-authentication/authorization. Checkout, video delivery, real dashboards, and
-the admin panel are not yet built — see "Next Phase" below.
+This is a phased build. **Phases 1-4 are implemented:** project foundation,
+MySQL/Prisma foundation + dynamic homepage, server-side session
+authentication/authorization, and the full course system (public catalog,
+admin course/category/instructor/lesson management, manual enrollment, and
+the student learning/progress flow). Checkout/payments, certificates, and
+real video protection are not yet built — see "Next Phase" below.
 
 ## Stack
 
@@ -125,6 +127,104 @@ route middleware can trust it.
   standalone `/login` and `/signup` pages for direct links, password-manager
   support, and error handling.
 
+## Course System
+
+Public catalog, admin management, and the student learning flow, all
+database-driven (no more hardcoded homepage course data).
+
+- **Public routes** (`src/routes/course.routes.js`, `src/routes/learn.routes.js`):
+  - `GET /courses` — paginated (12/page), server-side filtered catalog.
+    Query params: `q` (search), `category` (slug), `level`, `page`. Search
+    matches course title/short description/description/instructor
+    name/category name via Prisma `contains` (plain MySQL filtering — no
+    Elasticsearch/Meilisearch/full-text extension). Query is trimmed and
+    capped at 100 characters.
+  - `GET /courses/:slug` — only `PUBLISHED` courses are reachable; anything
+    else 404s, including to an authenticated non-admin. Shows curriculum
+    (published lessons, `sortOrder` then `id`) with title/duration/preview
+    flag only — never a lesson's `videoUrl`.
+  - `GET /learn/:courseSlug` — course overview/curriculum for the logged-in,
+    enrolled student (or an admin, for QA). Guests are sent to `/login`;
+    authenticated-but-not-enrolled users are bounced to the course detail
+    page with a flash message — never a raw 500 or silent empty page.
+  - `GET /learn/:courseSlug/:lessonSlug` — the lesson player. A lesson with
+    `preview: true` is reachable by anyone, enrolled or not; everything else
+    requires an active enrollment (or admin). This check happens in
+    `src/controllers/learn.controller.js`, server-side, regardless of what
+    links the UI does or doesn't show.
+- **Admin routes** (`src/routes/admin.routes.js`, all under `requireRole('ADMIN')`
+  applied once via `router.use(...)` so no route can be added unprotected by
+  accident):
+  - Courses: `GET/POST /admin/courses`, `/admin/courses/new`,
+    `/admin/courses/:id/edit`, `/admin/courses/:id`,
+    `/admin/courses/:id/delete`, `/admin/courses/:id/publish`,
+    `/admin/courses/:id/unpublish`.
+  - Lessons (nested under a course): `GET /admin/courses/:courseId/lessons`,
+    `/lessons/new`, `POST .../lessons`, `GET /admin/lessons/:id/edit`,
+    `POST /admin/lessons/:id`, `/admin/lessons/:id/delete`.
+  - Categories: `GET/POST /admin/categories`, `POST /admin/categories/:id`,
+    `/admin/categories/:id/delete` (single-page list with inline
+    create/edit forms).
+  - Instructors: same shape as courses (`new`/`:id/edit` pages).
+  - Students: `GET /admin/students` (paginated, searchable), `GET
+    /admin/students/:id` (detail + manual enroll/unenroll).
+  - All validation lives in `src/validators/*.validator.js` (never inline in
+    controllers); all writes go through `src/services/*.service.js`.
+- **Slugs:** generated server-side (`src/lib/slug.js`) from title/name,
+  lowercased and hyphenated; a client-supplied slug is still normalized and
+  uniqueness-checked, never trusted as-is. Collisions get a `-2`, `-3`, ...
+  suffix automatically — verified live (`test-automation-course` →
+  `test-automation-course-2` on a duplicate title).
+- **Money:** `price`/`salePrice` stay Prisma `Decimal` end-to-end —
+  `src/lib/money.js` validates the raw form string with a regex
+  (`\d{1,8}(\.\d{1,2})?`, 0–1,000,000) and passes the string straight to
+  Prisma, so precision is never lost through a JS float. `salePrice` >
+  `price` is rejected server-side.
+- **Course deletion safety:** `courseService.deleteCourseIfSafe` blocks
+  deletion (and tells the admin to archive instead) whenever the course has
+  any enrollment or order-item history — verified live: a course with an
+  active/cancelled enrollment refuses to delete, a clean course deletes
+  fine. Lessons have no such restriction (no financial record references a
+  lesson directly); deleting one cascades only to its own
+  `LessonProgress` rows, per the existing schema.
+- **Category/instructor deletion:** both use the schema's existing
+  `onDelete: SetNull` — deleting either never deletes a course, only clears
+  `course.categoryId`/`course.instructorId`. The admin UI asks for
+  confirmation and reports how many courses were affected.
+- **Manual enrollment (no payments yet):** `src/services/enrollment.service.js#enrollStudentManually`
+  creates an `Enrollment` with `orderId: null` (already nullable in the
+  schema — no migration needed) rather than fabricating an `Order`.
+  Re-enrolling a cancelled student reactivates the existing row instead of
+  erroring on the `(userId, courseId)` unique constraint; enrolling an
+  already-active student is rejected with a clean message, and this was
+  verified live (only one `Enrollment` row ever exists per user/course).
+  Unenrollment sets `status: 'CANCELLED'` — it never deletes the row, so
+  `LessonProgress` history survives.
+- **Lesson progress:** `POST /student/lessons/:lessonId/complete`
+  (CSRF-protected, `requireRole('STUDENT','ADMIN')`) always uses
+  `req.currentUser.id` — the request body has no `userId` field, so there's
+  nothing to tamper with. It re-validates that the lesson is `PUBLISHED`
+  and that the caller is actually enrolled in that lesson's course before
+  writing anything; verified live that a signed-in student who isn't
+  enrolled gets rejected with no `LessonProgress` row created.
+- **Course progress:** always recomputed server-side as `completed
+  published lessons / total published lessons * 100`
+  (`src/services/progress.service.js#computeCourseProgress`) — a
+  zero-lesson course returns 0% instead of dividing by zero. The frontend
+  never sends a percentage. `Enrollment.progressPercent` is kept as a
+  cache, refreshed after every completion, but `LessonProgress` rows remain
+  the source of truth.
+- **Video embedding:** `src/lib/video.js#parseVideoEmbed` recognizes
+  YouTube (`watch?v=`, `youtu.be/`, `/embed/`) and Vimeo links and returns a
+  clean, server-constructed `embedUrl` — never raw DB content. Templates
+  render it with `<%= embedUrl %>` inside an `<iframe src="...">`, never
+  `<%- %>`. Any other/unsupported URL renders a "Video unavailable or
+  unsupported." panel instead of guessing or crashing.
+- **Pagination:** `src/lib/pagination.js` clamps `page` to a valid integer
+  and to `[1, pageCount]` — an out-of-range or non-numeric `page` value
+  degrades to a valid page instead of erroring. 12/page on the public
+  catalog, 20/page in admin lists.
+
 ## Development
 
 - `npm run dev` — nodemon, auto-restarts on file changes.
@@ -201,7 +301,7 @@ part of this build.
 
 ## Next Phase
 
-See the report delivered alongside this implementation for the full Phase 4+
-scope (course detail pages, checkout/payments, video delivery, real student
-dashboard content, admin CRUD, reviews, certificates, contact/newsletter
-backends).
+See the report delivered alongside this implementation for the full Phase 5+
+scope (Razorpay checkout/payments, coupons, invoices, PDF certificates, real
+video DRM/upload storage, SMTP email, notifications, analytics, instructor
+accounts).

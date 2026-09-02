@@ -1,0 +1,46 @@
+<h1 style="font-size:24px;" class="mb-4">Students</h1>
+
+<form method="GET" action="/admin/students" class="row g-2 mb-4">
+    <div class="col-md-4">
+        <input type="text" name="q" class="form-control form-control-custom" placeholder="Search name or email..." value="<%= q %>">
+    </div>
+    <div class="col-md-2">
+        <button type="submit" class="auth-submit" style="height:100%;">Search</button>
+    </div>
+</form>
+
+<div class="admin-card">
+    <div class="table-responsive">
+        <table class="table admin-table align-middle">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Status</th>
+                    <th>Joined</th>
+                    <th>Enrollments</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% if (students.length === 0) { %>
+                    <tr><td colspan="6" class="text-center text-muted py-4">No students found.</td></tr>
+                <% } %>
+                <% students.forEach(function (student) { %>
+                    <tr>
+                        <td><strong><%= student.name %></strong></td>
+                        <td><%= student.email %></td>
+                        <td><span class="badge bg-<%= student.status === 'ACTIVE' ? 'success' : 'secondary' %>"><%= student.status %></span></td>
+                        <td><%= student.createdAt.toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' }) %></td>
+                        <td><%= student._count.enrollments %></td>
+                        <td class="text-end">
+                            <a href="/admin/students/<%= student.id %>" class="btn btn-sm btn-outline-secondary">View</a>
+                        </td>
+                    </tr>
+                <% }); %>
+            </tbody>
+        </table>
+    </div>
+
+    <%- include('../../partials/pagination', { pagination, pageUrl }) %>
+</div>

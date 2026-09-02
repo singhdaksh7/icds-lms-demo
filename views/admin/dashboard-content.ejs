@@ -1,13 +1,73 @@
-<section class="section-space">
-    <div class="container">
-        <h1 class="section-title">Admin Dashboard</h1>
-        <p class="section-description">
-            Signed in as <%= currentUser.name %> (Admin).
-        </p>
-        <p class="section-description">
-            This is a placeholder page confirming admin-only access works.
-            Course and user management tools will appear here in a later
-            phase.
-        </p>
+<h1 class="mb-1" style="font-size:24px;">Admin Dashboard</h1>
+<p class="text-muted mb-4">Signed in as <%= currentUser.name %>. Real database counts only — no fabricated revenue or analytics (payments aren't implemented yet).</p>
+
+<div class="row g-3 mb-4">
+
+    <div class="col-6 col-lg-3">
+        <div class="admin-stat-card">
+            <div class="admin-stat-number"><%= stats.totalStudents %></div>
+            <div class="admin-stat-label">Students</div>
+        </div>
     </div>
-</section>
+
+    <div class="col-6 col-lg-3">
+        <div class="admin-stat-card">
+            <div class="admin-stat-number"><%= stats.totalCourses %></div>
+            <div class="admin-stat-label">Total Courses</div>
+        </div>
+    </div>
+
+    <div class="col-6 col-lg-3">
+        <div class="admin-stat-card">
+            <div class="admin-stat-number"><%= stats.publishedCourses %></div>
+            <div class="admin-stat-label">Published Courses</div>
+        </div>
+    </div>
+
+    <div class="col-6 col-lg-3">
+        <div class="admin-stat-card">
+            <div class="admin-stat-number"><%= stats.draftCourses %></div>
+            <div class="admin-stat-label">Draft Courses</div>
+        </div>
+    </div>
+
+    <div class="col-6 col-lg-3">
+        <div class="admin-stat-card">
+            <div class="admin-stat-number"><%= stats.totalCategories %></div>
+            <div class="admin-stat-label">Categories</div>
+        </div>
+    </div>
+
+    <div class="col-6 col-lg-3">
+        <div class="admin-stat-card">
+            <div class="admin-stat-number"><%= stats.totalInstructors %></div>
+            <div class="admin-stat-label">Instructors</div>
+        </div>
+    </div>
+
+    <div class="col-6 col-lg-3">
+        <div class="admin-stat-card">
+            <div class="admin-stat-number"><%= stats.totalEnrollments %></div>
+            <div class="admin-stat-label">Total Enrollments</div>
+        </div>
+    </div>
+
+</div>
+
+<div class="admin-card">
+    <h6 class="mb-3">Quick Actions</h6>
+    <div class="d-flex flex-wrap gap-2">
+        <a href="/admin/courses/new" class="btn btn-sm" style="background:var(--primary-color); color:#fff;">
+            <i class="bi bi-plus-lg"></i> New Course
+        </a>
+        <a href="/admin/instructors/new" class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-plus-lg"></i> New Instructor
+        </a>
+        <a href="/admin/categories" class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-plus-lg"></i> Manage Categories
+        </a>
+        <a href="/admin/students" class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-people"></i> Manage Students
+        </a>
+    </div>
+</div>

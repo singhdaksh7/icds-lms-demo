@@ -1,0 +1,92 @@
+<div class="mb-3">
+    <a href="/admin/students" class="small text-decoration-none" style="color:#565acf;">
+        <i class="bi bi-arrow-left me-1"></i> Back to Students
+    </a>
+</div>
+
+<div class="row g-4">
+
+    <div class="col-lg-4">
+        <div class="admin-card mb-4">
+            <h6 class="mb-3">Student Details</h6>
+            <p class="mb-1"><strong><%= student.name %></strong></p>
+            <p class="text-muted small mb-1"><%= student.email %></p>
+            <p class="mb-1">
+                <span class="badge bg-<%= student.status === 'ACTIVE' ? 'success' : 'secondary' %>"><%= student.status %></span>
+            </p>
+            <p class="text-muted small mb-0">
+                Joined <%= student.createdAt.toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' }) %>
+            </p>
+        </div>
+
+        <div class="admin-card">
+            <h6 class="mb-3">Manually Enroll</h6>
+            <% if (enrollableCourses.length === 0) { %>
+                <p class="text-muted small mb-0">No published courses available to enroll into.</p>
+            <% } else { %>
+                <form method="POST" action="/admin/students/<%= student.id %>/enroll">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                    <select name="courseId" class="form-select form-control-custom mb-3" required>
+                        <option value="">Select a course...</option>
+                        <% enrollableCourses.forEach(function (course) { %>
+                            <option value="<%= course.id %>"><%= course.title %></option>
+                        <% }); %>
+                    </select>
+                    <button type="submit" class="auth-submit">Enroll Student</button>
+                </form>
+            <% } %>
+            <p class="text-muted small mt-3 mb-0">
+                No payment/order is created — this is for testing and manual operations before checkout is built.
+            </p>
+        </div>
+    </div>
+
+    <div class="col-lg-8">
+        <div class="admin-card">
+            <h6 class="mb-3">Enrollments</h6>
+
+            <% if (student.enrollments.length === 0) { %>
+                <p class="text-muted">No enrollments yet.</p>
+            <% } else { %>
+                <div class="table-responsive">
+                    <table class="table admin-table align-middle">
+                        <thead>
+                            <tr>
+                                <th>Course</th>
+                                <th>Status</th>
+                                <th>Progress</th>
+                                <th>Enrolled</th>
+                                <th class="text-end">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% student.enrollments.forEach(function (enrollment) { %>
+                                <tr>
+                                    <td><%= enrollment.course.title %></td>
+                                    <td>
+                                        <span class="badge bg-<%= enrollment.status === 'ACTIVE' ? 'success' : 'secondary' %>">
+                                            <%= enrollment.status %>
+                                        </span>
+                                    </td>
+                                    <td><%= enrollment.progressPercent %>%</td>
+                                    <td><%= enrollment.enrolledAt.toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' }) %></td>
+                                    <td class="text-end">
+                                        <% if (enrollment.status === 'ACTIVE') { %>
+                                            <form method="POST" action="/admin/students/<%= student.id %>/unenroll" class="m-0 d-inline"
+                                                  onsubmit="return confirm('Cancel this enrollment?');">
+                                                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                                <input type="hidden" name="courseId" value="<%= enrollment.courseId %>">
+                                                <button type="submit" class="btn btn-sm btn-outline-danger">Cancel</button>
+                                            </form>
+                                        <% } %>
+                                    </td>
+                                </tr>
+                            <% }); %>
+                        </tbody>
+                    </table>
+                </div>
+            <% } %>
+        </div>
+    </div>
+
+</div>

@@ -1,0 +1,75 @@
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 style="font-size:24px;" class="mb-0"><%= instructor ? 'Edit Instructor' : 'New Instructor' %></h1>
+    <a href="/admin/instructors" class="btn btn-sm btn-outline-secondary">Back to Instructors</a>
+</div>
+
+<% if (errors && errors.length) { %>
+    <div class="alert alert-danger">
+        <ul class="mb-0 ps-3">
+            <% errors.forEach(function (error) { %><li><%= error %></li><% }) %>
+        </ul>
+    </div>
+<% } %>
+
+<div class="admin-card">
+    <form method="POST" action="<%= instructor ? '/admin/instructors/' + instructor.id : '/admin/instructors' %>">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+        <div class="row g-3">
+
+            <div class="col-md-8">
+                <label class="form-label small fw-semibold">Name</label>
+                <input type="text" name="name" class="form-control form-control-custom" value="<%= values.name || '' %>" required>
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label small fw-semibold">Slug (optional)</label>
+                <input type="text" name="slug" class="form-control form-control-custom" value="<%= values.slug || '' %>">
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label small fw-semibold">Title</label>
+                <input type="text" name="title" class="form-control form-control-custom" value="<%= values.title || '' %>">
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label small fw-semibold">Email</label>
+                <input type="email" name="email" class="form-control form-control-custom" value="<%= values.email || '' %>">
+            </div>
+
+            <div class="col-12">
+                <label class="form-label small fw-semibold">Bio</label>
+                <textarea name="bio" class="form-control form-control-custom" rows="4"><%= values.bio || '' %></textarea>
+            </div>
+
+            <div class="col-12">
+                <label class="form-label small fw-semibold">Photo URL</label>
+                <input type="text" name="photoUrl" class="form-control form-control-custom" value="<%= values.photoUrl || '' %>" placeholder="https://...">
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label small fw-semibold">LinkedIn URL</label>
+                <input type="text" name="linkedinUrl" class="form-control form-control-custom" value="<%= values.linkedinUrl || '' %>">
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label small fw-semibold">Instagram URL</label>
+                <input type="text" name="instagramUrl" class="form-control form-control-custom" value="<%= values.instagramUrl || '' %>">
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label small fw-semibold">Status</label>
+                <select name="status" class="form-select form-control-custom">
+                    <% statuses.forEach(function (status) { %>
+                        <option value="<%= status %>" <%= values.status === status ? 'selected' : '' %>><%= status %></option>
+                    <% }); %>
+                </select>
+            </div>
+
+        </div>
+
+        <button type="submit" class="auth-submit mt-4" style="width:auto; padding:0 32px;">
+            <%= instructor ? 'Save Changes' : 'Create Instructor' %>
+        </button>
+    </form>
+</div>

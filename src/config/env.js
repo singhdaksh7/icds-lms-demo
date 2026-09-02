@@ -25,6 +25,8 @@ if (!DATABASE_URL) {
 // A short/placeholder secret would let an attacker forge session cookies, so
 // production must supply a real one. Development gets a fallback purely so
 // `npm run dev` works out of the box before a .env is customized.
+// It contains everything which should be visibile and the secrets are only for the auth purpose 
+
 const SESSION_SECRET = process.env.SESSION_SECRET;
 const PLACEHOLDER_SECRETS = new Set([
   'change-me',

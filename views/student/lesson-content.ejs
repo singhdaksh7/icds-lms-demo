@@ -1,0 +1,122 @@
+<section class="section-space">
+    <div class="container">
+
+        <div class="row g-4">
+
+            <div class="col-lg-8">
+
+                <div class="mb-3">
+                    <a href="/learn/<%= course.slug %>" class="small text-decoration-none" style="color:#565acf;">
+                        <i class="bi bi-arrow-left me-1"></i> Back to <%= course.title %>
+                    </a>
+                </div>
+
+                <h1 class="section-title" style="text-align:left; font-size:26px;">
+                    <%= lesson.title %>
+                </h1>
+
+                <% if (videoEmbed) { %>
+                    <div class="ratio ratio-16x9 mb-4 rounded-4 overflow-hidden bg-dark">
+                        <iframe
+                            src="<%= videoEmbed.embedUrl %>"
+                            title="<%= lesson.title %>"
+                            allowfullscreen
+                            referrerpolicy="strict-origin-when-cross-origin">
+                        </iframe>
+                    </div>
+                <% } else { %>
+                    <div class="ratio ratio-16x9 mb-4 rounded-4 d-flex align-items-center justify-content-center bg-dark text-white">
+                        <div class="text-center">
+                            <i class="bi bi-camera-video-off fs-1 d-block mb-2"></i>
+                            Video unavailable or unsupported.
+                        </div>
+                    </div>
+                <% } %>
+
+                <% if (lesson.description) { %>
+                    <p class="section-description" style="text-align:left; white-space:pre-line;">
+                        <%= lesson.description %>
+                    </p>
+                <% } %>
+
+                <% if (enrolled && !isAdmin) { %>
+                    <% const isDone = progressMap[lesson.id] && progressMap[lesson.id].completed; %>
+                    <form method="POST" action="/student/lessons/<%= lesson.id %>/complete" class="mt-3">
+                        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                        <button type="submit" class="auth-submit" style="width:auto; padding:0 28px;" <%= isDone ? 'disabled' : '' %>>
+                            <% if (isDone) { %>
+                                <i class="bi bi-check-circle-fill me-1"></i> Completed
+                            <% } else { %>
+                                Mark Complete
+                            <% } %>
+                        </button>
+                    </form>
+                <% } %>
+
+                <div class="d-flex justify-content-between mt-5 pt-4 border-top">
+                    <% if (previousLesson) { %>
+                        <a href="/learn/<%= course.slug %>/<%= previousLesson.slug %>" class="hero-secondary-btn">
+                            <i class="bi bi-arrow-left me-1"></i> Previous
+                        </a>
+                    <% } else { %>
+                        <span></span>
+                    <% } %>
+
+                    <% if (nextLesson) { %>
+                        <a href="/learn/<%= course.slug %>/<%= nextLesson.slug %>" class="hero-primary-btn">
+                            Next <i class="bi bi-arrow-right ms-1"></i>
+                        </a>
+                    <% } %>
+                </div>
+
+            </div>
+
+            <div class="col-lg-4">
+
+                <div class="modal-content p-3" style="position:sticky; top:100px;">
+
+                    <% if (!isAdmin) { %>
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between small mb-1">
+                                <span>Progress</span>
+                                <span><%= progress.percent %>%</span>
+                            </div>
+                            <div class="progress" style="height:6px; border-radius:6px;">
+                                <div class="progress-bar" role="progressbar" style="width: <%= progress.percent %>%; background: var(--primary-color);"></div>
+                            </div>
+                        </div>
+                    <% } %>
+
+                    <h6 class="mb-3">Curriculum</h6>
+
+                    <div class="list-group list-group-flush">
+                        <% lessons.forEach(function (item, index) { %>
+                            <% const done = progressMap[item.id] && progressMap[item.id].completed; %>
+                            <% const isCurrent = item.id === lesson.id; %>
+                            <% const locked = !item.preview && !enrolled; %>
+                            <a
+                                href="<%= locked ? '#' : '/learn/' + course.slug + '/' + item.slug %>"
+                                class="list-group-item list-group-item-action d-flex justify-content-between align-items-center <%= isCurrent ? 'active' : '' %> <%= locked ? 'disabled' : '' %>"
+                                style="<%= isCurrent ? 'background:var(--primary-color); border-color:var(--primary-color);' : '' %>">
+                                <span class="small">
+                                    <% if (done) { %>
+                                        <i class="bi bi-check-circle-fill me-1"></i>
+                                    <% } else if (locked) { %>
+                                        <i class="bi bi-lock me-1"></i>
+                                    <% } else { %>
+                                        <i class="bi bi-play-circle me-1"></i>
+                                    <% } %>
+                                    <%= index + 1 %>. <%= item.title %>
+                                </span>
+                            </a>
+                        <% }); %>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+</section>

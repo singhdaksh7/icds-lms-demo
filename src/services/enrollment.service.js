@@ -1,0 +1,87 @@
+const { prisma } = require('../config/db');
+
+class EnrollmentError extends Error {
+  constructor(message) {
+    super(message);
+    this.name = 'EnrollmentError';
+  }
+}
+
+async function isUserEnrolled(userId, courseId) {
+  const enrollment = await prisma.enrollment.findUnique({
+    where: { userId_courseId: { userId, courseId } },
+  });
+  return Boolean(enrollment && enrollment.status === 'ACTIVE');
+}
+
+async function getEnrollment(userId, courseId) {
+  return prisma.enrollment.findUnique({
+    where: { userId_courseId: { userId, courseId } },
+  });
+}
+
+async function listEnrollmentsForUser(userId) {
+  return prisma.enrollment.findMany({
+    where: { userId },
+    include: {
+      course: { include: { instructor: true, category: true } },
+    },
+    orderBy: { enrolledAt: 'desc' },
+  });
+}
+
+// Manual (no-payment) enrollment for admin operations. Reactivates a
+// cancelled/expired enrollment instead of erroring on the unique
+// (userId, courseId) constraint, and never creates a fake Order — orderId
+// stays null, which the schema already supports.
+async function enrollStudentManually(userId, courseId) {
+  const [user, course] = await Promise.all([
+    prisma.user.findUnique({ where: { id: userId } }),
+    prisma.course.findUnique({ where: { id: courseId } }),
+  ]);
+
+  if (!user || user.role !== 'STUDENT') {
+    throw new EnrollmentError('Student not found.');
+  }
+  if (!course) {
+    throw new EnrollmentError('Course not found.');
+  }
+
+  const existing = await getEnrollment(userId, courseId);
+  if (existing && existing.status === 'ACTIVE') {
+    throw new EnrollmentError('This student is already enrolled in that course.');
+  }
+
+  if (existing) {
+    return prisma.enrollment.update({
+      where: { id: existing.id },
+      data: { status: 'ACTIVE', accessExpiresAt: null },
+    });
+  }
+
+  return prisma.enrollment.create({
+    data: { userId, courseId, status: 'ACTIVE', orderId: null },
+  });
+}
+
+// Cancels rather than deletes, preserving LessonProgress/history.
+async function cancelEnrollment(userId, courseId) {
+  const existing = await getEnrollment(userId, courseId);
+  if (!existing) {
+    throw new EnrollmentError('Enrollment not found.');
+  }
+
+  return prisma.enrollment.update({
+    where: { id: existing.id },
+    data: { status: 'CANCELLED' },
+  });
+}
+
+module.exports = {
+  EnrollmentError,
+  isUserEnrolled,
+  getEnrollment,
+  listEnrollmentsForUser,
+  enrollStudentManually,
+  cancelEnrollment,
+};

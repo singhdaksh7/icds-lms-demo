@@ -1,0 +1,115 @@
+/* Minimal admin shell styling. Reuses the public site's CSS variables
+   (defined in main.css, loaded before this file) rather than redefining
+   the brand palette. */
+
+.admin-shell {
+    display: flex;
+    min-height: calc(100vh - 60px);
+    background: var(--light-bg);
+}
+
+.admin-sidebar {
+    width: 230px;
+    flex-shrink: 0;
+    background: var(--secondary-color);
+    color: #fff;
+    padding: 24px 0;
+}
+
+.admin-sidebar a {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 24px;
+    color: rgba(255, 255, 255, 0.75);
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 600;
+    border-left: 3px solid transparent;
+}
+
+.admin-sidebar a:hover,
+.admin-sidebar a.active {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.06);
+    border-left-color: var(--primary-color);
+}
+
+.admin-main {
+    flex: 1;
+    padding: 32px;
+    min-width: 0;
+}
+
+.admin-topbar {
+    background: #fff;
+    border-bottom: 1px solid var(--border-color);
+    padding: 14px 32px;
+}
+
+.admin-stat-card {
+    background: #fff;
+    border-radius: 14px;
+    padding: 24px;
+    box-shadow: var(--shadow-soft);
+    height: 100%;
+}
+
+.admin-stat-number {
+    font-size: 30px;
+    font-weight: 800;
+    color: var(--secondary-color);
+}
+
+.admin-stat-label {
+    font-size: 12px;
+    color: var(--body-color);
+    text-transform: uppercase;
+    letter-spacing: .5px;
+}
+
+.admin-card {
+    background: #fff;
+    border-radius: 14px;
+    padding: 24px;
+    box-shadow: var(--shadow-soft);
+}
+
+.admin-table th {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    color: var(--body-color);
+    border-bottom-width: 1px;
+}
+
+.admin-table td {
+    vertical-align: middle;
+    font-size: 14px;
+}
+
+@media (max-width: 860px) {
+    .admin-shell {
+        flex-direction: column;
+    }
+    .admin-sidebar {
+        width: 100%;
+        display: flex;
+        overflow-x: auto;
+        padding: 8px 0;
+    }
+    .admin-sidebar a {
+        padding: 10px 16px;
+        border-left: 0;
+        border-bottom: 3px solid transparent;
+        white-space: nowrap;
+    }
+    .admin-sidebar a:hover,
+    .admin-sidebar a.active {
+        border-left-color: transparent;
+        border-bottom-color: var(--primary-color);
+    }
+    .admin-main {
+        padding: 20px;
+    }
+}

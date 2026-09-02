@@ -1,0 +1,63 @@
+<div class="mb-3">
+    <a href="/admin/courses" class="small text-decoration-none" style="color:#565acf;">
+        <i class="bi bi-arrow-left me-1"></i> Back to Courses
+    </a>
+</div>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 style="font-size:24px;" class="mb-0">Lessons: <%= course.title %></h1>
+        <p class="text-muted small mb-0">Displayed in sortOrder ASC, then id ASC.</p>
+    </div>
+    <a href="/admin/courses/<%= course.id %>/lessons/new" class="btn btn-sm" style="background:var(--primary-color); color:#fff;">
+        <i class="bi bi-plus-lg"></i> New Lesson
+    </a>
+</div>
+
+<div class="admin-card">
+    <div class="table-responsive">
+        <table class="table admin-table align-middle">
+            <thead>
+                <tr>
+                    <th>Order</th>
+                    <th>Title</th>
+                    <th>Duration</th>
+                    <th>Preview</th>
+                    <th>Status</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% if (lessons.length === 0) { %>
+                    <tr><td colspan="6" class="text-center text-muted py-4">No lessons yet.</td></tr>
+                <% } %>
+                <% lessons.forEach(function (lesson) { %>
+                    <tr>
+                        <td><%= lesson.sortOrder %></td>
+                        <td>
+                            <strong><%= lesson.title %></strong>
+                            <div class="small text-muted"><%= lesson.slug %></div>
+                        </td>
+                        <td><%= lesson.duration || '—' %></td>
+                        <td><% if (lesson.preview) { %><i class="bi bi-check-circle-fill text-success"></i><% } else { %>—<% } %></td>
+                        <td>
+                            <span class="badge bg-<%= lesson.status === 'PUBLISHED' ? 'success' : 'secondary' %>">
+                                <%= lesson.status %>
+                            </span>
+                        </td>
+                        <td class="text-end">
+                            <div class="d-flex justify-content-end gap-2">
+                                <a href="/admin/lessons/<%= lesson.id %>/edit" class="btn btn-sm btn-outline-secondary">Edit</a>
+                                <form method="POST" action="/admin/lessons/<%= lesson.id %>/delete" class="m-0"
+                                      onsubmit="return confirm('Delete this lesson?');">
+                                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                <% }); %>
+            </tbody>
+        </table>
+    </div>
+</div>

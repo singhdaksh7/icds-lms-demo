@@ -1,0 +1,77 @@
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 style="font-size:24px;" class="mb-0"><%= lesson ? 'Edit Lesson' : 'New Lesson' %></h1>
+    <a href="/admin/courses/<%= course.id %>/lessons" class="btn btn-sm btn-outline-secondary">Back to Lessons</a>
+</div>
+
+<p class="text-muted mb-4">Course: <strong><%= course.title %></strong></p>
+
+<% if (errors && errors.length) { %>
+    <div class="alert alert-danger">
+        <ul class="mb-0 ps-3">
+            <% errors.forEach(function (error) { %><li><%= error %></li><% }) %>
+        </ul>
+    </div>
+<% } %>
+
+<div class="admin-card">
+    <form method="POST" action="<%= lesson ? '/admin/lessons/' + lesson.id : '/admin/courses/' + course.id + '/lessons' %>">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+        <div class="row g-3">
+
+            <div class="col-md-8">
+                <label class="form-label small fw-semibold">Title</label>
+                <input type="text" name="title" class="form-control form-control-custom" value="<%= values.title || '' %>" required>
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label small fw-semibold">Slug (optional)</label>
+                <input type="text" name="slug" class="form-control form-control-custom" value="<%= values.slug || '' %>">
+            </div>
+
+            <div class="col-12">
+                <label class="form-label small fw-semibold">Description</label>
+                <textarea name="description" class="form-control form-control-custom" rows="3"><%= values.description || '' %></textarea>
+            </div>
+
+            <div class="col-12">
+                <label class="form-label small fw-semibold">Video URL</label>
+                <input type="text" name="videoUrl" class="form-control form-control-custom" value="<%= values.videoUrl || '' %>" placeholder="https://www.youtube.com/watch?v=... or Vimeo link">
+                <div class="form-text">YouTube and Vimeo links are embedded automatically. Other providers are stored but won't preview yet.</div>
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label small fw-semibold">Duration (e.g. "12m")</label>
+                <input type="text" name="duration" class="form-control form-control-custom" value="<%= values.duration || '' %>">
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label small fw-semibold">Sort Order</label>
+                <input type="number" min="0" name="sortOrder" class="form-control form-control-custom" value="<%= (values.sortOrder !== undefined && values.sortOrder !== null) ? values.sortOrder : 0 %>">
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label small fw-semibold">Status</label>
+                <select name="status" class="form-select form-control-custom">
+                    <% statuses.forEach(function (status) { %>
+                        <option value="<%= status %>" <%= values.status === status ? 'selected' : '' %>><%= status %></option>
+                    <% }); %>
+                </select>
+            </div>
+
+            <div class="col-12">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="preview" id="preview" <%= values.preview ? 'checked' : '' %>>
+                    <label class="form-check-label" for="preview">
+                        Allow anonymous/non-enrolled preview access
+                    </label>
+                </div>
+            </div>
+
+        </div>
+
+        <button type="submit" class="auth-submit mt-4" style="width:auto; padding:0 32px;">
+            <%= lesson ? 'Save Changes' : 'Create Lesson' %>
+        </button>
+    </form>
+</div>

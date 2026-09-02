@@ -1,0 +1,129 @@
+<section class="section-space">
+    <div class="container">
+
+        <div class="row g-5">
+
+            <div class="col-lg-8">
+
+                <div class="course-category mb-2">
+                    <%= course.category ? course.category.name : 'General' %>
+                </div>
+
+                <h1 class="section-title" style="text-align:left;">
+                    <%= course.title %>
+                </h1>
+
+                <% if (course.shortDescription) { %>
+                    <p class="section-description" style="text-align:left;">
+                        <%= course.shortDescription %>
+                    </p>
+                <% } %>
+
+                <div class="course-meta mb-4" style="border:0; margin:0; padding:0;">
+                    <span class="me-4"><i class="bi bi-signal"></i> <%= course.level.charAt(0) + course.level.slice(1).toLowerCase() %></span>
+                    <span class="me-4"><i class="bi bi-clock"></i> <%= course.duration || 'TBD' %></span>
+                    <span><i class="bi bi-play-btn"></i> <%= lessonCount %> Lesson<%= lessonCount === 1 ? '' : 's' %></span>
+                </div>
+
+                <img
+                    src="<%= course.thumbnailUrl || '/assets/images/course-placeholder.jpg' %>"
+                    alt="<%= course.title %>"
+                    class="w-100 rounded-4 mb-4"
+                    style="max-height:420px; object-fit:cover;">
+
+                <% if (course.description) { %>
+                    <h3 class="mb-3">About this course</h3>
+                    <p class="section-description" style="text-align:left; white-space:pre-line;">
+                        <%= course.description %>
+                    </p>
+                <% } %>
+
+                <% if (course.instructor) { %>
+                    <div class="d-flex align-items-center gap-3 mt-5 p-3 rounded-4" style="background:var(--light-bg);">
+                        <img
+                            src="<%= course.instructor.photoUrl || '/assets/images/instructor-placeholder.jpg' %>"
+                            alt="<%= course.instructor.name %>"
+                            style="width:64px;height:64px;border-radius:50%;object-fit:cover;">
+                        <div>
+                            <strong class="d-block"><%= course.instructor.name %></strong>
+                            <small class="text-muted"><%= course.instructor.title || 'Instructor' %></small>
+                        </div>
+                    </div>
+                <% } %>
+
+                <h3 class="mt-5 mb-3">Curriculum</h3>
+
+                <% if (course.lessons.length === 0) { %>
+                    <p class="text-muted">Lessons for this course are coming soon.</p>
+                <% } else { %>
+                    <ul class="list-group">
+                        <% course.lessons.forEach(function (lesson, index) { %>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <span>
+                                    <i class="bi bi-play-circle me-2" style="color:var(--primary-color);"></i>
+                                    <%= index + 1 %>. <%= lesson.title %>
+                                    <% if (lesson.preview) { %>
+                                        <span class="badge ms-2" style="background:var(--primary-light); color:var(--primary-color);">Preview</span>
+                                    <% } %>
+                                </span>
+                                <span class="d-flex align-items-center gap-3">
+                                    <small class="text-muted"><%= lesson.duration || '' %></small>
+                                    <% if (lesson.preview) { %>
+                                        <a href="/learn/<%= course.slug %>/<%= lesson.slug %>" class="small" style="color:#565acf;">Preview</a>
+                                    <% } else { %>
+                                        <i class="bi bi-lock text-muted"></i>
+                                    <% } %>
+                                </span>
+                            </li>
+                        <% }); %>
+                    </ul>
+                <% } %>
+
+            </div>
+
+            <div class="col-lg-4">
+
+                <div class="modal-content p-4" style="position:sticky; top:100px;">
+
+                    <div class="course-price mb-3">
+                        <%= course.currency %> <%= Number(course.salePrice || course.price).toLocaleString('en-IN') %>
+                        <% if (course.salePrice) { %>
+                            <del><%= course.currency %> <%= Number(course.price).toLocaleString('en-IN') %></del>
+                        <% } %>
+                    </div>
+
+                    <% if (typeof currentUser !== 'undefined' && currentUser && currentUser.role === 'STUDENT') { %>
+                        <% if (isEnrolled) { %>
+                            <a href="/learn/<%= course.slug %>" class="auth-submit d-block text-center text-decoration-none">
+                                Continue Learning
+                            </a>
+                        <% } else { %>
+                            <button class="auth-submit" disabled>Enrollment via checkout coming soon</button>
+                            <p class="small text-muted mt-2 mb-0">
+                                Payments aren't live yet — contact us to get enrolled.
+                            </p>
+                        <% } %>
+                    <% } else if (typeof currentUser !== 'undefined' && currentUser && currentUser.role === 'ADMIN') { %>
+                        <a href="/learn/<%= course.slug %>" class="auth-submit d-block text-center text-decoration-none">
+                            View as Admin
+                        </a>
+                    <% } else { %>
+                        <a href="/login?returnTo=<%= encodeURIComponent('/courses/' + course.slug) %>" class="auth-submit d-block text-center text-decoration-none">
+                            Log In to Enroll
+                        </a>
+                    <% } %>
+
+                    <ul class="list-unstyled mt-4 mb-0 small">
+                        <li class="mb-2"><i class="bi bi-check-circle-fill me-2" style="color:var(--success-color);"></i>Lifetime access</li>
+                        <li class="mb-2"><i class="bi bi-check-circle-fill me-2" style="color:var(--success-color);"></i>Learn at your own pace</li>
+                        <li><i class="bi bi-check-circle-fill me-2" style="color:var(--success-color);"></i>Structured video lessons</li>
+                    </ul>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+</section>

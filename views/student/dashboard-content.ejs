@@ -1,13 +1,78 @@
 <section class="section-space">
     <div class="container">
-        <h1 class="section-title">Student Dashboard</h1>
-        <p class="section-description">
-            Welcome, <%= currentUser.name %>.
-        </p>
-        <p class="section-description">
-            This is a placeholder page confirming that authentication and
-            authorization are working. Your courses, progress and
-            certificates will appear here in a later phase.
-        </p>
+
+        <div class="section-heading reveal-element" style="text-align:left;">
+            <h1 class="section-title" style="text-align:left;">My Courses</h1>
+            <p class="section-description" style="text-align:left;">
+                Welcome back, <%= currentUser.name %>. Continue where you left off.
+            </p>
+        </div>
+
+        <% if (enrollments.length === 0) { %>
+
+            <div class="text-center py-5">
+                <i class="bi bi-mortarboard fs-1 d-block mb-3" style="color:var(--primary-color);"></i>
+                <p class="section-description mb-3">You haven't enrolled in any courses yet.</p>
+                <a href="/courses" class="hero-primary-btn d-inline-block">Browse Courses</a>
+            </div>
+
+        <% } else { %>
+
+            <div class="row g-4">
+                <% enrollments.forEach(function (enrollment) { %>
+                    <% const course = enrollment.course; %>
+                    <div class="col-md-6 col-xl-4">
+                        <div class="course-card">
+
+                            <div class="course-thumbnail">
+                                <img
+                                    src="<%= course.thumbnailUrl || '/assets/images/course-placeholder.jpg' %>"
+                                    alt="<%= course.title %>">
+                                <% if (enrollment.status !== 'ACTIVE') { %>
+                                    <span class="course-badge"><%= enrollment.status %></span>
+                                <% } %>
+                            </div>
+
+                            <div class="course-content">
+
+                                <div class="course-category">
+                                    <%= course.instructor ? course.instructor.name : 'ICDS' %>
+                                </div>
+
+                                <h3 class="course-title"><%= course.title %></h3>
+
+                                <div class="small text-muted mb-2">
+                                    Enrolled <%= enrollment.enrolledAt.toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' }) %>
+                                </div>
+
+                                <div class="mb-3">
+                                    <div class="d-flex justify-content-between small mb-1">
+                                        <span>Progress</span>
+                                        <span><%= enrollment.progressPercent %>%</span>
+                                    </div>
+                                    <div class="progress" style="height:6px; border-radius:6px;">
+                                        <div class="progress-bar" role="progressbar" style="width: <%= enrollment.progressPercent %>%; background: var(--primary-color);"></div>
+                                    </div>
+                                </div>
+
+                                <% if (enrollment.status === 'ACTIVE') { %>
+                                    <a href="/learn/<%= course.slug %>" class="auth-submit d-block text-center text-decoration-none">
+                                        Continue Learning
+                                    </a>
+                                <% } else { %>
+                                    <a href="/courses/<%= course.slug %>" class="hero-secondary-btn d-block text-center">
+                                        View Course
+                                    </a>
+                                <% } %>
+
+                            </div>
+
+                        </div>
+                    </div>
+                <% }); %>
+            </div>
+
+        <% } %>
+
     </div>
 </section>

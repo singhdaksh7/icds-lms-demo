@@ -12,6 +12,8 @@ const flashMiddleware = require('./src/lib/flash');
 const currentUser = require('./src/middleware/currentUser.middleware');
 const indexRoutes = require('./src/routes/index.routes');
 const authRoutes = require('./src/routes/auth.routes');
+const courseRoutes = require('./src/routes/course.routes');
+const learnRoutes = require('./src/routes/learn.routes');
 const studentRoutes = require('./src/routes/student.routes');
 const adminRoutes = require('./src/routes/admin.routes');
 const healthRoutes = require('./src/routes/api/health.routes');
@@ -64,6 +66,8 @@ app.use(currentUser);
 
 app.use('/api/health', healthRoutes);
 app.use('/', authRoutes);
+app.use('/', courseRoutes);
+app.use('/learn', learnRoutes);
 app.use('/student', studentRoutes);
 app.use('/admin', adminRoutes);
 app.use('/', indexRoutes);

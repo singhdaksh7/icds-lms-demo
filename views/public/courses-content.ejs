@@ -1,0 +1,86 @@
+<section class="section-space course-section">
+    <div class="container">
+
+        <div class="section-heading reveal-element">
+            <div class="section-tag">Course Catalog</div>
+            <h2 class="section-title">All Courses</h2>
+            <p class="section-description">
+                Browse every published course. Use search and filters to
+                find exactly what you're looking for.
+            </p>
+        </div>
+
+        <form method="GET" action="/courses" class="row g-3 mb-5 align-items-end">
+
+            <div class="col-md-5">
+                <label class="form-label small fw-semibold">Search</label>
+                <input
+                    type="text"
+                    name="q"
+                    maxlength="100"
+                    class="form-control form-control-custom"
+                    placeholder="Search courses, instructors, categories..."
+                    value="<%= filters.q %>">
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label small fw-semibold">Category</label>
+                <select name="category" class="form-select form-control-custom">
+                    <option value="">All Categories</option>
+                    <% categories.forEach(function (category) { %>
+                        <option value="<%= category.slug %>" <%= filters.categorySlug === category.slug ? 'selected' : '' %>>
+                            <%= category.name %>
+                        </option>
+                    <% }); %>
+                </select>
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label small fw-semibold">Level</label>
+                <select name="level" class="form-select form-control-custom">
+                    <option value="">All Levels</option>
+                    <% levels.forEach(function (level) { %>
+                        <option value="<%= level %>" <%= filters.level === level ? 'selected' : '' %>>
+                            <%= level.charAt(0) + level.slice(1).toLowerCase() %>
+                        </option>
+                    <% }); %>
+                </select>
+            </div>
+
+            <div class="col-md-1">
+                <button type="submit" class="auth-submit">Go</button>
+            </div>
+
+        </form>
+
+        <% if (filters.q || filters.categorySlug || filters.level) { %>
+            <p class="text-muted mb-4">
+                <%= pagination.total %> result<%= pagination.total === 1 ? '' : 's' %>
+                <% if (filters.q) { %> for "<%= filters.q %>"<% } %>
+                <a href="/courses" class="ms-2" style="color:#565acf;">Clear filters</a>
+            </p>
+        <% } %>
+
+        <% if (courses.length === 0) { %>
+
+            <div class="text-center py-5">
+                <p class="section-description mb-3">No courses match your search.</p>
+                <a href="/courses" class="hero-primary-btn d-inline-block">Browse All Courses</a>
+            </div>
+
+        <% } else { %>
+
+            <div class="row g-4">
+                <% courses.forEach(function (course) { %>
+                    <div class="col-md-6 col-xl-4 reveal-element">
+                        <%- include('../partials/course-card', { course }) %>
+                    </div>
+                <% }); %>
+            </div>
+
+            <%- include('../partials/pagination', { pagination, pageUrl }) %>
+
+        <% } %>
+
+    </div>
+</section>

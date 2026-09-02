@@ -1,0 +1,51 @@
+<section class="section-space">
+    <div class="container">
+
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
+            <div>
+                <div class="course-category mb-2"><%= course.category ? course.category.name : 'General' %></div>
+                <h1 class="section-title" style="text-align:left;"><%= course.title %></h1>
+            </div>
+
+            <a href="/student/dashboard" class="hero-secondary-btn">
+                <i class="bi bi-arrow-left me-1"></i> My Courses
+            </a>
+        </div>
+
+        <% if (!isAdmin) { %>
+            <div class="mb-5">
+                <div class="d-flex justify-content-between small mb-1">
+                    <span>Course Progress</span>
+                    <span><%= progress.completed %> / <%= progress.total %> lessons (<%= progress.percent %>%)</span>
+                </div>
+                <div class="progress" style="height:8px; border-radius:6px;">
+                    <div class="progress-bar" role="progressbar" style="width: <%= progress.percent %>%; background: var(--primary-color);"></div>
+                </div>
+            </div>
+        <% } else { %>
+            <p class="text-muted mb-5"><i class="bi bi-shield-check me-1"></i> Viewing as Admin (QA mode).</p>
+        <% } %>
+
+        <% if (lessons.length === 0) { %>
+            <p class="text-muted">No lessons have been published for this course yet.</p>
+        <% } else { %>
+            <div class="list-group">
+                <% lessons.forEach(function (lesson, index) { %>
+                    <% const done = progressMap[lesson.id] && progressMap[lesson.id].completed; %>
+                    <a href="/learn/<%= course.slug %>/<%= lesson.slug %>" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                        <span>
+                            <% if (done) { %>
+                                <i class="bi bi-check-circle-fill me-2" style="color:var(--success-color);"></i>
+                            <% } else { %>
+                                <i class="bi bi-play-circle me-2" style="color:var(--primary-color);"></i>
+                            <% } %>
+                            <%= index + 1 %>. <%= lesson.title %>
+                        </span>
+                        <small class="text-muted"><%= lesson.duration || '' %></small>
+                    </a>
+                <% }); %>
+            </div>
+        <% } %>
+
+    </div>
+</section>

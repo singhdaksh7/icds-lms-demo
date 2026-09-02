@@ -1,0 +1,115 @@
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 style="font-size:24px;" class="mb-0"><%= course ? 'Edit Course' : 'New Course' %></h1>
+    <a href="/admin/courses" class="btn btn-sm btn-outline-secondary">Back to Courses</a>
+</div>
+
+<% if (errors && errors.length) { %>
+    <div class="alert alert-danger">
+        <ul class="mb-0 ps-3">
+            <% errors.forEach(function (error) { %><li><%= error %></li><% }) %>
+        </ul>
+    </div>
+<% } %>
+
+<div class="admin-card">
+    <form method="POST" action="<%= course ? '/admin/courses/' + course.id : '/admin/courses' %>">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+        <div class="row g-3">
+
+            <div class="col-md-8">
+                <label class="form-label small fw-semibold">Title</label>
+                <input type="text" name="title" class="form-control form-control-custom" value="<%= values.title || '' %>" required>
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label small fw-semibold">Slug (optional)</label>
+                <input type="text" name="slug" class="form-control form-control-custom" value="<%= values.slug || '' %>" placeholder="auto-generated from title">
+            </div>
+
+            <div class="col-12">
+                <label class="form-label small fw-semibold">Short Description</label>
+                <textarea name="shortDescription" class="form-control form-control-custom" rows="2" maxlength="500"><%= values.shortDescription || '' %></textarea>
+            </div>
+
+            <div class="col-12">
+                <label class="form-label small fw-semibold">Full Description</label>
+                <textarea name="description" class="form-control form-control-custom" rows="5"><%= values.description || '' %></textarea>
+            </div>
+
+            <div class="col-12">
+                <label class="form-label small fw-semibold">Thumbnail URL</label>
+                <input type="text" name="thumbnailUrl" class="form-control form-control-custom" value="<%= values.thumbnailUrl || '' %>" placeholder="https://...">
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label small fw-semibold">Category</label>
+                <select name="categoryId" class="form-select form-control-custom">
+                    <option value="">— None —</option>
+                    <% categories.forEach(function (category) { %>
+                        <option value="<%= category.id %>" <%= String(values.categoryId) === String(category.id) ? 'selected' : '' %>>
+                            <%= category.name %>
+                        </option>
+                    <% }); %>
+                </select>
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label small fw-semibold">Instructor</label>
+                <select name="instructorId" class="form-select form-control-custom">
+                    <option value="">— None —</option>
+                    <% instructors.forEach(function (instructor) { %>
+                        <option value="<%= instructor.id %>" <%= String(values.instructorId) === String(instructor.id) ? 'selected' : '' %>>
+                            <%= instructor.name %>
+                        </option>
+                    <% }); %>
+                </select>
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label small fw-semibold">Price (INR)</label>
+                <input type="text" inputmode="decimal" name="price" class="form-control form-control-custom" value="<%= values.price || '' %>" required>
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label small fw-semibold">Sale Price (optional)</label>
+                <input type="text" inputmode="decimal" name="salePrice" class="form-control form-control-custom" value="<%= values.salePrice || '' %>">
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label small fw-semibold">Level</label>
+                <select name="level" class="form-select form-control-custom">
+                    <% levels.forEach(function (level) { %>
+                        <option value="<%= level %>" <%= values.level === level ? 'selected' : '' %>><%= level %></option>
+                    <% }); %>
+                </select>
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label small fw-semibold">Status</label>
+                <select name="status" class="form-select form-control-custom">
+                    <% statuses.forEach(function (status) { %>
+                        <option value="<%= status %>" <%= values.status === status ? 'selected' : '' %>><%= status %></option>
+                    <% }); %>
+                </select>
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label small fw-semibold">Duration (e.g. "8h 30m")</label>
+                <input type="text" name="duration" class="form-control form-control-custom" value="<%= values.duration || '' %>">
+            </div>
+
+            <div class="col-md-6 d-flex align-items-end">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="featured" id="featured" <%= values.featured ? 'checked' : '' %>>
+                    <label class="form-check-label" for="featured">Featured on homepage</label>
+                </div>
+            </div>
+
+        </div>
+
+        <button type="submit" class="auth-submit mt-4" style="width:auto; padding:0 32px;">
+            <%= course ? 'Save Changes' : 'Create Course' %>
+        </button>
+    </form>
+</div>

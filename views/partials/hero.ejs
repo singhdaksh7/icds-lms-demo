@@ -25,7 +25,7 @@
                         for students, professionals and aspiring practitioners.
                     </p>
 
-                    <div class="hero-search">
+                    <form class="hero-search" method="GET" action="/courses">
 
                         <div class="hero-search-icon">
                             <i class="bi bi-search"></i>
@@ -33,13 +33,15 @@
 
                         <input
                             type="text"
+                            name="q"
+                            maxlength="100"
                             placeholder="What do you want to learn today?">
 
-                        <button type="button">
+                        <button type="submit">
                             Search
                         </button>
 
-                    </div>
+                    </form>
 
                     <div class="hero-buttons">
 

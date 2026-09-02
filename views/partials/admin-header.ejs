@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title><%= pageTitle %></title>
+    <meta name="description" content="<%= metaDescription %>">
+
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700;800&display=swap" rel="stylesheet">
+
+    <link
+        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"
+        rel="stylesheet"
+        integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB"
+        crossorigin="anonymous">
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+    <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="/css/admin.css">
+</head>
+<body>
+
+<div class="admin-topbar d-flex justify-content-between align-items-center">
+    <a href="/admin" class="brand-logo" style="font-size:16px;">
+        <span class="brand-logo-mark"><i class="bi bi-mortarboard-fill"></i></span>
+        <span class="brand-logo-text">ICDS Admin</span>
+    </a>
+
+    <div class="d-flex align-items-center gap-3">
+        <a href="/" class="small text-decoration-none" style="color:#565acf;" target="_blank" rel="noopener">
+            <i class="bi bi-box-arrow-up-right me-1"></i> View Site
+        </a>
+        <span class="small text-muted"><%= currentUser.name %></span>
+        <form method="POST" action="/auth/logout" class="m-0">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <button type="submit" class="btn btn-sm btn-outline-secondary">Logout</button>
+        </form>
+    </div>
+</div>
+
+<% if (typeof flash !== 'undefined' && (flash.success || flash.error)) { %>
+    <div class="container-fluid px-4 mt-3">
+        <% if (flash.success) { %><div class="alert alert-success mb-2"><%= flash.success %></div><% } %>
+        <% if (flash.error) { %><div class="alert alert-danger mb-2"><%= flash.error %></div><% } %>
+    </div>
+<% } %>
+
+<div class="admin-shell">
+
+    <aside class="admin-sidebar">
+        <a href="/admin" class="<%= activeNav === 'dashboard' ? 'active' : '' %>">
+            <i class="bi bi-speedometer2"></i> Dashboard
+        </a>
+        <a href="/admin/courses" class="<%= activeNav === 'courses' ? 'active' : '' %>">
+            <i class="bi bi-collection-play"></i> Courses
+        </a>
+        <a href="/admin/categories" class="<%= activeNav === 'categories' ? 'active' : '' %>">
+            <i class="bi bi-tags"></i> Categories
+        </a>
+        <a href="/admin/instructors" class="<%= activeNav === 'instructors' ? 'active' : '' %>">
+            <i class="bi bi-person-badge"></i> Instructors
+        </a>
+        <a href="/admin/students" class="<%= activeNav === 'students' ? 'active' : '' %>">
+            <i class="bi bi-people"></i> Students
+        </a>
+    </aside>
+
+    <main class="admin-main">

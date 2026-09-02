@@ -1,0 +1,45 @@
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 style="font-size:24px;" class="mb-0">Instructors</h1>
+    <a href="/admin/instructors/new" class="btn btn-sm" style="background:var(--primary-color); color:#fff;">
+        <i class="bi bi-plus-lg"></i> New Instructor
+    </a>
+</div>
+
+<div class="admin-card">
+    <div class="table-responsive">
+        <table class="table admin-table align-middle">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Title</th>
+                    <th>Status</th>
+                    <th>Courses</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% if (instructors.length === 0) { %>
+                    <tr><td colspan="5" class="text-center text-muted py-4">No instructors yet.</td></tr>
+                <% } %>
+                <% instructors.forEach(function (instructor) { %>
+                    <tr>
+                        <td><strong><%= instructor.name %></strong></td>
+                        <td><%= instructor.title || '—' %></td>
+                        <td><span class="badge bg-<%= instructor.status === 'ACTIVE' ? 'success' : 'secondary' %>"><%= instructor.status %></span></td>
+                        <td><%= instructor._count.courses %></td>
+                        <td class="text-end">
+                            <div class="d-flex justify-content-end gap-2">
+                                <a href="/admin/instructors/<%= instructor.id %>/edit" class="btn btn-sm btn-outline-secondary">Edit</a>
+                                <form method="POST" action="/admin/instructors/<%= instructor.id %>/delete" class="m-0"
+                                      onsubmit="return confirm('Delete this instructor? <%= instructor._count.courses %> course(s) will lose their instructor.');">
+                                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                <% }); %>
+            </tbody>
+        </table>
+    </div>
+</div>

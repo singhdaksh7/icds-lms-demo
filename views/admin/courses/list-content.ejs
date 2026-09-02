@@ -1,0 +1,74 @@
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 style="font-size:24px;" class="mb-0">Courses</h1>
+    <a href="/admin/courses/new" class="btn btn-sm" style="background:var(--primary-color); color:#fff;">
+        <i class="bi bi-plus-lg"></i> New Course
+    </a>
+</div>
+
+<div class="admin-card">
+    <div class="table-responsive">
+        <table class="table admin-table align-middle">
+            <thead>
+                <tr>
+                    <th>Title</th>
+                    <th>Category</th>
+                    <th>Instructor</th>
+                    <th>Price</th>
+                    <th>Status</th>
+                    <th>Lessons</th>
+                    <th>Enrollments</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% if (courses.length === 0) { %>
+                    <tr><td colspan="8" class="text-center text-muted py-4">No courses yet.</td></tr>
+                <% } %>
+                <% courses.forEach(function (course) { %>
+                    <tr>
+                        <td>
+                            <strong><%= course.title %></strong>
+                            <div class="small text-muted"><%= course.slug %></div>
+                        </td>
+                        <td><%= course.category ? course.category.name : '—' %></td>
+                        <td><%= course.instructor ? course.instructor.name : '—' %></td>
+                        <td><%= course.currency %> <%= Number(course.salePrice || course.price).toLocaleString('en-IN') %></td>
+                        <td>
+                            <span class="badge bg-<%= course.status === 'PUBLISHED' ? 'success' : (course.status === 'DRAFT' ? 'secondary' : 'dark') %>">
+                                <%= course.status %>
+                            </span>
+                        </td>
+                        <td><%= course._count.lessons %></td>
+                        <td><%= course._count.enrollments %></td>
+                        <td class="text-end">
+                            <div class="d-flex justify-content-end gap-2 flex-wrap">
+                                <a href="/admin/courses/<%= course.id %>/lessons" class="btn btn-sm btn-outline-secondary">Lessons</a>
+                                <a href="/admin/courses/<%= course.id %>/edit" class="btn btn-sm btn-outline-secondary">Edit</a>
+
+                                <% if (course.status === 'PUBLISHED') { %>
+                                    <form method="POST" action="/admin/courses/<%= course.id %>/unpublish" class="m-0">
+                                        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                        <button type="submit" class="btn btn-sm btn-outline-warning">Unpublish</button>
+                                    </form>
+                                <% } else { %>
+                                    <form method="POST" action="/admin/courses/<%= course.id %>/publish" class="m-0">
+                                        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                        <button type="submit" class="btn btn-sm btn-outline-success">Publish</button>
+                                    </form>
+                                <% } %>
+
+                                <form method="POST" action="/admin/courses/<%= course.id %>/delete" class="m-0"
+                                      onsubmit="return confirm('Delete this course? This cannot be undone.');">
+                                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                <% }); %>
+            </tbody>
+        </table>
+    </div>
+
+    <%- include('../../partials/pagination', { pagination, pageUrl }) %>
+</div>
