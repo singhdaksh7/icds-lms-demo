@@ -198,31 +198,28 @@ async function main() {
   // -----------------------------------------------------------------------
   // Optional dev-only admin user.
   // No production backdoor: this block is skipped entirely when
-  // NODE_ENV === 'production', and requires an explicit password via env
-  // rather than ever hardcoding one.
+  // NODE_ENV === 'production', and requires both DEV_ADMIN_EMAIL and
+  // DEV_ADMIN_PASSWORD to be explicitly set — no default admin is ever
+  // created automatically. Uses the same bcryptjs hashing as real
+  // authentication (src/lib/password.js); if you seeded an admin before
+  // Phase 3 with the old scrypt placeholder hash, delete/recreate that user
+  // — old scrypt hashes will not verify against the bcrypt-based login.
   // -----------------------------------------------------------------------
   if (process.env.NODE_ENV !== 'production') {
     const devAdminEmail = process.env.DEV_ADMIN_EMAIL;
     const devAdminPassword = process.env.DEV_ADMIN_PASSWORD;
 
     if (devAdminEmail && devAdminPassword) {
-      // NOTE: password hashing library (bcrypt/argon2) is chosen in the
-      // auth phase (Phase 3). This placeholder hash is NOT a real
-      // credential store and must be replaced before any login endpoint
-      // relies on it — it exists only so the seed script can create a
-      // User row without pulling in an auth dependency this phase doesn't
-      // otherwise need.
-      const crypto = require('crypto');
-      const salt = crypto.randomBytes(16).toString('hex');
-      const hash = crypto.scryptSync(devAdminPassword, salt, 64).toString('hex');
+      const { hashPassword } = require('../src/lib/password');
+      const passwordHash = await hashPassword(devAdminPassword);
 
       await prisma.user.upsert({
         where: { email: devAdminEmail },
-        update: {},
+        update: { passwordHash, role: 'ADMIN', status: 'ACTIVE' },
         create: {
           name: 'Dev Admin',
           email: devAdminEmail,
-          passwordHash: `scrypt:${salt}:${hash}`,
+          passwordHash,
           role: 'ADMIN',
           status: 'ACTIVE',
         },

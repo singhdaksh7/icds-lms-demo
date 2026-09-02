@@ -1,0 +1,91 @@
+<section class="section-space">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <div class="modal-content">
+                    <div class="row g-0">
+
+                        <div class="col-md-5 d-none d-md-block">
+                            <div class="auth-brand-panel">
+                                <h3>Welcome back.</h3>
+                                <p>
+                                    Continue your learning journey and access
+                                    all your purchased courses from one place.
+                                </p>
+                                <div class="auth-feature">
+                                    <i class="bi bi-check-circle-fill"></i>
+                                    Access your purchased courses
+                                </div>
+                                <div class="auth-feature">
+                                    <i class="bi bi-check-circle-fill"></i>
+                                    Track your learning progress
+                                </div>
+                                <div class="auth-feature">
+                                    <i class="bi bi-check-circle-fill"></i>
+                                    Download eligible certificates
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-7">
+                            <div class="auth-form-area">
+                                <h4>Student Login</h4>
+                                <p>Sign in to continue learning.</p>
+
+                                <% if (errors && errors.length) { %>
+                                    <div class="alert alert-danger mt-3">
+                                        <ul class="mb-0 ps-3">
+                                            <% errors.forEach(function (error) { %>
+                                                <li><%= error %></li>
+                                            <% }) %>
+                                        </ul>
+                                    </div>
+                                <% } %>
+
+                                <form class="mt-4" method="POST" action="/auth/login" autocomplete="on">
+                                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                    <input type="hidden" name="returnTo" value="<%= returnTo || '' %>">
+
+                                    <div class="mb-3">
+                                        <label class="form-label small fw-semibold">Email Address</label>
+                                        <input
+                                            type="email"
+                                            name="email"
+                                            class="form-control form-control-custom"
+                                            placeholder="you@example.com"
+                                            value="<%= (values && values.email) || '' %>"
+                                            required>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="form-label small fw-semibold">Password</label>
+                                        <input
+                                            type="password"
+                                            name="password"
+                                            class="form-control form-control-custom"
+                                            placeholder="Enter password"
+                                            required>
+                                    </div>
+
+                                    <div class="d-flex justify-content-end mb-4">
+                                        <a href="/forgot-password" class="small text-decoration-none" style="color:#565acf;">
+                                            Forgot Password?
+                                        </a>
+                                    </div>
+
+                                    <button type="submit" class="auth-submit">Login to Account</button>
+                                </form>
+
+                                <p class="small mt-4 mb-0">
+                                    Don't have an account?
+                                    <a href="/signup" style="color:#565acf;">Create one</a>
+                                </p>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

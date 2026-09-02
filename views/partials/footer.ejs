@@ -109,21 +109,32 @@
 
                 <ul class="footer-links">
 
-                    <li>
-                        <a href="#" data-bs-toggle="modal" data-bs-target="#loginModal">
-                            Login
-                        </a>
-                    </li>
+                    <% if (typeof currentUser !== 'undefined' && currentUser) { %>
+
+                        <li>
+                            <a href="<%= currentUser.role === 'ADMIN' ? '/admin' : '/student/dashboard' %>">
+                                Dashboard
+                            </a>
+                        </li>
+
+                    <% } else { %>
+
+                        <li>
+                            <a href="#" data-bs-toggle="modal" data-bs-target="#loginModal">
+                                Login
+                            </a>
+                        </li>
+
+                        <li>
+                            <a href="#" data-bs-toggle="modal" data-bs-target="#signupModal">
+                                Create Account
+                            </a>
+                        </li>
+
+                    <% } %>
 
                     <li>
-                        <a href="#" data-bs-toggle="modal" data-bs-target="#signupModal">
-                            Create Account
-                        </a>
-                    </li>
-
-                    <li>
-                        <!-- Student dashboard not implemented yet (Phase 5+) -->
-                        <a href="#">
+                        <a href="<%= (typeof currentUser !== 'undefined' && currentUser) ? '/student/dashboard' : '/login?returnTo=' + encodeURIComponent('/student/dashboard') %>">
                             My Courses
                         </a>
                     </li>
@@ -283,11 +294,9 @@
 
                         </div>
 
-                        <!--
-                            NOTE: form has no action/handler yet — real
-                            authentication is implemented in a later phase.
-                        -->
-                        <form class="mt-4">
+                        <form class="mt-4" method="POST" action="/auth/login">
+
+                            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
 
                             <div class="mb-3">
 
@@ -297,6 +306,7 @@
 
                                 <input
                                     type="email"
+                                    name="email"
                                     class="form-control form-control-custom"
                                     placeholder="you@example.com"
                                     required>
@@ -312,6 +322,7 @@
 
                                 <input
                                     type="password"
+                                    name="password"
                                     class="form-control form-control-custom"
                                     placeholder="Enter password"
                                     required>
@@ -319,27 +330,10 @@
                             </div>
 
 
-                            <div class="d-flex justify-content-between mb-4">
-
-                                <div class="form-check">
-
-                                    <input
-                                        class="form-check-input"
-                                        type="checkbox"
-                                        id="rememberMe">
-
-                                    <label
-                                        class="form-check-label small"
-                                        for="rememberMe">
-
-                                        Remember me
-
-                                    </label>
-
-                                </div>
+                            <div class="d-flex justify-content-end mb-4">
 
                                 <a
-                                    href="#"
+                                    href="/forgot-password"
                                     class="small text-decoration-none"
                                     style="color:#565acf;">
 
@@ -350,7 +344,7 @@
                             </div>
 
 
-                            <button class="auth-submit">
+                            <button type="submit" class="auth-submit">
                                 Login to Account
                             </button>
 
@@ -441,39 +435,23 @@
 
                         </div>
 
-                        <!--
-                            NOTE: form has no action/handler yet — real
-                            registration is implemented in a later phase.
-                        -->
-                        <form class="mt-4">
+                        <form class="mt-4" method="POST" action="/auth/signup">
+
+                            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
 
                             <div class="row g-3">
 
-                                <div class="col-md-6">
+                                <div class="col-12">
 
                                     <label class="form-label small fw-semibold">
-                                        First Name
+                                        Full Name
                                     </label>
 
                                     <input
                                         type="text"
+                                        name="name"
                                         class="form-control form-control-custom"
-                                        placeholder="First name"
-                                        required>
-
-                                </div>
-
-
-                                <div class="col-md-6">
-
-                                    <label class="form-label small fw-semibold">
-                                        Last Name
-                                    </label>
-
-                                    <input
-                                        type="text"
-                                        class="form-control form-control-custom"
-                                        placeholder="Last name"
+                                        placeholder="Your full name"
                                         required>
 
                                 </div>
@@ -487,6 +465,7 @@
 
                                     <input
                                         type="email"
+                                        name="email"
                                         class="form-control form-control-custom"
                                         placeholder="you@example.com"
                                         required>
@@ -502,8 +481,26 @@
 
                                     <input
                                         type="password"
+                                        name="password"
                                         class="form-control form-control-custom"
-                                        placeholder="Create password"
+                                        placeholder="Create password (min 8 characters)"
+                                        minlength="8"
+                                        required>
+
+                                </div>
+
+                                <div class="col-12">
+
+                                    <label class="form-label small fw-semibold">
+                                        Confirm Password
+                                    </label>
+
+                                    <input
+                                        type="password"
+                                        name="confirmPassword"
+                                        class="form-control form-control-custom"
+                                        placeholder="Re-enter password"
+                                        minlength="8"
                                         required>
 
                                 </div>
@@ -530,7 +527,7 @@
                             </div>
 
 
-                            <button class="auth-submit">
+                            <button type="submit" class="auth-submit">
                                 Create Student Account
                             </button>
 

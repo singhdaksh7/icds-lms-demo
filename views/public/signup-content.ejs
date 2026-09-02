@@ -1,0 +1,110 @@
+<section class="section-space">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <div class="modal-content">
+                    <div class="row g-0">
+
+                        <div class="col-md-5 d-none d-md-block">
+                            <div class="auth-brand-panel">
+                                <h3>Start learning today.</h3>
+                                <p>
+                                    Create your student account and start
+                                    building professional skills through
+                                    expert-led courses.
+                                </p>
+                                <div class="auth-feature">
+                                    <i class="bi bi-check-circle-fill"></i>
+                                    One account for all courses
+                                </div>
+                                <div class="auth-feature">
+                                    <i class="bi bi-check-circle-fill"></i>
+                                    Personal learning dashboard
+                                </div>
+                                <div class="auth-feature">
+                                    <i class="bi bi-check-circle-fill"></i>
+                                    Track progress and certificates
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-7">
+                            <div class="auth-form-area">
+                                <h4>Create Account</h4>
+                                <p>Join thousands of learners.</p>
+
+                                <% if (errors && errors.length) { %>
+                                    <div class="alert alert-danger mt-3">
+                                        <ul class="mb-0 ps-3">
+                                            <% errors.forEach(function (error) { %>
+                                                <li><%= error %></li>
+                                            <% }) %>
+                                        </ul>
+                                    </div>
+                                <% } %>
+
+                                <form class="mt-4" method="POST" action="/auth/signup" autocomplete="on">
+                                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+                                    <div class="row g-3">
+                                        <div class="col-12">
+                                            <label class="form-label small fw-semibold">Full Name</label>
+                                            <input
+                                                type="text"
+                                                name="name"
+                                                class="form-control form-control-custom"
+                                                placeholder="Your full name"
+                                                value="<%= (values && values.name) || '' %>"
+                                                required>
+                                        </div>
+
+                                        <div class="col-12">
+                                            <label class="form-label small fw-semibold">Email Address</label>
+                                            <input
+                                                type="email"
+                                                name="email"
+                                                class="form-control form-control-custom"
+                                                placeholder="you@example.com"
+                                                value="<%= (values && values.email) || '' %>"
+                                                required>
+                                        </div>
+
+                                        <div class="col-12">
+                                            <label class="form-label small fw-semibold">Password</label>
+                                            <input
+                                                type="password"
+                                                name="password"
+                                                class="form-control form-control-custom"
+                                                placeholder="Create password (min 8 characters)"
+                                                minlength="8"
+                                                required>
+                                        </div>
+
+                                        <div class="col-12">
+                                            <label class="form-label small fw-semibold">Confirm Password</label>
+                                            <input
+                                                type="password"
+                                                name="confirmPassword"
+                                                class="form-control form-control-custom"
+                                                placeholder="Re-enter password"
+                                                minlength="8"
+                                                required>
+                                        </div>
+                                    </div>
+
+                                    <button type="submit" class="auth-submit mt-4">Create Student Account</button>
+                                </form>
+
+                                <p class="small mt-4 mb-0">
+                                    Already have an account?
+                                    <a href="/login" style="color:#565acf;">Log in</a>
+                                </p>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

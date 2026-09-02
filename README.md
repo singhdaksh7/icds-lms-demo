@@ -7,10 +7,10 @@ original static HTML page (preserved in `backup/original/`) with a
 Node.js + Express + EJS application backed by MySQL via Prisma, while
 keeping the original Bootstrap-based visual design.
 
-This is a phased build. **Phase 1 (project foundation) and Phase 2
-(MySQL/Prisma foundation + dynamic homepage) are implemented.**
-Authentication, checkout, video delivery, dashboards, and the admin panel are
-not yet built — see "Next Phase" below.
+This is a phased build. **Phases 1-3 are implemented:** project foundation,
+MySQL/Prisma foundation + dynamic homepage, and server-side session
+authentication/authorization. Checkout, video delivery, real dashboards, and
+the admin panel are not yet built — see "Next Phase" below.
 
 ## Stack
 
@@ -51,8 +51,9 @@ All read via `src/config/env.js`. See `.env.example` for the full template.
 | `DATABASE_URL` | Yes | MySQL connection string for Prisma. App refuses to start without it. |
 | `PORT` | No (default `3000`) | Local-dev port only. **Hostinger injects its own `PORT` at runtime** — never hardcode a port anywhere in frontend or backend code. |
 | `NODE_ENV` | No (default `development`) | Set to `production` on Hostinger. Controls error verbosity and the dev-admin seed guard. |
-| `SESSION_SECRET` | No (default placeholder) | Reserved for session/cookie signing once auth is implemented (Phase 3+). Not used yet. |
-| `DEV_ADMIN_EMAIL` / `DEV_ADMIN_PASSWORD` | No | Only read by `prisma/seed.js`, and only when `NODE_ENV !== production`. If both are unset, no admin user is created. There is no hardcoded/default admin account. |
+| `SESSION_SECRET` | **Yes in production** | Signs the session cookie. In production the app refuses to start if this is missing, a known placeholder (`change-me`, `secret`, `password`, `your-secret-here`), or shorter than 32 characters. In development a fallback is used so `npm run dev` works out of the box. Generate one with `node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"`. |
+| `SESSION_COOKIE_NAME` | No (default `icds.sid`) | Name of the session cookie (kept off the default `connect.sid`). |
+| `DEV_ADMIN_EMAIL` / `DEV_ADMIN_PASSWORD` | No | Only read by `prisma/seed.js`, and only when `NODE_ENV !== production`. Both must be set together to create/update a dev admin user; if either is unset, no admin user is created. There is no hardcoded/default admin account, and this seed path is fully disabled when `NODE_ENV === production`. |
 
 ## Database
 
@@ -65,6 +66,64 @@ messages, password reset tokens). See the schema file itself for full field
 lists and relations/cascade behavior — order records use `Restrict` instead
 of `Cascade` so a deleted user/course can never silently delete financial
 history.
+
+## Authentication
+
+Server-side session authentication — no JWT/localStorage. Browser holds a
+secure, HttpOnly session cookie; Express + `express-session` resolve it to
+a server-side session on every request; `res.locals.currentUser` is loaded
+from the database (`src/middleware/currentUser.middleware.js`) so views and
+route middleware can trust it.
+
+- **Password hashing:** `bcryptjs` (pure JS, no native compilation — required
+  for Hostinger compatibility), 12 salt rounds. Utilities in
+  `src/lib/password.js` (`hashPassword` / `verifyPassword`); nothing else in
+  the codebase should hash or compare passwords directly.
+- **Session store:** MySQL-backed via `express-mysql-session`, reusing
+  `DATABASE_URL` (no separate DB env vars, no Redis). The store auto-creates
+  a `sessions` table and sweeps expired rows every 15 minutes. Configured in
+  `src/config/session.js`.
+- **CSRF protection:** `csrf-csrf` (double-submit cookie pattern) on every
+  state-changing auth form (signup, login, logout, forgot-password,
+  reset-password). `res.locals.csrfToken` is available in every view —
+  forms must include `<input type="hidden" name="_csrf" value="<%= csrfToken %>">`.
+  An invalid/missing token redirects back with a flash message instead of a
+  raw 500. See `src/config/csrf.js` for why the token is bound to a
+  dedicated anchor cookie rather than `req.session.id` (a session that's
+  never modified — e.g. just viewing the login page — isn't persisted under
+  `saveUninitialized: false`, so its id isn't stable across that GET → POST).
+- **Authorization middleware** (`src/middleware/auth.middleware.js`):
+  `requireAuth`, `requireGuest`, `requireRole(...roles)`. Enforced
+  server-side on every protected route — never rely on hidden frontend
+  links.
+- **Open-redirect protection:** `returnTo` / post-login redirects are
+  validated by `src/lib/safeRedirect.js` to only allow internal relative
+  paths.
+- **Password reset:** uses the existing `PasswordResetToken` model. Raw
+  tokens are never stored — only a SHA-256 hash (`src/lib/tokens.js`); the
+  raw token exists only in the emailed/logged URL and expires after 45
+  minutes. The forgot-password response is identical whether or not the
+  email exists (no account enumeration). A successful reset invalidates all
+  of that user's other active sessions.
+- **Email:** `src/lib/mailer.js` is a minimal abstraction with no SMTP
+  provider wired up yet. **In development only**, it logs the reset URL to
+  the console under a `DEVELOPMENT PASSWORD RESET URL` banner. **This must
+  never be enabled in production** — the production branch explicitly does
+  not log or expose the token, and just records that no provider is
+  configured.
+- **Rate limiting:** `src/middleware/authRateLimit.js` applies a stricter
+  limit (20 requests / 15 min / IP) on top of the app-wide limiter,
+  specifically on login, signup, forgot-password and reset-password.
+- **Routes:** `src/routes/auth.routes.js` (`GET /login`, `/signup`,
+  `/forgot-password`, `/reset-password/:token`; `POST /auth/signup`,
+  `/auth/login`, `/auth/logout`, `/auth/forgot-password`,
+  `/auth/reset-password/:token`), plus placeholder protected pages at
+  `GET /student/dashboard` (STUDENT or ADMIN) and `GET /admin` (ADMIN only).
+- **Existing homepage modals:** the login/signup Bootstrap modals in
+  `views/partials/footer.ejs` now submit to the same real `/auth/login` and
+  `/auth/signup` actions (with CSRF tokens) — kept alongside the new
+  standalone `/login` and `/signup` pages for direct links, password-manager
+  support, and error handling.
 
 ## Development
 
@@ -100,8 +159,14 @@ part of this build.
 - **Install command:** `npm install` (or `npm ci` if a lockfile is
   committed). `postinstall` automatically runs `prisma generate`.
 - **Environment variables:** set `DATABASE_URL`, `NODE_ENV=production`, and
-  `SESSION_SECRET` in Hostinger's environment variable panel. Do not commit
-  a `.env` file — it's git-ignored.
+  a real `SESSION_SECRET` (see Authentication section above for how to
+  generate one) in Hostinger's environment variable panel. Do not commit
+  a `.env` file — it's git-ignored. The app fails to start in production
+  without a valid `SESSION_SECRET`, by design.
+- **Sessions:** persisted in MySQL (no Redis) via the same `DATABASE_URL` —
+  nothing extra to provision. Cookies are `Secure` in production (the app
+  sends `secure: true` when `NODE_ENV=production`), so the site must be
+  served over HTTPS, which Hostinger's proxy already terminates.
 - **MySQL connection:** create a MySQL database + user in hPanel, then build
   `DATABASE_URL` as `mysql://USER:PASSWORD@HOST:3306/DATABASE` using the
   credentials hPanel gives you.
@@ -136,7 +201,7 @@ part of this build.
 
 ## Next Phase
 
-See the report delivered alongside this implementation for the full Phase 3+
-scope (authentication, course detail pages, checkout/payments, video
-delivery, student dashboard, admin panel, reviews, certificates, contact/
-newsletter backends).
+See the report delivered alongside this implementation for the full Phase 4+
+scope (course detail pages, checkout/payments, video delivery, real student
+dashboard content, admin CRUD, reviews, certificates, contact/newsletter
+backends).

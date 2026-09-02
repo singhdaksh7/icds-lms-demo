@@ -161,23 +161,35 @@
 
             <div class="d-flex gap-2 align-items-center mt-3 mt-lg-0">
 
-                <button
-                    class="btn login-button"
-                    data-bs-toggle="modal"
-                    data-bs-target="#loginModal">
+                <% if (typeof currentUser !== 'undefined' && currentUser) { %>
 
-                    Login
+                    <a
+                        class="btn login-button"
+                        href="<%= currentUser.role === 'ADMIN' ? '/admin' : '/student/dashboard' %>">
 
-                </button>
+                        <i class="bi bi-person-circle me-1"></i>
+                        <%= currentUser.name %>
 
-                <button
-                    class="btn signup-button"
-                    data-bs-toggle="modal"
-                    data-bs-target="#signupModal">
+                    </a>
 
-                    Sign Up
+                    <form method="POST" action="/auth/logout" class="m-0">
+                        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                        <button type="submit" class="btn signup-button">
+                            Logout
+                        </button>
+                    </form>
 
-                </button>
+                <% } else { %>
+
+                    <a class="btn login-button" href="/login">
+                        Login
+                    </a>
+
+                    <a class="btn signup-button" href="/signup">
+                        Sign Up
+                    </a>
+
+                <% } %>
 
             </div>
 
@@ -186,3 +198,14 @@
     </div>
 
 </nav>
+
+<% if (typeof flash !== 'undefined' && (flash.success || flash.error)) { %>
+    <div class="container mt-3">
+        <% if (flash.success) { %>
+            <div class="alert alert-success"><%= flash.success %></div>
+        <% } %>
+        <% if (flash.error) { %>
+            <div class="alert alert-danger"><%= flash.error %></div>
+        <% } %>
+    </div>
+<% } %>
