@@ -49,6 +49,29 @@ if (IS_PRODUCTION) {
   }
 }
 
+// ---------------------------------------------------------------------------
+// Razorpay (Phase 5)
+// ---------------------------------------------------------------------------
+// Deliberately NOT validated/thrown on at boot: a deployment without
+// payments configured yet should still be able to serve the rest of the
+// site. Payment routes fail clearly (503) at the moment they're actually
+// invoked if these are missing — see src/services/razorpay.service.js.
+// RAZORPAY_KEY_SECRET and RAZORPAY_WEBHOOK_SECRET must never reach an EJS
+// view or any client-side script; only RAZORPAY_KEY_ID is safe to expose.
+const RAZORPAY_KEY_ID = process.env.RAZORPAY_KEY_ID || '';
+const RAZORPAY_KEY_SECRET = process.env.RAZORPAY_KEY_SECRET || '';
+const RAZORPAY_WEBHOOK_SECRET = process.env.RAZORPAY_WEBHOOK_SECRET || '';
+
+if (IS_PRODUCTION && (!RAZORPAY_KEY_ID || !RAZORPAY_KEY_SECRET || !RAZORPAY_WEBHOOK_SECRET)) {
+  // Not a hard failure — the rest of the site (auth, courses, admin) must
+  // keep working even if payments aren't configured yet. Loud warning only.
+  console.warn(
+    'WARNING: Razorpay is not fully configured (RAZORPAY_KEY_ID / RAZORPAY_KEY_SECRET / ' +
+      'RAZORPAY_WEBHOOK_SECRET). Checkout and webhook routes will reject requests with a ' +
+      'clear 503 until these are set.'
+  );
+}
+
 module.exports = {
   NODE_ENV,
   IS_PRODUCTION,
@@ -59,4 +82,8 @@ module.exports = {
   SESSION_MAX_AGE_MS: 7 * 24 * 60 * 60 * 1000, // 7 days
   DEV_ADMIN_EMAIL: process.env.DEV_ADMIN_EMAIL,
   DEV_ADMIN_PASSWORD: process.env.DEV_ADMIN_PASSWORD,
+  APP_BASE_URL: process.env.APP_BASE_URL || '',
+  RAZORPAY_KEY_ID,
+  RAZORPAY_KEY_SECRET,
+  RAZORPAY_WEBHOOK_SECRET,
 };

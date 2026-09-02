@@ -1,0 +1,43 @@
+<section class="section-space">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-6">
+
+                <div class="modal-content p-5 text-center">
+
+                    <i class="bi bi-check-circle-fill mb-3" style="font-size:56px; color:var(--success-color);"></i>
+
+                    <h2 class="mb-2">Payment Successful</h2>
+                    <p class="text-muted mb-4">You're all set — enrollment is confirmed.</p>
+
+                    <div class="text-start mb-4">
+                        <div class="d-flex justify-content-between border-top pt-3">
+                            <span class="text-muted">Course</span>
+                            <span><%= order.items[0].course.title %></span>
+                        </div>
+                        <div class="d-flex justify-content-between border-top pt-3 mt-3">
+                            <span class="text-muted">Amount Paid</span>
+                            <span><%= order.currency %> <%= Number(order.amount).toLocaleString('en-IN') %></span>
+                        </div>
+                        <div class="d-flex justify-content-between border-top pt-3 mt-3">
+                            <span class="text-muted">Order ID</span>
+                            <span>ICDS-<%= order.id %></span>
+                        </div>
+                        <% if (order.providerPaymentId) { %>
+                            <div class="d-flex justify-content-between border-top pt-3 mt-3">
+                                <span class="text-muted">Payment ID</span>
+                                <span class="small"><%= order.providerPaymentId %></span>
+                            </div>
+                        <% } %>
+                    </div>
+
+                    <a href="/learn/<%= order.items[0].course.slug %>" class="auth-submit d-block text-center text-decoration-none">
+                        Continue Learning
+                    </a>
+
+                </div>
+
+            </div>
+        </div>
+    </div>
+</section>

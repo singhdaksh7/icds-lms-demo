@@ -21,4 +21,15 @@ function parseAmount(value) {
   return trimmed;
 }
 
-module.exports = { parseAmount, MAX_AMOUNT };
+// Converts a decimal amount string (e.g. "2499.00", "2499", "2499.5") into
+// integer paise for Razorpay, via string manipulation only — never
+// `price * 100` on a JS float, which can produce off-by-one paise on values
+// that aren't exactly representable in binary floating point.
+function toPaise(amountString) {
+  const [wholePartRaw, fractionPartRaw = ''] = String(amountString).trim().split('.');
+  const wholePart = wholePartRaw || '0';
+  const fractionPart = (fractionPartRaw + '00').slice(0, 2);
+  return parseInt(`${wholePart}${fractionPart}`, 10);
+}
+
+module.exports = { parseAmount, MAX_AMOUNT, toPaise };

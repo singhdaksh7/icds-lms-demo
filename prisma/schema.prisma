@@ -222,7 +222,10 @@ model Order {
   currency          String      @default("INR")
   status            OrderStatus @default(PENDING)
   paymentProvider   String?
-  providerOrderId   String?
+  // Unique so webhook/verify handlers can reliably map a Razorpay order
+  // back to exactly one local Order (findUnique) — required for safe,
+  // idempotent payment finalization independent of any in-memory state.
+  providerOrderId   String?     @unique
   providerPaymentId String?
   createdAt         DateTime    @default(now())
   updatedAt         DateTime    @updatedAt

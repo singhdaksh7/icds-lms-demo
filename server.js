@@ -14,6 +14,9 @@ const indexRoutes = require('./src/routes/index.routes');
 const authRoutes = require('./src/routes/auth.routes');
 const courseRoutes = require('./src/routes/course.routes');
 const learnRoutes = require('./src/routes/learn.routes');
+const checkoutRoutes = require('./src/routes/checkout.routes');
+const paymentRoutes = require('./src/routes/payment.routes');
+const webhookRoutes = require('./src/routes/webhook.routes');
 const studentRoutes = require('./src/routes/student.routes');
 const adminRoutes = require('./src/routes/admin.routes');
 const healthRoutes = require('./src/routes/api/health.routes');
@@ -40,11 +43,8 @@ app.use(
   })
 );
 
-app.use(express.json({ limit: '1mb' }));
-app.use(express.urlencoded({ extended: true, limit: '1mb' }));
-
-// Basic abuse protection for all routes; the auth routes additionally get a
-// stricter, dedicated limiter (src/middleware/authRateLimit.js).
+// Basic abuse protection for all routes; the auth/payment routes
+// additionally get their own stricter, dedicated limiters.
 app.use(
   rateLimit({
     windowMs: 15 * 60 * 1000,
@@ -53,6 +53,14 @@ app.use(
     legacyHeaders: false,
   })
 );
+
+// Razorpay webhook signature verification needs the EXACT raw request
+// bytes, so this must be mounted here — before express.json() below parses
+// (and effectively discards) the original body. See src/routes/webhook.routes.js.
+app.use('/webhooks', webhookRoutes);
+
+app.use(express.json({ limit: '1mb' }));
+app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -67,6 +75,8 @@ app.use(currentUser);
 app.use('/api/health', healthRoutes);
 app.use('/', authRoutes);
 app.use('/', courseRoutes);
+app.use('/', checkoutRoutes);
+app.use('/', paymentRoutes);
 app.use('/learn', learnRoutes);
 app.use('/student', studentRoutes);
 app.use('/admin', adminRoutes);

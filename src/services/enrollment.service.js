@@ -64,6 +64,31 @@ async function enrollStudentManually(userId, courseId) {
   });
 }
 
+// Direct, no-payment enrollment for a genuinely free (price === 0) course.
+// Callers must already have verified the course's server-computed purchase
+// price is exactly 0 — this function itself doesn't re-check pricing, only
+// enrollment state, mirroring enrollStudentManually's reactivation logic.
+// No Order is ever created here (nothing was paid), so Enrollment.orderId
+// stays null — indistinguishable from an admin manual enrollment in that
+// respect, which is intentional.
+async function enrollFree(userId, courseId) {
+  const existing = await getEnrollment(userId, courseId);
+  if (existing && existing.status === 'ACTIVE') {
+    throw new EnrollmentError('You are already enrolled in this course.');
+  }
+
+  if (existing) {
+    return prisma.enrollment.update({
+      where: { id: existing.id },
+      data: { status: 'ACTIVE', accessExpiresAt: null },
+    });
+  }
+
+  return prisma.enrollment.create({
+    data: { userId, courseId, status: 'ACTIVE', orderId: null },
+  });
+}
+
 // Cancels rather than deletes, preserving LessonProgress/history.
 async function cancelEnrollment(userId, courseId) {
   const existing = await getEnrollment(userId, courseId);
@@ -83,5 +108,6 @@ module.exports = {
   getEnrollment,
   listEnrollmentsForUser,
   enrollStudentManually,
+  enrollFree,
   cancelEnrollment,
 };

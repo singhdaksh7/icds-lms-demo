@@ -1,0 +1,45 @@
+<section class="section-space">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-6">
+
+                <div class="modal-content p-5 text-center">
+
+                    <i class="bi bi-x-circle-fill mb-3" style="font-size:56px; color:#e05a5a;"></i>
+
+                    <% if (order.status === 'PENDING') { %>
+                        <h2 class="mb-2">Payment Not Completed</h2>
+                        <p class="text-muted mb-4">
+                            We could not confirm your payment. If you completed the payment, it may still
+                            be processing — check <a href="/student/orders">My Orders</a> shortly. Otherwise, you can try again.
+                        </p>
+                    <% } else { %>
+                        <h2 class="mb-2">Payment Failed</h2>
+                        <p class="text-muted mb-4">Your payment could not be completed.</p>
+                    <% } %>
+
+                    <div class="text-start mb-4">
+                        <div class="d-flex justify-content-between border-top pt-3">
+                            <span class="text-muted">Course</span>
+                            <span><%= order.items[0].course.title %></span>
+                        </div>
+                        <div class="d-flex justify-content-between border-top pt-3 mt-3">
+                            <span class="text-muted">Order ID</span>
+                            <span>ICDS-<%= order.id %></span>
+                        </div>
+                        <div class="d-flex justify-content-between border-top pt-3 mt-3">
+                            <span class="text-muted">Status</span>
+                            <span><%= order.status %></span>
+                        </div>
+                    </div>
+
+                    <a href="/checkout/<%= order.items[0].course.slug %>" class="auth-submit d-block text-center text-decoration-none">
+                        Try Again
+                    </a>
+
+                </div>
+
+            </div>
+        </div>
+    </div>
+</section>

@@ -97,19 +97,22 @@
                             <a href="/learn/<%= course.slug %>" class="auth-submit d-block text-center text-decoration-none">
                                 Continue Learning
                             </a>
+                        <% } else if (isFree) { %>
+                            <a href="/checkout/<%= course.slug %>" class="auth-submit d-block text-center text-decoration-none">
+                                Enroll Free
+                            </a>
                         <% } else { %>
-                            <button class="auth-submit" disabled>Enrollment via checkout coming soon</button>
-                            <p class="small text-muted mt-2 mb-0">
-                                Payments aren't live yet — contact us to get enrolled.
-                            </p>
+                            <a href="/checkout/<%= course.slug %>" class="auth-submit d-block text-center text-decoration-none">
+                                Buy Now
+                            </a>
                         <% } %>
                     <% } else if (typeof currentUser !== 'undefined' && currentUser && currentUser.role === 'ADMIN') { %>
                         <a href="/learn/<%= course.slug %>" class="auth-submit d-block text-center text-decoration-none">
                             View as Admin
                         </a>
                     <% } else { %>
-                        <a href="/login?returnTo=<%= encodeURIComponent('/courses/' + course.slug) %>" class="auth-submit d-block text-center text-decoration-none">
-                            Log In to Enroll
+                        <a href="/login?returnTo=<%= encodeURIComponent('/checkout/' + course.slug) %>" class="auth-submit d-block text-center text-decoration-none">
+                            <%= isFree ? 'Log In to Enroll' : 'Log In to Buy' %>
                         </a>
                     <% } %>
 

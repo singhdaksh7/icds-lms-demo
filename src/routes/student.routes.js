@@ -9,6 +9,9 @@ router.use(requireRole('STUDENT', 'ADMIN'));
 
 router.get('/dashboard', studentController.getDashboard);
 
+router.get('/orders', studentController.listMyOrders);
+router.get('/orders/:id', studentController.getMyOrderDetail);
+
 router.post('/lessons/:lessonId/complete', doubleCsrfProtection, studentController.completeLesson);
 
 module.exports = router;

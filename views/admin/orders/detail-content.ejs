@@ -1,0 +1,67 @@
+<div class="mb-3">
+    <a href="/admin/orders" class="small text-decoration-none" style="color:#565acf;">
+        <i class="bi bi-arrow-left me-1"></i> Back to Orders
+    </a>
+</div>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 style="font-size:24px;" class="mb-0">Order ICDS-<%= order.id %></h1>
+    <span class="badge bg-<%= order.status === 'PAID' ? 'success' : (order.status === 'PENDING' ? 'secondary' : 'danger') %> fs-6">
+        <%= order.status %>
+    </span>
+</div>
+
+<div class="row g-4">
+
+    <div class="col-lg-4">
+        <div class="admin-card mb-4">
+            <h6 class="mb-3">Student</h6>
+            <p class="mb-1"><strong><%= order.user.name %></strong></p>
+            <p class="text-muted small mb-0"><%= order.user.email %></p>
+        </div>
+
+        <div class="admin-card">
+            <h6 class="mb-3">Payment</h6>
+            <p class="mb-1 small"><strong>Provider:</strong> <%= order.paymentProvider || '—' %></p>
+            <p class="mb-1 small"><strong>Provider Order ID:</strong> <%= order.providerOrderId || '—' %></p>
+            <p class="mb-1 small"><strong>Provider Payment ID:</strong> <%= order.providerPaymentId || '—' %></p>
+            <p class="mb-0 small"><strong>Placed:</strong> <%= order.createdAt.toLocaleString('en-IN') %></p>
+            <p class="text-muted small mt-3 mb-0">
+                Payment status is set only by verified Razorpay events — there is no manual "mark as paid" override.
+            </p>
+        </div>
+    </div>
+
+    <div class="col-lg-8">
+        <div class="admin-card">
+            <h6 class="mb-3">Items</h6>
+            <div class="table-responsive">
+                <table class="table admin-table align-middle">
+                    <thead>
+                        <tr>
+                            <th>Course</th>
+                            <th>Price (at time of order)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% order.items.forEach(function (item) { %>
+                            <tr>
+                                <td>
+                                    <a href="/admin/courses/<%= item.course.id %>/edit"><%= item.course.title %></a>
+                                </td>
+                                <td><%= order.currency %> <%= Number(item.price).toLocaleString('en-IN') %></td>
+                            </tr>
+                        <% }); %>
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <th>Total</th>
+                            <th><%= order.currency %> <%= Number(order.amount).toLocaleString('en-IN') %></th>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+
+</div>

@@ -178,6 +178,13 @@
 
                     </a>
 
+                    <% if (currentUser.role === 'STUDENT') { %>
+                        <a class="btn login-button" href="/student/orders">
+                            <i class="bi bi-receipt me-1"></i>
+                            My Orders
+                        </a>
+                    <% } %>
+
                     <form method="POST" action="/auth/logout" class="m-0">
                         <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                         <button type="submit" class="btn signup-button">

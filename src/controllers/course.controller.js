@@ -2,6 +2,7 @@ const courseService = require('../services/course.service');
 const homeService = require('../services/home.service');
 const { isUserEnrolled } = require('../services/enrollment.service');
 const { parsePage } = require('../lib/pagination');
+const { getCoursePurchasePrice } = require('../lib/pricing');
 const { LEVELS } = require('../validators/course.validator');
 
 async function listCourses(req, res, next) {
@@ -55,12 +56,15 @@ async function getCourseDetail(req, res, next) {
       isEnrolled = await isUserEnrolled(req.currentUser.id, course.id);
     }
 
+    const isFree = Number(getCoursePurchasePrice(course)) === 0;
+
     res.render('public/course-detail', {
       pageTitle: `${course.title} | ICDS`,
       metaDescription: course.shortDescription || course.title,
       course,
       lessonCount,
       isEnrolled,
+      isFree,
     });
   } catch (err) {
     next(err);

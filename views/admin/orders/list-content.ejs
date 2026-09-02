@@ -1,0 +1,65 @@
+<h1 style="font-size:24px;" class="mb-4">Orders</h1>
+
+<form method="GET" action="/admin/orders" class="row g-2 mb-4">
+    <div class="col-md-4">
+        <input type="text" name="q" class="form-control form-control-custom" placeholder="Search student name or email..." value="<%= filters.q %>">
+    </div>
+    <div class="col-md-3">
+        <select name="status" class="form-select form-control-custom">
+            <option value="">All Statuses</option>
+            <% statuses.forEach(function (status) { %>
+                <option value="<%= status %>" <%= filters.status === status ? 'selected' : '' %>><%= status %></option>
+            <% }); %>
+        </select>
+    </div>
+    <div class="col-md-2">
+        <button type="submit" class="auth-submit" style="height:100%;">Filter</button>
+    </div>
+</form>
+
+<div class="admin-card">
+    <div class="table-responsive">
+        <table class="table admin-table align-middle">
+            <thead>
+                <tr>
+                    <th>Order</th>
+                    <th>Student</th>
+                    <th>Course(s)</th>
+                    <th>Amount</th>
+                    <th>Status</th>
+                    <th>Provider</th>
+                    <th>Date</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% if (orders.length === 0) { %>
+                    <tr><td colspan="8" class="text-center text-muted py-4">No orders found.</td></tr>
+                <% } %>
+                <% orders.forEach(function (order) { %>
+                    <tr>
+                        <td>ICDS-<%= order.id %></td>
+                        <td>
+                            <strong><%= order.user.name %></strong>
+                            <div class="small text-muted"><%= order.user.email %></div>
+                        </td>
+                        <td><%= order.items.map(function (i) { return i.course.title; }).join(', ') %></td>
+                        <td><%= order.currency %> <%= Number(order.amount).toLocaleString('en-IN') %></td>
+                        <td>
+                            <span class="badge bg-<%= order.status === 'PAID' ? 'success' : (order.status === 'PENDING' ? 'secondary' : 'danger') %>">
+                                <%= order.status %>
+                            </span>
+                        </td>
+                        <td><%= order.paymentProvider || '—' %></td>
+                        <td><%= order.createdAt.toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' }) %></td>
+                        <td class="text-end">
+                            <a href="/admin/orders/<%= order.id %>" class="btn btn-sm btn-outline-secondary">View</a>
+                        </td>
+                    </tr>
+                <% }); %>
+            </tbody>
+        </table>
+    </div>
+
+    <%- include('../../partials/pagination', { pagination, pageUrl }) %>
+</div>

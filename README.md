@@ -7,12 +7,12 @@ original static HTML page (preserved in `backup/original/`) with a
 Node.js + Express + EJS application backed by MySQL via Prisma, while
 keeping the original Bootstrap-based visual design.
 
-This is a phased build. **Phases 1-4 are implemented:** project foundation,
+This is a phased build. **Phases 1-5 are implemented:** project foundation,
 MySQL/Prisma foundation + dynamic homepage, server-side session
-authentication/authorization, and the full course system (public catalog,
-admin course/category/instructor/lesson management, manual enrollment, and
-the student learning/progress flow). Checkout/payments, certificates, and
-real video protection are not yet built — see "Next Phase" below.
+authentication/authorization, the full course system (public catalog, admin
+management, manual enrollment, student learning/progress), and Razorpay
+checkout with automatic, server-verified enrollment. Certificates, coupons,
+subscriptions, and real video DRM are not yet built — see "Next Phase" below.
 
 ## Stack
 
@@ -56,6 +56,12 @@ All read via `src/config/env.js`. See `.env.example` for the full template.
 | `SESSION_SECRET` | **Yes in production** | Signs the session cookie. In production the app refuses to start if this is missing, a known placeholder (`change-me`, `secret`, `password`, `your-secret-here`), or shorter than 32 characters. In development a fallback is used so `npm run dev` works out of the box. Generate one with `node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"`. |
 | `SESSION_COOKIE_NAME` | No (default `icds.sid`) | Name of the session cookie (kept off the default `connect.sid`). |
 | `DEV_ADMIN_EMAIL` / `DEV_ADMIN_PASSWORD` | No | Only read by `prisma/seed.js`, and only when `NODE_ENV !== production`. Both must be set together to create/update a dev admin user; if either is unset, no admin user is created. There is no hardcoded/default admin account, and this seed path is fully disabled when `NODE_ENV === production`. |
+| `APP_BASE_URL` | No | Optional absolute base URL of the deployment. Not currently required — the app builds redirects from the current request — reserved for a future need to construct an absolute URL outside a request context. |
+| `RAZORPAY_KEY_ID` | No (required to accept payments) | Razorpay key id. The **only** Razorpay credential ever sent to the browser (the Checkout script needs it). Use TEST MODE keys in development. |
+| `RAZORPAY_KEY_SECRET` | No (required to accept payments) | Razorpay key secret. Server-side only — never appears in any view or client script. Signs/verifies checkout signatures and authenticates order-creation/payment-fetch API calls. |
+| `RAZORPAY_WEBHOOK_SECRET` | No (required for the webhook) | Separate secret from `RAZORPAY_KEY_SECRET`, generated when you create the webhook in the Razorpay dashboard. Verifies `X-Razorpay-Signature`. |
+
+Razorpay variables are deliberately **not** validated at boot — a deployment without payments configured yet still serves the rest of the site normally. Checkout (`/checkout/*`, `/payments/*`) and the webhook (`/webhooks/razorpay`) each fail clearly with `503` at the moment they're invoked if these are missing, rather than the app refusing to start. See "Payments (Razorpay)" below.
 
 ## Database
 
@@ -225,6 +231,127 @@ database-driven (no more hardcoded homepage course data).
   degrades to a valid page instead of erroring. 12/page on the public
   catalog, 20/page in admin lists.
 
+## Payments (Razorpay)
+
+Single-course "Buy Now" checkout via the official `razorpay` Node SDK, with
+automatic, server-verified enrollment. No cart, no coupons, no
+subscriptions, no refunds UI yet — see "Next Phase".
+
+**Flow:** `GET /courses/:slug` → "Buy Now" → `GET /checkout/:courseSlug` →
+`POST /checkout/:courseSlug/create-order` (local `PENDING` `Order` +
+`OrderItem` snapshot, then a Razorpay order) → Razorpay Checkout popup →
+`POST /payments/razorpay/verify` (signature-verified server-side) →
+`GET /payment/success/:orderId` or `/payment/failed/:orderId`.
+
+- **Server-side pricing:** `src/lib/pricing.js#getCoursePurchasePrice(course)`
+  is the one place that decides what a course costs — sale price if it's
+  valid (non-null, ≥0, and less than the regular price) and the regular
+  price otherwise. Every payable-amount decision (checkout page, order
+  creation, free-enroll) calls this against a freshly-fetched `Course` row;
+  nothing from the client (`amount`, `price`, `salePrice`) is ever trusted.
+- **Paise conversion:** `src/lib/money.js#toPaise` converts the decimal
+  amount string via string splitting/padding, never `price * 100` on a JS
+  float — verified (`"5499.00"` → `549900`, `"0.50"` → `50`).
+- **Order model:** the existing `Order`/`OrderItem` schema already snapshots
+  `OrderItem.price` at purchase time (never re-reads `Course.price` later),
+  so historical order value stays stable even if a course's price changes
+  afterward. The only schema change this phase made was adding
+  `@unique` to `Order.providerOrderId` (migration
+  `20260902072334_order_provider_order_id_unique`) — required so a webhook
+  or verify request can reliably map a Razorpay order id back to exactly
+  one local `Order` via `findUnique`, with no in-memory state involved.
+- **Order reference:** displayed as `ICDS-{id}` (e.g. `ICDS-42`) using the
+  existing `Order.id` — no separate `orderNumber` column was added, since
+  authorization is by session ownership (`userId` match), never by the
+  reference string's secrecy, so nothing depended on a dedicated field.
+- **Idempotent finalization:** `src/services/order.service.js#finalizePaidOrder`
+  is the **one** canonical function that turns a verified payment into a
+  `PAID` order + active `Enrollment` — both the client-verify endpoint and
+  the webhook call this exact function, so there is no second/competing
+  "what happens on payment success" implementation. The `PENDING → PAID`
+  transition is gated by `prisma.order.updateMany({ where: { id, status:
+  'PENDING' } })` inside a transaction; MySQL row-locks that statement, so
+  if client-verify and the webhook race each other, only one can win the
+  transition — the other sees `count === 0` and treats it as an
+  already-processed no-op instead of double-enrolling. Verified live: the
+  same webhook event replayed several times, and a signature-valid-but-
+  already-PAID client-verify call, both produced exactly one `Enrollment`
+  row and no state corruption.
+- **Automatic enrollment:** only `finalizePaidOrder` ever creates/reactivates
+  an `Enrollment` for a paid course — never a query param, frontend
+  callback, `localStorage`, or session flag. A Razorpay popup reporting
+  "success" is not trusted by itself; enrollment happens only after the
+  server verifies the payment.
+- **Checkout signature verification** (`src/services/razorpay.service.js#verifyCheckoutSignature`):
+  Razorpay's documented formula, `HMAC_SHA256(order_id + "|" + payment_id,
+  key_secret)`, implemented directly (not the SDK's internal helper, which
+  compares with plain `===`) so the actual comparison is constant-time
+  (`crypto.timingSafeEqual`). Beyond signature validity, `POST
+  /payments/razorpay/verify` also fetches the payment from Razorpay
+  directly and cross-checks its `order_id`, `amount` (in paise, via the
+  same `toPaise` conversion as the local order), `currency`, and status
+  (`captured`/`authorized`) before finalizing — a technically-valid
+  signature alone is not enough.
+- **Webhook** (`POST /webhooks/razorpay`): verifies `X-Razorpay-Signature`
+  against `RAZORPAY_WEBHOOK_SECRET` using the same HMAC-SHA256 formula, and
+  is **not** session/CSRF-protected — its authority is entirely the
+  verified signature. Handles `payment.captured`/`order.paid` (finalize, via
+  the same `finalizePaidOrder`, after the same amount/currency cross-check)
+  and `payment.failed` (mark a still-`PENDING` order `FAILED` — this can
+  never downgrade an already-`PAID` order, since `markOrderFailed`'s
+  `updateMany` is scoped to `status: 'PENDING'`). Unrecognized event types
+  are acknowledged with `200` and logged, never processed or crashed on.
+- **Raw body requirement:** Razorpay signs the *exact* request bytes, so
+  `server.js` mounts `app.use('/webhooks', webhookRoutes)` — with
+  `express.raw({ type: 'application/json' })` scoped to just that route —
+  **before** the app's global `express.json()`/`express.urlencoded()`. If
+  that order were reversed, the global JSON parser would consume the body
+  first and re-serializing it for verification would not reliably match
+  the bytes Razorpay actually signed. Verified live end-to-end: a
+  locally-constructed HMAC over a raw JSON payload was accepted; the same
+  payload with a wrong/missing signature was rejected.
+- **No in-memory state:** every payment decision is re-derived from the
+  `orders`/`order_items`/`enrollments` tables via `providerOrderId`/`id` —
+  nothing depends on a process-local `Map`/cache. This matters because
+  Hostinger can restart the Node process at any time; a webhook arriving
+  after a restart works identically to one arriving mid-session.
+- **Free courses:** a course whose server-computed purchase price is
+  exactly `0` never touches Razorpay. `POST /courses/:slug/enroll-free`
+  (authenticated STUDENT, CSRF-protected) re-validates the price is `0`
+  server-side and calls `enrollmentService.enrollFree`, which creates the
+  `Enrollment` directly with `orderId: null` — no fake `Order`/`OrderItem`
+  is ever created for a free enrollment.
+- **Manual admin enrollment** (from Phase 4) is unchanged and still uses
+  `orderId: null` — a paid enrollment is the only kind that ever links to a
+  real `Order`, so `Enrollment.orderId` reliably distinguishes "how did
+  this student get in": `null` for free/manual, a real id for paid.
+- **Checkout concurrency:** double-clicking "Pay Securely" or opening two
+  tabs can create more than one local `PENDING` order for the same course —
+  this is allowed (kept simple, as the spec calls for) rather than
+  deduplicated, because it's harmless: `finalizePaidOrder`'s idempotent gate
+  and the `Enrollment` unique `(userId, courseId)` constraint mean only the
+  order that's actually paid ever produces an enrollment, and the checkout
+  page itself immediately redirects an already-enrolled student to
+  `/learn/:slug` on the next visit rather than letting them start a second
+  purchase.
+- **Rate limiting:** `src/middleware/paymentRateLimit.js` (30 req/15min/IP)
+  applies to `create-order` and `verify` — **not** to the webhook, since
+  Razorpay retries webhooks on non-2xx responses and throttling it could
+  drop a legitimate retry.
+- **Logging:** payment lifecycle events log the internal order id, provider
+  order/payment id, event type, and outcome (`[payment] ...` / `[webhook]
+  ...` prefixes) — never the key secret, webhook secret, signature values,
+  or card/UPI details.
+- **Admin orders** (`GET /admin/orders`, `/admin/orders/:id`) are
+  **read-only** — there is no "mark as paid" override. Order status only
+  ever changes via a verified Razorpay event (client-verify or webhook),
+  by design (a manual override would need its own separately-designed,
+  audited feature).
+- **Dashboard revenue:** `src/services/order.service.js#getPaymentStats`
+  sums `amount` via `prisma.order.aggregate({ where: { status: 'PAID' } })`
+  — a Decimal-safe database-side sum, summing only `PAID` orders, never
+  `PENDING`/`FAILED`/`CANCELLED` ones.
+
 ## Development
 
 - `npm run dev` — nodemon, auto-restarts on file changes.
@@ -293,6 +420,14 @@ part of this build.
   `{ "success": true, "status": "ok", "database": "connected" | "disconnected" }`
   and actually runs a `SELECT 1` against MySQL — point Hostinger's health
   check (if it has one) or an external uptime monitor at this route.
+- **Razorpay webhook:** in the Razorpay Dashboard, add a webhook pointing at
+  `https://YOUR-DOMAIN.com/webhooks/razorpay` (replace with your real
+  production domain), subscribed to at least `payment.captured` and
+  `payment.failed` (and `order.paid` if desired — handled identically to
+  `payment.captured`). Copy the webhook secret it generates into
+  `RAZORPAY_WEBHOOK_SECRET`. This is a plain HTTPS Express route — no
+  special Hostinger configuration is required beyond the site already being
+  served over HTTPS (which Hostinger's proxy terminates).
 - No Docker, PM2, Redis, systemd, custom nginx config, or background workers
   are required or assumed anywhere in this codebase.
 - All file paths use `path.join(...)`/`process.cwd()`-relative resolution —
@@ -301,7 +436,7 @@ part of this build.
 
 ## Next Phase
 
-See the report delivered alongside this implementation for the full Phase 5+
-scope (Razorpay checkout/payments, coupons, invoices, PDF certificates, real
-video DRM/upload storage, SMTP email, notifications, analytics, instructor
-accounts).
+See the report delivered alongside this implementation for the full Phase 6+
+scope (coupons/discount codes, subscriptions, refunds UI, invoices/GST,
+PDF certificates, real video DRM/upload storage, SMTP email, notifications,
+analytics, instructor accounts, instructor payouts).

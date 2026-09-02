@@ -10,6 +10,7 @@ const categoryController = require('../controllers/admin/category.controller');
 const instructorController = require('../controllers/admin/instructor.controller');
 const lessonController = require('../controllers/admin/lesson.controller');
 const studentController = require('../controllers/admin/student.controller');
+const orderController = require('../controllers/admin/order.controller');
 
 // Every route in this file is admin-only — enforced once here rather than
 // repeated per-route, so it's impossible to accidentally add an
@@ -55,5 +56,10 @@ router.get('/students', studentController.listStudents);
 router.get('/students/:id', studentController.getStudentDetail);
 router.post('/students/:id/enroll', doubleCsrfProtection, studentController.enrollStudent);
 router.post('/students/:id/unenroll', doubleCsrfProtection, studentController.unenrollStudent);
+
+// --- Orders (read-only — payment state only ever comes from verified
+// Razorpay events, never a manual admin override) ---------------------------
+router.get('/orders', orderController.listOrders);
+router.get('/orders/:id', orderController.getOrderDetail);
 
 module.exports = router;
