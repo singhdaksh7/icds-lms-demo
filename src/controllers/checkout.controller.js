@@ -1,5 +1,6 @@
 const courseService = require('../services/course.service');
 const enrollmentService = require('../services/enrollment.service');
+const enrollmentRequestService = require('../services/enrollmentRequest.service');
 const orderService = require('../services/order.service');
 const razorpayService = require('../services/razorpay.service');
 const { getCoursePurchasePrice } = require('../lib/pricing');
@@ -156,4 +157,35 @@ async function enrollFree(req, res, next) {
   }
 }
 
-module.exports = { getCheckoutPage, createOrder, enrollFree };
+// Primary launch-phase path for paid courses while Razorpay stays disabled
+// (see README "Razorpay"): the student expresses interest, and the admin
+// finishes the enrollment manually via /admin/enrollment-requests — never a
+// working payment, and never a fabricated Order.
+async function requestEnrollment(req, res, next) {
+  try {
+    const course = await courseService.getPublishedCourseBySlug(req.params.slug);
+    if (!course) {
+      req.flashError('Course not found.');
+      return res.redirect('/courses');
+    }
+
+    if (req.currentUser.role !== 'STUDENT') {
+      req.flashError('Only student accounts can request enrollment.');
+      return res.redirect(`/courses/${course.slug}`);
+    }
+
+    const alreadyEnrolled = await enrollmentService.isUserEnrolled(req.currentUser.id, course.id);
+    if (alreadyEnrolled) {
+      req.flashSuccess('You are already enrolled in this course.');
+      return res.redirect(`/learn/${course.slug}`);
+    }
+
+    await enrollmentRequestService.createRequest(req.currentUser.id, course.id);
+    req.flashSuccess('Request received. Our team will contact you to complete enrollment.');
+    res.redirect(`/courses/${course.slug}`);
+  } catch (err) {
+    next(err);
+  }
+}
+
+module.exports = { getCheckoutPage, createOrder, enrollFree, requestEnrollment };

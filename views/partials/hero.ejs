@@ -67,11 +67,11 @@
 
                     <div class="hero-image-wrapper">
 
-                        <!-- TEMP external asset — replace with a licensed/owned photo before launch (see README "Asset Handling") -->
+                        <!-- Local placeholder graphic — swap for a licensed/owned photo once available (see public/assets/images/README.md) -->
                         <img
                             class="hero-image"
-                            src="https://www.ssfkz.si/wp-content/gallery/splosno/program_kt/kozmeticni_tehnik_ssfkz_08.jpg"
-                            alt="Students attending professional cosmetology training">
+                            src="/assets/images/hero-placeholder.svg"
+                            alt="ICDS online learning">
 
                         <div class="hero-floating-card first">
 
@@ -80,7 +80,7 @@
                             </div>
 
                             <div class="floating-text">
-                                <strong>100+ Video Lessons</strong>
+                                <strong>Video Lessons</strong>
                                 <small>Learn at your own pace</small>
                             </div>
 
@@ -111,7 +111,13 @@
 
 </section>
 
-
+<%
+  // Real, DB-derived stats only — no fabricated numbers. Hide the whole
+  // strip until there's at least one meaningful figure to show.
+  var hasStats = typeof stats !== 'undefined' && stats &&
+    (stats.courseCount > 0 || stats.instructorCount > 0 || stats.studentCount > 0 || stats.averageRating);
+%>
+<% if (hasStats) { %>
 <!-- STATS -->
 <section class="stats-strip">
 
@@ -121,41 +127,41 @@
 
             <div class="row">
 
+                <% if (stats.courseCount > 0) { %>
                 <div class="col-6 col-lg-3">
-
                     <div class="stat-item">
-                        <div class="stat-number">50+</div>
+                        <div class="stat-number"><%= stats.courseCount %>+</div>
                         <div class="stat-label">Professional Courses</div>
                     </div>
-
                 </div>
+                <% } %>
 
+                <% if (stats.studentCount > 0) { %>
                 <div class="col-6 col-lg-3">
-
                     <div class="stat-item">
-                        <div class="stat-number">12K+</div>
+                        <div class="stat-number"><%= stats.studentCount %></div>
                         <div class="stat-label">Students Learning</div>
                     </div>
-
                 </div>
+                <% } %>
 
+                <% if (stats.instructorCount > 0) { %>
                 <div class="col-6 col-lg-3">
-
                     <div class="stat-item">
-                        <div class="stat-number">35+</div>
+                        <div class="stat-number"><%= stats.instructorCount %></div>
                         <div class="stat-label">Expert Instructors</div>
                     </div>
-
                 </div>
+                <% } %>
 
+                <% if (stats.averageRating) { %>
                 <div class="col-6 col-lg-3">
-
                     <div class="stat-item">
-                        <div class="stat-number">4.9/5</div>
-                        <div class="stat-label">Student Rating</div>
+                        <div class="stat-number"><%= stats.averageRating %>/5</div>
+                        <div class="stat-label">Student Rating (<%= stats.ratingCount %> reviews)</div>
                     </div>
-
                 </div>
+                <% } %>
 
             </div>
 
@@ -164,3 +170,4 @@
     </div>
 
 </section>
+<% } %>

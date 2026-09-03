@@ -174,6 +174,10 @@ async function uploadLessonVideo(req, res, next) {
       data: { videoType: 'LOCAL', videoPath: relativePath },
     });
 
+    if (lesson.videoType === 'LOCAL' && lesson.videoPath && lesson.videoPath !== relativePath) {
+      await lessonService.cleanupOrphanedVideo(lesson.videoPath, lesson.id);
+    }
+
     req.flashSuccess('Video uploaded and attached to this lesson.');
     res.redirect(`/admin/lessons/${lesson.id}/edit`);
   } catch (err) {
@@ -211,6 +215,10 @@ async function registerLessonVideo(req, res, next) {
       data: { videoType: 'LOCAL', videoPath: relativePath },
     });
 
+    if (lesson.videoType === 'LOCAL' && lesson.videoPath && lesson.videoPath !== relativePath) {
+      await lessonService.cleanupOrphanedVideo(lesson.videoPath, id);
+    }
+
     req.flashSuccess('Existing video file registered for this lesson.');
     res.redirect(`/admin/lessons/${id}/edit`);
   } catch (err) {
@@ -235,7 +243,11 @@ async function removeLessonVideo(req, res, next) {
       data: { videoType: 'EXTERNAL', videoPath: null },
     });
 
-    req.flashSuccess('Local video detached from this lesson. The file itself was not deleted.');
+    if (lesson.videoType === 'LOCAL' && lesson.videoPath) {
+      await lessonService.cleanupOrphanedVideo(lesson.videoPath, id);
+    }
+
+    req.flashSuccess('Local video detached from this lesson.');
     res.redirect(`/admin/lessons/${id}/edit`);
   } catch (err) {
     next(err);

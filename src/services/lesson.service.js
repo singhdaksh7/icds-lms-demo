@@ -1,5 +1,6 @@
 const { prisma } = require('../config/db');
 const { generateUniqueSlug } = require('../lib/slug');
+const { deleteFile } = require('../lib/videoStorage');
 
 class LessonError extends Error {
   constructor(message) {
@@ -92,7 +93,24 @@ async function deleteLesson(id) {
     throw new LessonError('Lesson not found.');
   }
   await prisma.lesson.delete({ where: { id } });
+  if (existing.videoType === 'LOCAL' && existing.videoPath) {
+    await cleanupOrphanedVideo(existing.videoPath, id);
+  }
   return existing.courseId;
+}
+
+// Deletes a LOCAL video file from disk only if no other lesson still
+// references the same relative path (the "register an existing file" flow
+// lets more than one lesson point at the same physical file, e.g. while
+// swapping content around) — never deletes anything still in use.
+async function cleanupOrphanedVideo(videoPath, excludeLessonId) {
+  const stillReferenced = await prisma.lesson.findFirst({
+    where: { videoPath, id: { not: excludeLessonId } },
+    select: { id: true },
+  });
+  if (!stillReferenced) {
+    deleteFile(videoPath);
+  }
 }
 
 module.exports = {
@@ -102,4 +120,5 @@ module.exports = {
   createLesson,
   updateLesson,
   deleteLesson,
+  cleanupOrphanedVideo,
 };

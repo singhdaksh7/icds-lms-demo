@@ -26,7 +26,7 @@
                 </div>
 
                 <img
-                    src="<%= course.thumbnailUrl || '/assets/images/course-placeholder.jpg' %>"
+                    src="<%= course.thumbnailUrl || '/assets/images/course-placeholder.svg' %>"
                     alt="<%= course.title %>"
                     class="w-100 rounded-4 mb-4"
                     style="max-height:420px; object-fit:cover;">
@@ -41,7 +41,7 @@
                 <% if (course.instructor) { %>
                     <div class="d-flex align-items-center gap-3 mt-5 p-3 rounded-4" style="background:var(--light-bg);">
                         <img
-                            src="<%= course.instructor.photoUrl || '/assets/images/instructor-placeholder.jpg' %>"
+                            src="<%= course.instructor.photoUrl || '/assets/images/instructor-placeholder.svg' %>"
                             alt="<%= course.instructor.name %>"
                             style="width:64px;height:64px;border-radius:50%;object-fit:cover;">
                         <div>
@@ -98,21 +98,27 @@
                                 Continue Learning
                             </a>
                         <% } else if (isFree) { %>
-                            <a href="/checkout/<%= course.slug %>" class="auth-submit d-block text-center text-decoration-none">
-                                Enroll Free
-                            </a>
+                            <form method="POST" action="/courses/<%= course.slug %>/enroll-free">
+                                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                <button type="submit" class="auth-submit d-block w-100 text-center">Enroll Free</button>
+                            </form>
+                        <% } else if (hasPendingRequest) { %>
+                            <button class="auth-submit d-block w-100 text-center" disabled>Enrollment Requested</button>
+                            <p class="small text-muted mt-2 mb-0">Our team will contact you to complete enrollment.</p>
                         <% } else { %>
-                            <a href="/checkout/<%= course.slug %>" class="auth-submit d-block text-center text-decoration-none">
-                                Buy Now
-                            </a>
+                            <form method="POST" action="/courses/<%= course.slug %>/request-enrollment">
+                                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                <button type="submit" class="auth-submit d-block w-100 text-center">Request Enrollment</button>
+                            </form>
+                            <p class="small text-muted mt-2 mb-0">Submit a request and our team will reach out to complete your enrollment.</p>
                         <% } %>
                     <% } else if (typeof currentUser !== 'undefined' && currentUser && currentUser.role === 'ADMIN') { %>
                         <a href="/learn/<%= course.slug %>" class="auth-submit d-block text-center text-decoration-none">
                             View as Admin
                         </a>
                     <% } else { %>
-                        <a href="/login?returnTo=<%= encodeURIComponent('/checkout/' + course.slug) %>" class="auth-submit d-block text-center text-decoration-none">
-                            <%= isFree ? 'Log In to Enroll' : 'Log In to Buy' %>
+                        <a href="/login?returnTo=<%= encodeURIComponent('/courses/' + course.slug) %>" class="auth-submit d-block text-center text-decoration-none">
+                            <%= isFree ? 'Log In to Enroll' : 'Log In to Request Enrollment' %>
                         </a>
                     <% } %>
 

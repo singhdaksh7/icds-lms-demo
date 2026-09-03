@@ -3,7 +3,7 @@
     <div class="course-thumbnail">
 
         <img
-            src="<%= course.thumbnailUrl || '/assets/images/course-placeholder.jpg' %>"
+            src="<%= course.thumbnailUrl || '/assets/images/course-placeholder.svg' %>"
             alt="<%= course.title %>">
 
         <% if (course.featured) { %>
@@ -11,10 +11,6 @@
         <% } else if (course.level === 'ADVANCED') { %>
             <span class="course-badge">Advanced</span>
         <% } %>
-
-        <button class="course-wishlist" type="button">
-            <i class="bi bi-heart"></i>
-        </button>
 
     </div>
 
@@ -28,18 +24,22 @@
             <%= course.title %>
         </h3>
 
+        <%
+            var reviewRatings = Array.isArray(course.reviews) ? course.reviews.map(function (r) { return r.rating; }) : [];
+            var avgRating = reviewRatings.length > 0
+                ? (reviewRatings.reduce(function (a, b) { return a + b; }, 0) / reviewRatings.length)
+                : null;
+        %>
         <div class="course-rating">
-
-            <span class="course-stars">
-                ★★★★★
-            </span>
-
-            <strong>&mdash;</strong>
-
-            <span>
-                (no reviews yet)
-            </span>
-
+            <% if (avgRating) { %>
+                <span class="course-stars">
+                    <%= '★'.repeat(Math.round(avgRating)) %><%= '☆'.repeat(5 - Math.round(avgRating)) %>
+                </span>
+                <strong><%= avgRating.toFixed(1) %></strong>
+                <span>(<%= reviewRatings.length %> review<%= reviewRatings.length === 1 ? '' : 's' %>)</span>
+            <% } else { %>
+                <span class="text-muted small">No reviews yet</span>
+            <% } %>
         </div>
 
         <div class="course-meta">

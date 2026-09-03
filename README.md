@@ -454,6 +454,72 @@ analytics, instructor accounts, instructor payouts).
 
 Razorpay architecture is **IMPLEMENTED: YES**. **REAL PROVIDER VERIFIED: NO**. **PRODUCTION READY: NO**. Real Razorpay TEST/LIVE verification remains mandatory before launch. SMTP, final legal text, and real contact/branding details are also required before production.
 
+# Phase 7 — core LMS product completion
+
+Full audit + completion pass over the existing Phase 1-6 build, focused on
+finishing real product workflows and removing content that could mislead a
+visitor into thinking it was real. Hosting/deployment work was intentionally
+out of scope for this phase.
+
+- **Local course/instructor thumbnail upload.** Admin course and instructor
+  edit forms now support a direct image upload (JPG/PNG/WEBP, 5MB max,
+  server-generated filenames, MIME+extension validated) alongside the
+  existing URL field — see `src/lib/imageStorage.js`,
+  `src/middleware/thumbnailUpload.middleware.js`, and the
+  `THUMBNAIL_STORAGE_ROOT` env var (same persistent-storage pattern as
+  `VIDEO_STORAGE_ROOT`). Replacing or clearing a thumbnail deletes the old
+  file only if this app generated it.
+- **Local lesson video orphan cleanup.** Uploading a replacement video,
+  detaching a video, or deleting a lesson now removes the old file from disk
+  — but only when no other lesson still references the same path (the
+  "register an existing file" flow can share one physical file across
+  lessons), and never from a client-supplied path. See
+  `lesson.service.js#cleanupOrphanedVideo`.
+- **Enrollment Request feature.** Since Razorpay stays disabled, a logged-in
+  student can submit "Request Enrollment" on a paid course's detail page
+  instead of hitting a dead payment button. Admin has a new
+  `/admin/enrollment-requests` queue (PENDING/CONTACTED/ENROLLED/DECLINED)
+  where approving a request performs the same `orderId: null` manual
+  enrollment used elsewhere — never a fabricated order. New `EnrollmentRequest`
+  Prisma model/migration. Free courses are unaffected (still instant
+  `Enroll Free`).
+- **Removed misleading demo content:** fabricated homepage stats
+  ("12K+ students", "4.9/5 rating", "35+ instructors"), fake testimonials
+  (stock photos + invented names — now wired to real, `APPROVED` `Review`
+  rows with a clean empty state), an unrelated third-party "intro video"
+  modal and matching stock promo image (deleted), a fabricated "10+ years"
+  badge, always-5-star course-card ratings (now computed from real
+  `Review` data), and a client-side-only "wishlist" heart icon that reset on
+  reload and didn't persist anything (removed pending a real implementation).
+  Local SVG placeholders (`public/assets/images/*-placeholder.svg`) replace
+  hotlinked third-party stock photos in every page template; `prisma/seed.js`
+  dev data is unchanged and still clearly documented as demo-only.
+- **Branding centralization extended:** `src/config/site.js` now also
+  carries `address`, `copyrightName`, and per-platform `social` URLs
+  (`SOCIAL_FACEBOOK_URL`, etc. — see `.env.example`). The footer only
+  renders a social icon when its URL is configured, instead of linking `#`.
+- **Course purchase CTA:** the course detail page no longer links to a
+  payment flow that dead-ends at a disabled "Payments Unavailable" button;
+  it now submits an Enrollment Request (see above). The `/checkout/*` routes
+  and Razorpay integration code are untouched and still reachable directly —
+  they light up automatically once real Razorpay keys are configured.
+- **Audit findings, already correct (no change needed):** course/lesson/
+  category/instructor CRUD and safe-delete guards, manual enrollment
+  (duplicate/reactivation handling), student dashboard/My Courses, the
+  learn page (published-only navigation, duplicate-safe completion,
+  server-derived progress), certificate issuance/PDF/public verification
+  (no PII leaked), contact/newsletter (CSRF + rate-limited + duplicate-safe),
+  full admin/student route authorization, error handling (no stack traces
+  leaked), and local video streaming authorization.
+- **Known gap, not addressed this phase:** lesson reordering is a manual
+  numeric `sortOrder` field rather than drag-and-drop — functionally
+  complete but not a polished UX. Course "what you'll learn"/requirements
+  fields were evaluated and deliberately deferred (no schema change) —
+  `shortDescription`/`description` remain the only free-text course fields.
+- **npm audit:** 3 moderate transitive vulnerabilities (`qs` via `body-parser`
+  via `express`) have no non-breaking fix yet upstream — `npm audit fix`
+  makes no change without a major `express` bump, which was not taken.
+
 ## Production Operations
 
 ### Runtime database: Hostinger → HTTPS → TiDB Cloud

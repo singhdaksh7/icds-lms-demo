@@ -85,6 +85,13 @@ enum ContactMessageStatus {
   RESOLVED
 }
 
+enum EnrollmentRequestStatus {
+  PENDING
+  CONTACTED
+  ENROLLED
+  DECLINED
+}
+
 // ---------------------------------------------------------------------------
 // Core identity
 // ---------------------------------------------------------------------------
@@ -106,6 +113,7 @@ model User {
   lessonProgress     LessonProgress[]
   certificates       Certificate[]
   passwordResetTokens PasswordResetToken[]
+  enrollmentRequests EnrollmentRequest[]
 
   @@map("users")
 }
@@ -176,6 +184,7 @@ model Course {
   wishlistItems  WishlistItem[]
   reviews        Review[]
   certificates   Certificate[]
+  enrollmentRequests EnrollmentRequest[]
 
   @@index([categoryId])
   @@index([instructorId])
@@ -375,6 +384,29 @@ model ContactMessage {
   createdAt DateTime @default(now())
 
   @@map("contact_messages")
+}
+
+// A student-initiated "I want this course" signal, distinct from a generic
+// ContactMessage: it's tied to a specific user+course so the admin manual-
+// enrollment queue (see src/services/enrollmentRequest.service.js) can act
+// on it directly instead of parsing free-text messages. Never implies
+// payment — enrollment here always goes through the same orderId=null
+// manual-enrollment path as any other admin enrollment.
+model EnrollmentRequest {
+  id        Int                     @id @default(autoincrement())
+  userId    Int
+  courseId  Int
+  status    EnrollmentRequestStatus @default(PENDING)
+  message   String?                 @db.Text
+  createdAt DateTime                @default(now())
+  updatedAt DateTime                @updatedAt
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@index([courseId])
+  @@index([status])
+  @@map("enrollment_requests")
 }
 
 // Express-session storage, backed by Prisma/TiDB instead of

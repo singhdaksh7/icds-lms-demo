@@ -48,6 +48,7 @@ async function listPublishedCourses({ q, categorySlug, level, page = 1 } = {}) {
       category: true,
       instructor: true,
       _count: { select: { lessons: { where: { status: 'PUBLISHED' } } } },
+      reviews: { where: { status: 'APPROVED' }, select: { rating: true } },
     },
     orderBy: [{ featured: 'desc' }, { publishedAt: 'desc' }],
     skip: pagination.skip,
@@ -206,6 +207,15 @@ async function updateCourse(id, values) {
   });
 }
 
+async function setCourseThumbnail(id, thumbnailUrl) {
+  const existing = await prisma.course.findUnique({ where: { id } });
+  if (!existing) {
+    throw new CourseError('Course not found.');
+  }
+  await prisma.course.update({ where: { id }, data: { thumbnailUrl } });
+  return existing.thumbnailUrl;
+}
+
 async function setCourseStatus(id, status) {
   const existing = await prisma.course.findUnique({ where: { id } });
   if (!existing) {
@@ -248,6 +258,7 @@ module.exports = {
   getCourseByIdAdmin,
   createCourse,
   updateCourse,
+  setCourseThumbnail,
   setCourseStatus,
   deleteCourseIfSafe,
 };

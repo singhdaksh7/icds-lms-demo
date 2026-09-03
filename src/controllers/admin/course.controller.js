@@ -2,6 +2,7 @@ const courseService = require('../../services/course.service');
 const { prisma } = require('../../config/db');
 const { validateCourse, LEVELS, STATUSES } = require('../../validators/course.validator');
 const { parsePage } = require('../../lib/pagination');
+const imageStorage = require('../../lib/imageStorage');
 
 async function getFormOptions() {
   const [categories, instructors] = await Promise.all([
@@ -157,6 +158,27 @@ async function deleteCourse(req, res, next) {
   res.redirect('/admin/courses');
 }
 
+async function uploadCourseThumbnail(req, res, next) {
+  const id = parseInt(req.params.id, 10);
+  try {
+    if (!req.file) {
+      req.flashError('No image file was uploaded.');
+      return res.redirect(`/admin/courses/${id}/edit`);
+    }
+    const newUrl = imageStorage.publicUrlFor(req.file.filename);
+    const oldUrl = await courseService.setCourseThumbnail(id, newUrl);
+    imageStorage.deleteIfOwned(oldUrl);
+    req.flashSuccess('Thumbnail updated.');
+    res.redirect(`/admin/courses/${id}/edit`);
+  } catch (err) {
+    if (err instanceof courseService.CourseError) {
+      req.flashError(err.message);
+      return res.redirect('/admin/courses');
+    }
+    next(err);
+  }
+}
+
 async function publishCourse(req, res, next) {
   try {
     const id = parseInt(req.params.id, 10);
@@ -193,6 +215,7 @@ module.exports = {
   createCourse,
   editCourseForm,
   updateCourse,
+  uploadCourseThumbnail,
   deleteCourse,
   publishCourse,
   unpublishCourse,

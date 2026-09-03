@@ -992,6 +992,19 @@
             object-fit: cover;
         }
 
+        .testimonial-avatar-fallback {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background: var(--primary-light, #eeefff);
+            color: var(--primary-color, #565acf);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
         .testimonial-user strong {
             display: block;
             color: var(--secondary-color);

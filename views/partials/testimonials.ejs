@@ -1,7 +1,4 @@
-<%# NOTE: still static placeholder content. The Review model exists in
-    prisma/schema.prisma; wiring this section to real, approved reviews is
-    planned for a later phase (see README "Next Phase") rather than Phase 1/2. %>
-
+<% if (typeof reviews !== 'undefined' && reviews.length > 0) { %>
 <!-- TESTIMONIALS -->
 <section class="section-space" id="testimonials">
 
@@ -18,8 +15,7 @@
             </h2>
 
             <p class="section-description">
-                Real learning experiences from students building
-                their professional careers.
+                Real reviews from enrolled students.
             </p>
 
         </div>
@@ -27,106 +23,44 @@
 
         <div class="row g-4">
 
-            <div class="col-md-6 col-lg-4 reveal-element">
+            <% reviews.forEach(function (review) { %>
 
-                <div class="testimonial-card">
+                <div class="col-md-6 col-lg-4 reveal-element">
 
-                    <div class="testimonial-quote">
-                        <i class="bi bi-quote"></i>
-                    </div>
+                    <div class="testimonial-card">
 
-                    <p class="testimonial-text">
-                        The lessons are extremely easy to follow.
-                        I could pause the demonstrations and practice
-                        everything at my own pace.
-                    </p>
+                        <div class="testimonial-quote">
+                            <i class="bi bi-quote"></i>
+                        </div>
 
-                    <div class="testimonial-user">
+                        <% if (review.comment) { %>
+                            <p class="testimonial-text">
+                                <%= review.comment %>
+                            </p>
+                        <% } %>
 
-                        <img
-                            class="testimonial-avatar"
-                            src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=150&q=80"
-                            alt="Student">
+                        <div class="testimonial-user">
 
-                        <div>
-                            <strong>Simran Kaur</strong>
-                            <span>Cosmetology Student</span>
+                            <div class="testimonial-avatar-fallback" aria-hidden="true">
+                                <i class="bi bi-person-fill"></i>
+                            </div>
+
+                            <div>
+                                <strong><%= review.user.name %></strong>
+                                <span><%= review.course.title %></span>
+                            </div>
+
                         </div>
 
                     </div>
 
                 </div>
 
-            </div>
-
-
-            <div class="col-md-6 col-lg-4 reveal-element">
-
-                <div class="testimonial-card">
-
-                    <div class="testimonial-quote">
-                        <i class="bi bi-quote"></i>
-                    </div>
-
-                    <p class="testimonial-text">
-                        The dental science modules helped me understand
-                        important concepts much more clearly than
-                        traditional study material.
-                    </p>
-
-                    <div class="testimonial-user">
-
-                        <img
-                            class="testimonial-avatar"
-                            src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=150&q=80"
-                            alt="Student">
-
-                        <div>
-                            <strong>Arjun Malhotra</strong>
-                            <span>Dental Sciences Student</span>
-                        </div>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-
-            <div class="col-md-6 col-lg-4 reveal-element">
-
-                <div class="testimonial-card">
-
-                    <div class="testimonial-quote">
-                        <i class="bi bi-quote"></i>
-                    </div>
-
-                    <p class="testimonial-text">
-                        I loved being able to access the course whenever
-                        I had time. The practical demonstrations made
-                        a huge difference for me.
-                    </p>
-
-                    <div class="testimonial-user">
-
-                        <img
-                            class="testimonial-avatar"
-                            src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80"
-                            alt="Student">
-
-                        <div>
-                            <strong>Riya Sharma</strong>
-                            <span>Aesthetics Student</span>
-                        </div>
-
-                    </div>
-
-                </div>
-
-            </div>
+            <% }); %>
 
         </div>
 
     </div>
 
 </section>
+<% } %>

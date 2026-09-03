@@ -32,7 +32,7 @@
 
                             <div class="course-thumbnail">
                                 <img
-                                    src="<%= course.thumbnailUrl || '/assets/images/course-placeholder.jpg' %>"
+                                    src="<%= course.thumbnailUrl || '/assets/images/course-placeholder.svg' %>"
                                     alt="<%= course.title %>">
                                 <% if (enrollment.status !== 'ACTIVE') { %>
                                     <span class="course-badge"><%= enrollment.status %></span>

@@ -40,6 +40,7 @@
             <div class="col-12">
                 <label class="form-label small fw-semibold">Thumbnail URL</label>
                 <input type="text" name="thumbnailUrl" class="form-control form-control-custom" value="<%= values.thumbnailUrl || '' %>" placeholder="https://...">
+                <div class="form-text">Set directly, or upload a local image below (saved after upload).</div>
             </div>
 
             <div class="col-md-6">
@@ -113,3 +114,20 @@
         </button>
     </form>
 </div>
+
+<% if (course) { %>
+    <div class="admin-card mt-4">
+        <h5 class="mb-3">Upload Thumbnail Image</h5>
+
+        <% if (values.thumbnailUrl) { %>
+            <img src="<%= values.thumbnailUrl %>" alt="Current thumbnail" style="max-width:220px; border-radius:8px; margin-bottom:16px; display:block;">
+        <% } %>
+
+        <form method="POST" action="/admin/courses/<%= course.id %>/thumbnail/upload" enctype="multipart/form-data" class="d-flex gap-2 align-items-center flex-wrap">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <input type="file" name="thumbnail" accept=".jpg,.jpeg,.png,.webp" class="form-control form-control-custom" style="max-width:320px;" required>
+            <button type="submit" class="btn btn-sm btn-outline-secondary">Upload</button>
+        </form>
+        <div class="form-text mt-2">JPG, PNG or WEBP, max 5MB.</div>
+    </div>
+<% } %>

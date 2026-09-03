@@ -45,6 +45,7 @@
             <div class="col-12">
                 <label class="form-label small fw-semibold">Photo URL</label>
                 <input type="text" name="photoUrl" class="form-control form-control-custom" value="<%= values.photoUrl || '' %>" placeholder="https://...">
+                <div class="form-text">Set directly, or upload a local photo below (saved after upload).</div>
             </div>
 
             <div class="col-md-6">
@@ -73,3 +74,20 @@
         </button>
     </form>
 </div>
+
+<% if (instructor) { %>
+    <div class="admin-card mt-4">
+        <h5 class="mb-3">Upload Photo</h5>
+
+        <% if (values.photoUrl) { %>
+            <img src="<%= values.photoUrl %>" alt="Current photo" style="width:120px; height:120px; object-fit:cover; border-radius:50%; margin-bottom:16px; display:block;">
+        <% } %>
+
+        <form method="POST" action="/admin/instructors/<%= instructor.id %>/photo/upload" enctype="multipart/form-data" class="d-flex gap-2 align-items-center flex-wrap">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <input type="file" name="thumbnail" accept=".jpg,.jpeg,.png,.webp" class="form-control form-control-custom" style="max-width:320px;" required>
+            <button type="submit" class="btn btn-sm btn-outline-secondary">Upload</button>
+        </form>
+        <div class="form-text mt-2">JPG, PNG or WEBP, max 5MB.</div>
+    </div>
+<% } %>

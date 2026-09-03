@@ -2,10 +2,12 @@ const homeService = require('../services/home.service');
 
 async function getHomePage(req, res, next) {
   try {
-    const [categories, featuredCourses, instructors] = await Promise.all([
+    const [categories, featuredCourses, instructors, reviews, stats] = await Promise.all([
       homeService.getActiveCategories(),
       homeService.getFeaturedCourses(),
       homeService.getActiveInstructors(),
+      homeService.getApprovedReviews(),
+      homeService.getPlatformStats(),
     ]);
 
     res.render('public/home', {
@@ -15,6 +17,8 @@ async function getHomePage(req, res, next) {
       categories,
       featuredCourses,
       instructors,
+      reviews,
+      stats,
     });
   } catch (err) {
     next(err);

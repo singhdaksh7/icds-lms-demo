@@ -8,7 +8,7 @@
             <div class="col-lg-4">
 
                 <a href="/" class="footer-brand">
-                    Institute of Cosmetology & Dental Sciences
+                    <%= site.name %>
                 </a>
 
                 <p class="footer-description">
@@ -16,25 +16,28 @@
                     aesthetics, dental sciences, skin, hair and beauty education.
                 </p>
 
-                <div class="footer-social">
+                <% if (site.address) { %>
+                    <p class="footer-description mb-0">
+                        <i class="bi bi-geo-alt me-1"></i><%= site.address %>
+                    </p>
+                <% } %>
 
-                    <a href="#">
-                        <i class="bi bi-facebook"></i>
-                    </a>
-
-                    <a href="#">
-                        <i class="bi bi-instagram"></i>
-                    </a>
-
-                    <a href="#">
-                        <i class="bi bi-youtube"></i>
-                    </a>
-
-                    <a href="#">
-                        <i class="bi bi-linkedin"></i>
-                    </a>
-
-                </div>
+                <% if (site.hasSocialLinks) { %>
+                    <div class="footer-social">
+                        <% if (site.social.facebook) { %>
+                            <a href="<%= site.social.facebook %>" target="_blank" rel="noopener"><i class="bi bi-facebook"></i></a>
+                        <% } %>
+                        <% if (site.social.instagram) { %>
+                            <a href="<%= site.social.instagram %>" target="_blank" rel="noopener"><i class="bi bi-instagram"></i></a>
+                        <% } %>
+                        <% if (site.social.youtube) { %>
+                            <a href="<%= site.social.youtube %>" target="_blank" rel="noopener"><i class="bi bi-youtube"></i></a>
+                        <% } %>
+                        <% if (site.social.linkedin) { %>
+                            <a href="<%= site.social.linkedin %>" target="_blank" rel="noopener"><i class="bi bi-linkedin"></i></a>
+                        <% } %>
+                    </div>
+                <% } %>
 
             </div>
 
@@ -195,7 +198,7 @@
             <div class="row align-items-center">
 
                 <div class="col-md-6">
-                    &copy; <%= new Date().getFullYear() %> Institute of Cosmetology & Dental Sciences.
+                    &copy; <%= new Date().getFullYear() %> <%= site.copyrightName %>.
                     All Rights Reserved.
                 </div>
 
@@ -532,52 +535,6 @@
                         </form>
 
                     </div>
-
-                </div>
-
-            </div>
-
-        </div>
-
-    </div>
-
-</div>
-
-
-<!-- VIDEO MODAL -->
-<div
-    class="modal fade"
-    id="videoModal"
-    tabindex="-1"
-    aria-hidden="true">
-
-    <div class="modal-dialog modal-dialog-centered modal-xl">
-
-        <div class="modal-content bg-dark">
-
-            <div class="modal-header border-0">
-
-                <h5 class="modal-title text-white">
-                    Welcome to ICDS Learning
-                </h5>
-
-                <button
-                    type="button"
-                    class="btn-close btn-close-white"
-                    data-bs-dismiss="modal">
-                </button>
-
-            </div>
-
-            <div class="modal-body p-0">
-
-                <div class="ratio ratio-16x9">
-
-                    <iframe
-                        src="https://www.youtube.com/embed/ScMzIvxBSi4"
-                        title="Introduction video"
-                        allowfullscreen>
-                    </iframe>
 
                 </div>
 

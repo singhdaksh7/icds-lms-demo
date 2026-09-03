@@ -75,6 +75,15 @@ async function updateInstructor(id, values) {
   });
 }
 
+async function setInstructorPhoto(id, photoUrl) {
+  const existing = await prisma.instructor.findUnique({ where: { id } });
+  if (!existing) {
+    throw new InstructorError('Instructor not found.');
+  }
+  await prisma.instructor.update({ where: { id }, data: { photoUrl } });
+  return existing.photoUrl;
+}
+
 // Courses reference instructors via onDelete: SetNull — deleting an
 // instructor never deletes a course, only clears course.instructorId.
 async function deleteInstructor(id) {
@@ -96,5 +105,6 @@ module.exports = {
   getInstructorByIdAdmin,
   createInstructor,
   updateInstructor,
+  setInstructorPhoto,
   deleteInstructor,
 };

@@ -23,4 +23,11 @@ router.post(
   checkoutController.enrollFree
 );
 
+router.post(
+  '/courses/:slug/request-enrollment',
+  requireAuth,
+  doubleCsrfProtection,
+  checkoutController.requestEnrollment
+);
+
 module.exports = router;

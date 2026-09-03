@@ -112,6 +112,16 @@ function findExistingFile(courseSlug, filename) {
   return path.posix.join(courseSlug, filename);
 }
 
+// Best-effort delete of a previously-stored LOCAL video file. Only ever
+// called with a DB-originated relativePath (never client input) and only
+// after the caller has confirmed no other lesson still references it — see
+// lesson.service.js `cleanupOrphanedVideo`.
+function deleteFile(relativePath) {
+  const absolute = resolveVideoPath(relativePath);
+  if (!absolute) return;
+  fs.unlink(absolute, () => {}); // never let cleanup failure break the request
+}
+
 module.exports = {
   STORAGE_ROOT,
   ALLOWED_VIDEO_TYPES,
@@ -121,4 +131,5 @@ module.exports = {
   mimeTypeFor,
   ensureCourseDir,
   findExistingFile,
+  deleteFile,
 };

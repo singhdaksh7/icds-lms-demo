@@ -1,5 +1,6 @@
 const instructorService = require('../../services/instructor.service');
 const { validateInstructor, STATUSES } = require('../../validators/instructor.validator');
+const imageStorage = require('../../lib/imageStorage');
 
 async function listInstructors(req, res, next) {
   try {
@@ -99,6 +100,27 @@ async function updateInstructor(req, res, next) {
   }
 }
 
+async function uploadInstructorPhoto(req, res, next) {
+  const id = parseInt(req.params.id, 10);
+  try {
+    if (!req.file) {
+      req.flashError('No image file was uploaded.');
+      return res.redirect(`/admin/instructors/${id}/edit`);
+    }
+    const newUrl = imageStorage.publicUrlFor(req.file.filename);
+    const oldUrl = await instructorService.setInstructorPhoto(id, newUrl);
+    imageStorage.deleteIfOwned(oldUrl);
+    req.flashSuccess('Photo updated.');
+    res.redirect(`/admin/instructors/${id}/edit`);
+  } catch (err) {
+    if (err instanceof instructorService.InstructorError) {
+      req.flashError(err.message);
+      return res.redirect('/admin/instructors');
+    }
+    next(err);
+  }
+}
+
 async function deleteInstructor(req, res, next) {
   try {
     const id = parseInt(req.params.id, 10);
@@ -124,5 +146,6 @@ module.exports = {
   createInstructor,
   editInstructorForm,
   updateInstructor,
+  uploadInstructorPhoto,
   deleteInstructor,
 };

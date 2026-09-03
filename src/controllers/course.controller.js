@@ -1,6 +1,7 @@
 const courseService = require('../services/course.service');
 const homeService = require('../services/home.service');
 const { isUserEnrolled } = require('../services/enrollment.service');
+const { prisma } = require('../config/db');
 const { parsePage } = require('../lib/pagination');
 const { getCoursePurchasePrice } = require('../lib/pricing');
 const { LEVELS } = require('../validators/course.validator');
@@ -52,8 +53,19 @@ async function getCourseDetail(req, res, next) {
     const lessonCount = course.lessons.length;
 
     let isEnrolled = false;
+    let hasPendingRequest = false;
     if (req.currentUser && req.currentUser.role === 'STUDENT') {
       isEnrolled = await isUserEnrolled(req.currentUser.id, course.id);
+      if (!isEnrolled) {
+        const pending = await prisma.enrollmentRequest.findFirst({
+          where: {
+            userId: req.currentUser.id,
+            courseId: course.id,
+            status: { in: ['PENDING', 'CONTACTED'] },
+          },
+        });
+        hasPendingRequest = Boolean(pending);
+      }
     }
 
     const isFree = Number(getCoursePurchasePrice(course)) === 0;
@@ -64,6 +76,7 @@ async function getCourseDetail(req, res, next) {
       course,
       lessonCount,
       isEnrolled,
+      hasPendingRequest,
       isFree,
     });
   } catch (err) {

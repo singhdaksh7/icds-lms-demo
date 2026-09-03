@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 240" role="img" aria-label="Course thumbnail placeholder">
+  <rect width="400" height="240" fill="#eeefff"/>
+  <g fill="none" stroke="#9a9de8" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="130" y="80" width="140" height="90" rx="10"/>
+    <path d="M175 105 L205 125 L175 145 Z" fill="#9a9de8" stroke="none"/>
+  </g>
+</svg>

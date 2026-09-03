@@ -82,6 +82,12 @@ app.use('/internal', internalRoutes);
 // through the authorized /media/lessons/:lessonId/video route.
 app.use(express.static(path.join(__dirname, 'public')));
 
+// Course/instructor thumbnails: served via a dedicated static route (rather
+// than relying on the plain public/ mount above) so THUMBNAIL_STORAGE_ROOT
+// can be pointed at a path outside public/ in production without changing
+// this URL — see src/lib/imageStorage.js.
+app.use('/uploads/thumbnails', express.static(require('./src/lib/imageStorage').STORAGE_ROOT));
+
 // Auth stack: cookies -> session -> flash -> CSRF token -> current user.
 // Order matters — CSRF and currentUser both depend on the session existing.
 app.use(cookieParser());
