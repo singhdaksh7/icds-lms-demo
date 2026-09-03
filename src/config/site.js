@@ -19,6 +19,10 @@ const site = {
     youtube: process.env.SOCIAL_YOUTUBE_URL || '',
     linkedin: process.env.SOCIAL_LINKEDIN_URL || '',
   },
+  // Optional, third-party, off by default — only rendered when the env var
+  // is actually set (see views/partials/seo-head.ejs). Never fabricate one.
+  gaMeasurementId: process.env.GA_MEASUREMENT_ID || '',
+  googleSiteVerification: process.env.GOOGLE_SITE_VERIFICATION || '',
 };
 
 site.phoneHref = site.contactPhone ? `tel:${digits(site.contactPhone)}` : '';

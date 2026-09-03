@@ -11,7 +11,25 @@
  *
  * This script is safe to re-run: it upserts by unique slug/email instead of
  * blindly inserting duplicates.
+ *
+ * PRODUCTION GUARD: this seed must never run against a real/production
+ * database — it would put fabricated instructor bios, fake course pricing,
+ * and hotlinked third-party images in front of real visitors. Refuses to
+ * run whenever NODE_ENV=production. There is intentionally NO override
+ * flag — if this demo data is ever genuinely needed against a
+ * production-configured environment, run with NODE_ENV unset/development
+ * instead of adding a bypass here. See README "DO NOT RUN DEMO SEED IN
+ * PRODUCTION".
  */
+if (process.env.NODE_ENV === 'production') {
+  console.error(
+    'Refusing to run prisma/seed.js: NODE_ENV=production. This script inserts fabricated ' +
+      'demo/placeholder data (fake instructor bios, course pricing, hotlinked images) and must ' +
+      'never touch a production database. See README "DO NOT RUN DEMO SEED IN PRODUCTION".'
+  );
+  process.exit(1);
+}
+
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 

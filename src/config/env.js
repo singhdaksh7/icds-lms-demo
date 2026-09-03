@@ -72,6 +72,45 @@ if (IS_PRODUCTION && (!RAZORPAY_KEY_ID || !RAZORPAY_KEY_SECRET || !RAZORPAY_WEBH
   );
 }
 
+// ---------------------------------------------------------------------------
+// SMTP (email notifications — Phase 9)
+// ---------------------------------------------------------------------------
+// Deliberately provider-agnostic: any standard SMTP service works
+// (Hostinger email, Google Workspace, Zoho, Brevo, SendGrid SMTP, Amazon
+// SES SMTP, ...) — nothing here is specific to one vendor. Like Razorpay
+// above, this is NOT validated/thrown on at boot: an app without email
+// configured yet must keep working (signup/enrollment/certificates/contact
+// all persist to the DB regardless of email). See src/services/email.service.js.
+const SMTP_HOST = process.env.SMTP_HOST || '';
+const SMTP_PORT = process.env.SMTP_PORT ? Number(process.env.SMTP_PORT) : 587;
+const SMTP_SECURE = process.env.SMTP_SECURE === '1' || process.env.SMTP_SECURE === 'true';
+const SMTP_USER = process.env.SMTP_USER || '';
+const SMTP_PASSWORD = process.env.SMTP_PASSWORD || '';
+const SMTP_FROM_EMAIL = process.env.SMTP_FROM_EMAIL || '';
+const SMTP_FROM_NAME = process.env.SMTP_FROM_NAME || '';
+
+const SMTP_CONFIGURED = Boolean(SMTP_HOST && SMTP_FROM_EMAIL);
+
+if (SMTP_HOST && !SMTP_FROM_EMAIL) {
+  console.warn(
+    'WARNING: SMTP_HOST is set but SMTP_FROM_EMAIL is not — email sending stays disabled until ' +
+      'both are configured (a "from" address is required by virtually every SMTP provider).'
+  );
+}
+if (SMTP_HOST && (!SMTP_USER || !SMTP_PASSWORD)) {
+  console.warn(
+    'WARNING: SMTP_HOST is set without SMTP_USER/SMTP_PASSWORD — most providers require ' +
+      'authentication; unauthenticated delivery will likely fail at send time.'
+  );
+}
+if (IS_PRODUCTION && !SMTP_CONFIGURED) {
+  console.warn(
+    'WARNING: SMTP is not configured. Password reset, enrollment, and certificate emails will ' +
+      'not be delivered — the underlying actions (reset token generation, enrollment, ' +
+      'certificate issuance) still succeed, only the notification email is skipped.'
+  );
+}
+
 // Hostinger's Node.js Web App runtime cannot reach raw MySQL TCP (verified
 // against both Hostinger's own MySQL and an external TiDB Cloud database),
 // so production instead routes Prisma queries through TiDB Cloud's HTTPS
@@ -108,4 +147,12 @@ module.exports = {
   RAZORPAY_KEY_ID,
   RAZORPAY_KEY_SECRET,
   RAZORPAY_WEBHOOK_SECRET,
+  SMTP_HOST,
+  SMTP_PORT,
+  SMTP_SECURE,
+  SMTP_USER,
+  SMTP_PASSWORD,
+  SMTP_FROM_EMAIL,
+  SMTP_FROM_NAME,
+  SMTP_CONFIGURED,
 };

@@ -1,4 +1,5 @@
 const { prisma } = require('../config/db');
+const emailService = require('./email.service');
 
 class EnrollmentError extends Error {
   constructor(message) {
@@ -52,16 +53,24 @@ async function enrollStudentManually(userId, courseId) {
     throw new EnrollmentError('This student is already enrolled in that course.');
   }
 
-  if (existing) {
-    return prisma.enrollment.update({
-      where: { id: existing.id },
-      data: { status: 'ACTIVE', accessExpiresAt: null },
-    });
-  }
+  const enrollment = existing
+    ? await prisma.enrollment.update({
+        where: { id: existing.id },
+        data: { status: 'ACTIVE', accessExpiresAt: null },
+      })
+    : await prisma.enrollment.create({
+        data: { userId, courseId, status: 'ACTIVE', orderId: null },
+      });
 
-  return prisma.enrollment.create({
-    data: { userId, courseId, status: 'ACTIVE', orderId: null },
-  });
+  // Notification only — never lets a failed/unconfigured email undo an
+  // enrollment that already succeeded above. Covers both admin manual
+  // enrollment and enrollment-request approval, since both call this same
+  // function — no separate/duplicate notification path needed.
+  emailService
+    .sendEnrollmentApprovedEmail(null, { toEmail: user.email, studentName: user.name, courseTitle: course.title })
+    .catch(() => {});
+
+  return enrollment;
 }
 
 // Direct, no-payment enrollment for a genuinely free (price === 0) course.

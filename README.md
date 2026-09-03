@@ -44,6 +44,14 @@ npm run dev                 # starts the server with nodemon
 
 Then open `http://localhost:3000` (or whatever `PORT` you set).
 
+> **DO NOT RUN THE DEMO SEED IN PRODUCTION.** `prisma/seed.js` inserts
+> fabricated demo data — fake instructor bios, made-up course pricing, and
+> hotlinked third-party thumbnail images — for local development only. It
+> refuses to run whenever `NODE_ENV=production` (with no override flag), but
+> the same protection doesn't help if you point a *development-configured*
+> environment's `DATABASE_URL` at a real production database — never do
+> that either.
+
 ## Environment Variables
 
 All read via `src/config/env.js`. See `.env.example` for the full template.
@@ -56,10 +64,13 @@ All read via `src/config/env.js`. See `.env.example` for the full template.
 | `SESSION_SECRET` | **Yes in production** | Signs the session cookie. In production the app refuses to start if this is missing, a known placeholder (`change-me`, `secret`, `password`, `your-secret-here`), or shorter than 32 characters. In development a fallback is used so `npm run dev` works out of the box. Generate one with `node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"`. |
 | `SESSION_COOKIE_NAME` | No (default `icds.sid`) | Name of the session cookie (kept off the default `connect.sid`). |
 | `DEV_ADMIN_EMAIL` / `DEV_ADMIN_PASSWORD` | No | Only read by `prisma/seed.js`, and only when `NODE_ENV !== production`. Both must be set together to create/update a dev admin user; if either is unset, no admin user is created. There is no hardcoded/default admin account, and this seed path is fully disabled when `NODE_ENV === production`. |
-| `APP_BASE_URL` | No | Optional absolute base URL of the deployment. Not currently required — the app builds redirects from the current request — reserved for a future need to construct an absolute URL outside a request context. |
+| `APP_BASE_URL` | Strongly recommended in production | Absolute base URL of the deployment (no trailing slash). Not required — canonical URLs, sitemap.xml, robots.txt, Open Graph tags, and email links fall back to deriving an origin from the current request when unset — but it's the only correct source for links generated outside a request (e.g. certificate-issued emails), and is more reliable behind a proxy/CDN. |
 | `RAZORPAY_KEY_ID` | No (required to accept payments) | Razorpay key id. The **only** Razorpay credential ever sent to the browser (the Checkout script needs it). Use TEST MODE keys in development. |
 | `RAZORPAY_KEY_SECRET` | No (required to accept payments) | Razorpay key secret. Server-side only — never appears in any view or client script. Signs/verifies checkout signatures and authenticates order-creation/payment-fetch API calls. |
 | `RAZORPAY_WEBHOOK_SECRET` | No (required for the webhook) | Separate secret from `RAZORPAY_KEY_SECRET`, generated when you create the webhook in the Razorpay dashboard. Verifies `X-Razorpay-Signature`. |
+| `SMTP_HOST` / `SMTP_PORT` / `SMTP_SECURE` / `SMTP_USER` / `SMTP_PASSWORD` / `SMTP_FROM_EMAIL` / `SMTP_FROM_NAME` | No | Any standard SMTP provider — see "SMTP / Email" below. `SMTP_HOST` + `SMTP_FROM_EMAIL` together enable real sending; without them the app uses a safe no-op transport and every email-dependent action still works. |
+| `GA_MEASUREMENT_ID` | No | Google Analytics 4 measurement ID. Renders the GA tag only when set — never a placeholder. |
+| `GOOGLE_SITE_VERIFICATION` | No | Google Search Console HTML-tag verification token. Renders the meta tag only when set. |
 
 Razorpay variables are deliberately **not** validated at boot — a deployment without payments configured yet still serves the rest of the site normally. Checkout (`/checkout/*`, `/payments/*`) and the webhook (`/webhooks/razorpay`) each fail clearly with `503` at the moment they're invoked if these are missing, rather than the app refusing to start. See "Payments (Razorpay)" below.
 
@@ -355,6 +366,10 @@ subscriptions, no refunds UI yet — see "Next Phase".
 ## Development
 
 - `npm run dev` — nodemon, auto-restarts on file changes.
+- `npm test` — runs the automated test suite (Node's built-in `node:test`
+  runner, no extra dependency). Currently covers the SEO helpers, email
+  templates, the SMTP-unconfigured fallback, and the seed script's
+  production guard — a foundation to build on, not full coverage.
 - `npm run prisma:studio` — opens Prisma Studio to browse/edit data.
 - A single shared `PrismaClient` lives in `src/config/db.js`; always import
   it from there instead of instantiating a new client.
@@ -685,3 +700,113 @@ layer instead of "the database doesn't work."
 `/api/health` itself also now bounds its DB check to ~9 seconds (logging
 `TIDB_HEALTH_TIMEOUT` server-side on timeout) so a hung query can't hang
 the health check indefinitely; the public response shape is unchanged.
+
+# Phase 9 — SEO, email, and discoverability
+
+## SEO
+
+- **Central helper**: `src/lib/seo.js#buildSeo(req, options)` builds a
+  consistent `seo` object (title, description, robots, canonical, Open
+  Graph, Twitter card) that `views/partials/seo-head.ejs` renders — no view
+  hand-rolls `<meta>` tags. Pages that don't pass a `seo` object to
+  `res.render()` default to `noindex, nofollow` with no canonical URL —
+  indexing is opt-in per page, not opt-out, so a new private route is safe
+  by default.
+- **Indexable pages** (opted in): `/`, `/courses` (unfiltered), `/courses/:slug`,
+  `/contact`, `/privacy`, `/terms`. Filtered/search results on `/courses`
+  stay `noindex, follow` with no self-canonical, so they don't compete with
+  the plain catalog page for the same content.
+- **Always noindex**: `/login`, `/signup`, `/forgot-password`,
+  `/reset-password/*`, everything under `/student` and `/admin`, and
+  `/certificates/verify/:certificateNumber` (a real student's name is on
+  that page — kept out of search results even though the certificate number
+  itself is unguessable).
+- **`GET /robots.txt`** and **`GET /sitemap.xml`** (`src/controllers/seo.controller.js`):
+  the sitemap is DB-driven from published courses only (no drafts, no
+  admin/student/auth routes, no per-certificate entries) and its `<loc>`
+  values, like every other absolute URL in the app, come from
+  `APP_BASE_URL` when set, falling back to the current request's own
+  origin — never a hardcoded `localhost`.
+- **Structured data (JSON-LD)**: homepage renders `EducationalOrganization`,
+  course detail renders `Course` (with an `Offer` only for actual non-zero
+  prices) — built strictly from real DB/config fields. No rating, review
+  count, accreditation, or "provider" claim is ever fabricated.
+- **Favicon / manifest**: `public/assets/icons/` holds a locally-generated
+  neutral placeholder mark (SVG + PNG sizes) and `GET /site.webmanifest` is
+  served dynamically from `site.name` rather than a static file, so it never
+  drifts from the configured brand name. Replace the SVG source and
+  regenerate the PNGs once a real client logo exists.
+- **Analytics / Search Console** (both optional, both off unless configured):
+  `GA_MEASUREMENT_ID` renders the GA4 tag when set; `GOOGLE_SITE_VERIFICATION`
+  renders the ownership-verification meta tag when set. Neither is faked
+  when unset — nothing renders at all.
+
+## SMTP / Email
+
+- **Provider-agnostic** (`SMTP_HOST`/`PORT`/`SECURE`/`USER`/`PASSWORD`/`FROM_EMAIL`/`FROM_NAME`
+  — see `.env.example`): works with Hostinger email, Google Workspace, Zoho,
+  Brevo, SendGrid SMTP, Amazon SES SMTP, or any other standard SMTP service.
+  Nothing in the code assumes a specific provider.
+- **Without SMTP configured** (the default — safe for local dev and for a
+  production deploy that hasn't set it up yet): `src/lib/mailer.js` uses
+  Nodemailer's `jsonTransport`, which never opens a network connection. In
+  development the composed message is logged to the console (subject/to
+  only, never in production); in production it's silently skipped. Either
+  way, **the underlying action always succeeds** — signup, manual/request
+  enrollment, certificate issuance, and contact-form submission never fail
+  or roll back because email couldn't be sent. Verified via `npm test` and
+  live local regression with SMTP unset.
+- **`src/services/email.service.js`** is the only module that should be
+  called from controllers/services — it owns URL-building (via
+  `src/lib/seo.js#absoluteUrl`, so links respect `APP_BASE_URL`), and
+  sanitizes any user-controlled value (contact-form subject/email) before
+  it reaches an SMTP header, on top of Nodemailer's own header sanitization.
+  Templates (`src/lib/emailTemplates.js`) HTML-escape every user-controlled
+  value (student name, course title, contact message) before it's
+  interpolated into the HTML email body.
+- **Password reset**: `POST /auth/forgot-password` is rate-limited
+  (`authLimiter`), keeps its existing generic response regardless of whether
+  the email exists, and the reset URL is built from `APP_BASE_URL`/the
+  request origin — never `localhost` in a real deployment. The raw
+  token/URL is logged to the console only when `NODE_ENV` is not
+  `production`.
+- **Enrollment approved**: sent from `enrollment.service.js#enrollStudentManually`
+  — the single function used by both the admin "Enroll" action and
+  enrollment-request approval, so there's exactly one notification path,
+  never a duplicate.
+- **Certificate issued**: sent from `certificate.service.js#issueCertificate`,
+  only on genuine first issuance (not the idempotent "already exists"
+  return path).
+- **Contact notification**: sent (fire-and-forget) after the message is
+  already persisted to the database — the DB row is the source of truth;
+  a failed or unconfigured email never loses a submission. Uses the
+  visitor's (validated) email as `replyTo`.
+- **Newsletter**: unchanged from Phase 6/7 — subscriber collection and an
+  admin listing only. No bulk-sending/marketing-email engine was added, and
+  none is planned for this phase.
+- **Local testing without real credentials**: run the app with no `SMTP_*`
+  vars set and exercise any of the flows above — `npm test` also covers the
+  template-escaping and unconfigured-transport behavior directly. Real SMTP
+  delivery through an actual provider has **not** been tested against live
+  credentials in this phase.
+
+## npm audit
+
+Baseline going into this phase: 3 moderate vulnerabilities, all a
+transitive `qs` issue pulled in through `express@4.22.2` (which pins
+`qs: ~6.15.1`, capping below the fixed `6.16.0` release — no non-breaking
+fix was available directly from Express 4.x). Resolved via a `package.json`
+`"overrides"` entry pinning `qs` to `^6.16.0` (a minor-version bump within
+the same major, not a breaking change) rather than upgrading to Express 5.
+`nodemailer` was added at `^9.1.1` specifically because `nodemailer<=9.0.0`
+carries several vulnerabilities (SMTP command injection, header injection,
+SSRF via the `raw` option, etc.) — `9.1.1` is the first patched release.
+Current state: **0 vulnerabilities**.
+
+## Razorpay / production status (unchanged)
+
+Razorpay: Implemented YES, Enabled NO, Real provider verified NO,
+Production ready NO — still intentionally disabled; nothing in this phase
+touched checkout/payment code. Production deployment (Hostinger hosting,
+DNS, TiDB connectivity) remains pending — this phase was explicitly
+SEO/email/local-integration work only, no hosting changes.

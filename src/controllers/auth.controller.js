@@ -9,7 +9,8 @@ const {
 const { safeRedirectPath } = require('../lib/safeRedirect');
 const { hashToken } = require('../lib/tokens');
 const { prisma } = require('../config/db');
-const { SESSION_COOKIE_NAME } = require('../config/env');
+const { SESSION_COOKIE_NAME, IS_PRODUCTION } = require('../config/env');
+const { absoluteUrl } = require('../lib/seo');
 
 // ---------------------------------------------------------------------------
 // Page renders (GET)
@@ -173,7 +174,16 @@ async function postForgotPassword(req, res, next) {
     const result = await authService.requestPasswordReset(values.email);
 
     if (result) {
-      const resetUrl = `${req.protocol}://${req.get('host')}/reset-password/${result.rawToken}`;
+      const resetUrl = absoluteUrl(req, `/reset-password/${result.rawToken}`);
+
+      // Development convenience only: the token/URL must never appear in
+      // production logs. Gated on IS_PRODUCTION, not just NODE_ENV !== dev,
+      // so any non-production environment (test, staging) also stays safe
+      // by default unless explicitly running as production.
+      if (!IS_PRODUCTION) {
+        console.log(`[dev] Password reset URL for ${result.user.email}: ${resetUrl}`);
+      }
+
       await authService.sendPasswordResetEmail(result.user.email, resetUrl);
     }
 

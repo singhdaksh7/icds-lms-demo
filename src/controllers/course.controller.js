@@ -5,6 +5,8 @@ const { prisma } = require('../config/db');
 const { parsePage } = require('../lib/pagination');
 const { getCoursePurchasePrice } = require('../lib/pricing');
 const { LEVELS } = require('../validators/course.validator');
+const site = require('../config/site');
+const { buildSeo, absoluteUrl, PUBLIC_ROBOTS } = require('../lib/seo');
 
 async function listCourses(req, res, next) {
   try {
@@ -28,9 +30,22 @@ async function listCourses(req, res, next) {
       return `/courses${qs ? `?${qs}` : ''}`;
     };
 
+    const isFiltered = Boolean(q || categorySlug || level);
+    const title = q ? `Search: ${q} | ${site.name}` : `Courses | ${site.name}`;
+    const description = 'Browse professional cosmetology, aesthetics, dental sciences and beauty video courses.';
+
     res.render('public/courses', {
-      pageTitle: q ? `Search: ${q} | ICDS Courses` : 'All Courses | ICDS',
-      metaDescription: 'Browse professional cosmetology, aesthetics, dental sciences and beauty video courses.',
+      pageTitle: title,
+      metaDescription: description,
+      // Filtered/search views stay followable but out of the index (avoids
+      // competing with the canonical unfiltered catalog for the same
+      // content); the plain /courses page is fully indexable.
+      seo: buildSeo(req, {
+        title,
+        description,
+        robots: isFiltered ? 'noindex, follow' : PUBLIC_ROBOTS,
+        noCanonical: isFiltered,
+      }),
       courses,
       pagination,
       pageUrl,
@@ -70,9 +85,41 @@ async function getCourseDetail(req, res, next) {
 
     const isFree = Number(getCoursePurchasePrice(course)) === 0;
 
+    const title = `${course.title} | ${site.name}`;
+    const description = course.shortDescription || course.title;
+    // Only use the course's own thumbnail — never a hotlinked/placeholder
+    // asset — and only if it's an absolute URL (a local /uploads path still
+    // needs the site origin prefixed for OG to resolve it).
+    const ogImage = course.thumbnailUrl
+      ? course.thumbnailUrl.startsWith('http')
+        ? course.thumbnailUrl
+        : absoluteUrl(req, course.thumbnailUrl)
+      : null;
+
+    const price = getCoursePurchasePrice(course);
+    const jsonLd = {
+      '@context': 'https://schema.org',
+      '@type': 'Course',
+      name: course.title,
+      description: course.shortDescription || course.description || course.title,
+      provider: { '@type': 'Organization', name: site.name, url: site.baseUrl || undefined },
+      ...(course.instructor ? { instructor: { '@type': 'Person', name: course.instructor.name } } : {}),
+      ...(Number(price) > 0
+        ? {
+            offers: {
+              '@type': 'Offer',
+              price: Number(price).toFixed(2),
+              priceCurrency: course.currency,
+              availability: 'https://schema.org/InStock',
+            },
+          }
+        : {}),
+    };
+
     res.render('public/course-detail', {
-      pageTitle: `${course.title} | ICDS`,
-      metaDescription: course.shortDescription || course.title,
+      pageTitle: title,
+      metaDescription: description,
+      seo: buildSeo(req, { title, description, robots: PUBLIC_ROBOTS, ogType: 'website', ogImage, jsonLd }),
       course,
       lessonCount,
       isEnrolled,

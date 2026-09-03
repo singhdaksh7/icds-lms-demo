@@ -2,6 +2,7 @@ const { prisma } = require('../config/db');
 const { PDFDocument, StandardFonts, rgb } = require('pdf-lib');
 const crypto = require('crypto');
 const { isUniqueConstraintError } = require('../lib/prismaErrors');
+const emailService = require('./email.service');
 
 async function isCertificateEligible(userId, courseId) {
   const enrollment = await prisma.enrollment.findUnique({ where: { userId_courseId: { userId, courseId } } });
@@ -18,8 +19,9 @@ async function issueCertificate(userId, courseId) {
   const eligibility = await isCertificateEligible(userId, courseId);
   if (!eligibility.eligible) { const error = new Error(eligibility.reason); error.code = 'INELIGIBLE'; throw error; }
   // The ID is database-assigned; the transaction and unique user/course key make issuance idempotent.
+  let issued;
   try {
-    return await prisma.$transaction(async (tx) => {
+    issued = await prisma.$transaction(async (tx) => {
       const created = await tx.certificate.create({ data: { userId, courseId, certificateNumber: `PENDING-${crypto.randomUUID()}` } });
       return tx.certificate.update({ where: { id: created.id }, data: { certificateNumber: `ICDS-CERT-${new Date().getFullYear()}-${String(created.id).padStart(6, '0')}` } });
     });
@@ -27,6 +29,25 @@ async function issueCertificate(userId, courseId) {
     if (isUniqueConstraintError(error)) return prisma.certificate.findUnique({ where: { userId_courseId: { userId, courseId } } });
     throw error;
   }
+
+  // Notification only, and only on genuine first issuance (not the
+  // existing-certificate short-circuit above) — never blocks/rolls back
+  // issuance if email fails or SMTP isn't configured.
+  Promise.all([
+    prisma.user.findUnique({ where: { id: userId }, select: { name: true, email: true } }),
+    prisma.course.findUnique({ where: { id: courseId }, select: { title: true } }),
+  ])
+    .then(([user, course]) => {
+      if (!user || !course) return;
+      return emailService.sendCertificateIssuedEmail(null, {
+        toEmail: user.email,
+        studentName: user.name,
+        courseTitle: course.title,
+      });
+    })
+    .catch(() => {});
+
+  return issued;
 }
 
 async function certificatePdf(certificate) {

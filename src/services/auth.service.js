@@ -1,7 +1,7 @@
 const { prisma } = require('../config/db');
 const { hashPassword, verifyPassword } = require('../lib/password');
 const { generateRawToken, hashToken } = require('../lib/tokens');
-const { sendPasswordResetEmail } = require('../lib/mailer');
+const { sendPasswordResetEmail } = require('../services/email.service');
 
 // Lazily required to avoid a require-cycle at module-load time (session.js
 // only depends on config/env, so this is safe, but keeping it lazy keeps

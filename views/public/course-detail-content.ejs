@@ -6,7 +6,11 @@
             <div class="col-lg-8">
 
                 <div class="course-category mb-2">
-                    <%= course.category ? course.category.name : 'General' %>
+                    <% if (course.category) { %>
+                        <a href="/courses?category=<%= course.category.slug %>" style="color:inherit; text-decoration:none;"><%= course.category.name %></a>
+                    <% } else { %>
+                        General
+                    <% } %>
                 </div>
 
                 <h1 class="section-title" style="text-align:left;">
@@ -19,10 +23,13 @@
                     </p>
                 <% } %>
 
-                <div class="course-meta mb-4" style="border:0; margin:0; padding:0;">
+                <div class="course-meta mb-4 d-flex align-items-center flex-wrap" style="border:0; margin:0; padding:0; gap: 4px;">
                     <span class="me-4"><i class="bi bi-signal"></i> <%= course.level.charAt(0) + course.level.slice(1).toLowerCase() %></span>
                     <span class="me-4"><i class="bi bi-clock"></i> <%= course.duration || 'TBD' %></span>
-                    <span><i class="bi bi-play-btn"></i> <%= lessonCount %> Lesson<%= lessonCount === 1 ? '' : 's' %></span>
+                    <span class="me-4"><i class="bi bi-play-btn"></i> <%= lessonCount %> Lesson<%= lessonCount === 1 ? '' : 's' %></span>
+                    <button type="button" class="btn btn-sm btn-outline-secondary copy-course-link" data-url="<%= typeof seo !== 'undefined' && seo.ogUrl ? seo.ogUrl : '' %>">
+                        <i class="bi bi-link-45deg"></i> Copy Link
+                    </button>
                 </div>
 
                 <img

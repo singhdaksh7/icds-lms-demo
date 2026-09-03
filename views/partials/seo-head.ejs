@@ -1,0 +1,62 @@
+<%
+    // Every page passes pageTitle/metaDescription (existing convention);
+    // pages that need SEO control beyond the defaults also pass a `seo`
+    // object built with src/lib/seo.js#buildSeo. Falling back here keeps
+    // every existing res.render() call working unchanged.
+    const seo = typeof locals.seo !== 'undefined' ? locals.seo : {
+        title: pageTitle,
+        description: metaDescription,
+        robots: 'noindex, nofollow',
+        canonical: null,
+        ogType: 'website',
+        ogUrl: null,
+        ogImage: null,
+    };
+%>
+<title><%= seo.title || site.name %></title>
+<meta name="description" content="<%= seo.description || metaDescription || '' %>">
+<meta name="robots" content="<%= seo.robots %>">
+<% if (seo.canonical) { %><link rel="canonical" href="<%= seo.canonical %>"><% } %>
+
+<meta property="og:site_name" content="<%= site.name %>">
+<meta property="og:type" content="<%= seo.ogType || 'website' %>">
+<meta property="og:title" content="<%= seo.title || site.name %>">
+<meta property="og:description" content="<%= seo.description || metaDescription || '' %>">
+<% if (seo.ogUrl) { %><meta property="og:url" content="<%= seo.ogUrl %>"><% } %>
+<% if (seo.ogImage) { %>
+    <meta property="og:image" content="<%= seo.ogImage %>">
+    <meta name="twitter:card" content="summary_large_image">
+<% } else { %>
+    <meta name="twitter:card" content="summary">
+<% } %>
+<meta name="twitter:title" content="<%= seo.title || site.name %>">
+<meta name="twitter:description" content="<%= seo.description || metaDescription || '' %>">
+
+<% if (site.googleSiteVerification) { %>
+    <meta name="google-site-verification" content="<%= site.googleSiteVerification %>">
+<% } %>
+
+<link rel="icon" type="image/svg+xml" href="/assets/icons/favicon.svg">
+<link rel="icon" type="image/png" href="/favicon.ico">
+<link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png">
+<link rel="manifest" href="/site.webmanifest">
+
+<% if (typeof seo.jsonLd !== 'undefined' && seo.jsonLd) { %>
+    <%
+        // Defends against a "</script>" (or "<!--") breakout via any
+        // user-controlled value (course title, etc.) landing in the JSON-LD —
+        // JSON.stringify alone does not escape "<".
+        const jsonLdSafe = JSON.stringify(seo.jsonLd).replace(/</g, '\\u003c');
+    %>
+    <script type="application/ld+json"><%- jsonLdSafe %></script>
+<% } %>
+
+<% if (site.gaMeasurementId) { %>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=<%= site.gaMeasurementId %>"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', '<%= site.gaMeasurementId %>');
+    </script>
+<% } %>

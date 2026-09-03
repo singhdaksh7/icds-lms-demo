@@ -25,16 +25,16 @@
                 <% if (site.hasSocialLinks) { %>
                     <div class="footer-social">
                         <% if (site.social.facebook) { %>
-                            <a href="<%= site.social.facebook %>" target="_blank" rel="noopener"><i class="bi bi-facebook"></i></a>
+                            <a href="<%= site.social.facebook %>" target="_blank" rel="noopener noreferrer"><i class="bi bi-facebook"></i></a>
                         <% } %>
                         <% if (site.social.instagram) { %>
-                            <a href="<%= site.social.instagram %>" target="_blank" rel="noopener"><i class="bi bi-instagram"></i></a>
+                            <a href="<%= site.social.instagram %>" target="_blank" rel="noopener noreferrer"><i class="bi bi-instagram"></i></a>
                         <% } %>
                         <% if (site.social.youtube) { %>
-                            <a href="<%= site.social.youtube %>" target="_blank" rel="noopener"><i class="bi bi-youtube"></i></a>
+                            <a href="<%= site.social.youtube %>" target="_blank" rel="noopener noreferrer"><i class="bi bi-youtube"></i></a>
                         <% } %>
                         <% if (site.social.linkedin) { %>
-                            <a href="<%= site.social.linkedin %>" target="_blank" rel="noopener"><i class="bi bi-linkedin"></i></a>
+                            <a href="<%= site.social.linkedin %>" target="_blank" rel="noopener noreferrer"><i class="bi bi-linkedin"></i></a>
                         <% } %>
                     </div>
                 <% } %>
@@ -602,7 +602,7 @@
                    style="background:#eeefff;"
                    href="<%= site.whatsappHref || '/contact' %>"
                    target="_blank"
-                   rel="noopener">
+                   rel="noopener noreferrer">
 
                     <i class="bi bi-whatsapp fs-4"
                        style="color:#565acf;"></i>

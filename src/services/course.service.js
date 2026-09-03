@@ -102,6 +102,16 @@ async function getCourseBySlugForViewer(slug, viewerIsAdmin) {
   return course;
 }
 
+// Lightweight, unpaginated list for sitemap generation — published courses
+// only, just the fields a <url> entry needs.
+async function listPublishedCourseSlugsForSitemap() {
+  return prisma.course.findMany({
+    where: { status: 'PUBLISHED' },
+    select: { slug: true, updatedAt: true },
+    orderBy: { publishedAt: 'desc' },
+  });
+}
+
 // ---------------------------------------------------------------------------
 // Admin catalog management
 // ---------------------------------------------------------------------------
@@ -252,6 +262,7 @@ async function deleteCourseIfSafe(id) {
 module.exports = {
   CourseError,
   listPublishedCourses,
+  listPublishedCourseSlugsForSitemap,
   getPublishedCourseBySlug,
   getCourseBySlugForViewer,
   listCoursesAdmin,

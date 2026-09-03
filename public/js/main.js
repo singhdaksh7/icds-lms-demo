@@ -185,3 +185,38 @@ document
         });
 
     });
+
+
+/*
+ * Copy Course Link
+ */
+document
+    .querySelectorAll(".copy-course-link")
+    .forEach(function (button) {
+
+        button.addEventListener("click", function () {
+
+            const url = this.dataset.url || window.location.href;
+            const label = this.innerHTML;
+
+            const showCopied = () => {
+                this.innerHTML = '<i class="bi bi-check-lg"></i> Copied';
+                setTimeout(() => { this.innerHTML = label; }, 1800);
+            };
+
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(url).then(showCopied).catch(() => {});
+            } else {
+                const temp = document.createElement("textarea");
+                temp.value = url;
+                temp.style.position = "fixed";
+                temp.style.opacity = "0";
+                document.body.appendChild(temp);
+                temp.select();
+                try { document.execCommand("copy"); showCopied(); } catch (e) {}
+                document.body.removeChild(temp);
+            }
+
+        });
+
+    });
