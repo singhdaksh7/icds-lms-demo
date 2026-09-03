@@ -46,17 +46,23 @@
                                     loading="lazy"
                                     onerror="this.onerror=null;this.src='/assets/images/instructor-placeholder.svg';">
 
-                                <div class="instructor-social">
+                                <% if (instructor.linkedinUrl || instructor.instagramUrl) { %>
+                                    <div class="instructor-social">
 
-                                    <a href="<%= instructor.linkedinUrl || '#' %>">
-                                        <i class="bi bi-linkedin"></i>
-                                    </a>
+                                        <% if (instructor.linkedinUrl) { %>
+                                            <a href="<%= instructor.linkedinUrl %>" target="_blank" rel="noopener noreferrer">
+                                                <i class="bi bi-linkedin"></i>
+                                            </a>
+                                        <% } %>
 
-                                    <a href="<%= instructor.instagramUrl || '#' %>">
-                                        <i class="bi bi-instagram"></i>
-                                    </a>
+                                        <% if (instructor.instagramUrl) { %>
+                                            <a href="<%= instructor.instagramUrl %>" target="_blank" rel="noopener noreferrer">
+                                                <i class="bi bi-instagram"></i>
+                                            </a>
+                                        <% } %>
 
-                                </div>
+                                    </div>
+                                <% } %>
 
                             </div>
 
