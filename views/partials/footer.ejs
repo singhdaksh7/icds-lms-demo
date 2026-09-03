@@ -297,7 +297,9 @@
 
                         <form class="mt-4" method="POST" action="/auth/login">
 
-                            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                            <% if (typeof csrfToken !== 'undefined' && csrfToken) { %>
+                                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                            <% } %>
 
                             <div class="mb-3">
 
@@ -438,7 +440,9 @@
 
                         <form class="mt-4" method="POST" action="/auth/signup">
 
-                            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                            <% if (typeof csrfToken !== 'undefined' && csrfToken) { %>
+                                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                            <% } %>
 
                             <div class="row g-3">
 

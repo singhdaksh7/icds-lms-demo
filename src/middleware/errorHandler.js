@@ -33,10 +33,29 @@ function errorHandler(err, req, res, next) {
     });
   }
 
-  res.status(status).render('public/500', {
-    pageTitle: 'Something Went Wrong',
-    message: IS_PRODUCTION ? 'Something went wrong. Please try again.' : err.message,
-  });
+  // The view layer (e.g. the shared footer's login/signup forms) may depend
+  // on locals like csrfToken that upstream middleware never got to set if
+  // the failure happened earlier in the stack (e.g. session/DB errors). Views
+  // are expected to guard those themselves, but render() is still wrapped
+  // here as a last-resort net so a broken view can never take down error
+  // handling itself or trigger a second, conflicting response.
+  res.status(status).render(
+    'public/500',
+    {
+      pageTitle: 'Something Went Wrong',
+      message: IS_PRODUCTION ? 'Something went wrong. Please try again.' : err.message,
+    },
+    (renderErr, html) => {
+      if (renderErr) {
+        console.error('500 page itself failed to render:', renderErr.message);
+        if (!res.headersSent) {
+          res.type('text/plain').send('Something went wrong. Please try again.');
+        }
+        return;
+      }
+      res.send(html);
+    }
+  );
 }
 
 module.exports = errorHandler;
