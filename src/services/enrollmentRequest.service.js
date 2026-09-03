@@ -50,13 +50,28 @@ async function setStatus(id, status) {
 // Approves the request: performs the same orderId=null manual enrollment as
 // the student-admin "Enroll" action, then marks the request ENROLLED. Never
 // fabricates payment/order state.
+//
+// Idempotent: approving a request twice (e.g. an admin double-click) must
+// not surface an error once the student is already enrolled — the desired
+// end state (student ACTIVE, request ENROLLED) is already reached, so a
+// repeat call is a no-op success rather than a thrown EnrollmentError.
 async function approveAndEnroll(id) {
   const existing = await prisma.enrollmentRequest.findUnique({ where: { id } });
   if (!existing) {
     throw new EnrollmentRequestError('Enrollment request not found.');
   }
 
-  await enrollmentService.enrollStudentManually(existing.userId, existing.courseId);
+  try {
+    await enrollmentService.enrollStudentManually(existing.userId, existing.courseId);
+  } catch (err) {
+    const alreadyEnrolled =
+      err instanceof enrollmentService.EnrollmentError &&
+      (await enrollmentService.isUserEnrolled(existing.userId, existing.courseId));
+    if (!alreadyEnrolled) {
+      throw err;
+    }
+  }
+
   return prisma.enrollmentRequest.update({ where: { id }, data: { status: 'ENROLLED' } });
 }
 
