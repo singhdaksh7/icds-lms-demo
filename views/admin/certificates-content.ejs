@@ -1,1 +1,22 @@
-<h1 class="mb-4">Certificates</h1><div class="admin-card table-responsive"><table class="table"><thead><tr><th>Number</th><th>Student</th><th>Course</th><th>Issued</th></tr></thead><tbody><% certificates.forEach(c => { %><tr><td><%= c.certificateNumber %></td><td><%= c.user.name %><br><small><%= c.user.email %></small></td><td><%= c.course.title %></td><td><%= c.issuedAt.toLocaleDateString('en-IN') %></td></tr><% }) %></tbody></table></div>
+<h1 class="mb-4">Certificates</h1>
+<div class="admin-card table-responsive">
+    <% if (!certificates.length) { %>
+        <%- include('../partials/empty-state', { icon: 'bi-award', title: 'No certificates issued yet', text: 'Certificates appear here once a student completes every published lesson in a course.' }) %>
+    <% } else { %>
+        <table class="table align-middle mb-0">
+            <thead>
+                <tr><th>Number</th><th>Student</th><th>Course</th><th>Issued</th></tr>
+            </thead>
+            <tbody>
+                <% certificates.forEach(function (c) { %>
+                    <tr>
+                        <td><code><%= c.certificateNumber %></code></td>
+                        <td><%= c.user.name %><br><small class="text-muted"><%= c.user.email %></small></td>
+                        <td><%= c.course.title %></td>
+                        <td class="text-muted small"><%= c.issuedAt.toLocaleDateString('en-IN') %></td>
+                    </tr>
+                <% }) %>
+            </tbody>
+        </table>
+    <% } %>
+</div>

@@ -42,7 +42,9 @@
                                 <img
                                     class="instructor-image"
                                     src="<%= instructor.photoUrl || '/assets/images/instructor-placeholder.svg' %>"
-                                    alt="<%= instructor.name %>">
+                                    alt="<%= instructor.name %>"
+                                    loading="lazy"
+                                    onerror="this.onerror=null;this.src='/assets/images/instructor-placeholder.svg';">
 
                                 <div class="instructor-social">
 

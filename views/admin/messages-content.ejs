@@ -1,1 +1,23 @@
-<h1 class="mb-4">Contact Messages</h1><div class="admin-card table-responsive"><table class="table"><thead><tr><th>Name</th><th>Email</th><th>Subject</th><th>Status</th><th>Received</th></tr></thead><tbody><% messages.forEach(m => { %><tr><td><a href="/admin/messages/<%= m.id %>"><%= m.name %></a></td><td><%= m.email %></td><td><%= m.subject %></td><td><%= m.status %></td><td><%= m.createdAt.toLocaleDateString('en-IN') %></td></tr><% }) %></tbody></table></div>
+<h1 class="mb-4">Contact Messages</h1>
+<div class="admin-card table-responsive">
+    <% if (!messages.length) { %>
+        <%- include('../partials/empty-state', { icon: 'bi-envelope', title: 'No messages yet', text: 'Contact form submissions from visitors will appear here.' }) %>
+    <% } else { %>
+        <table class="table align-middle mb-0">
+            <thead>
+                <tr><th>Name</th><th>Email</th><th>Subject</th><th>Status</th><th>Received</th></tr>
+            </thead>
+            <tbody>
+                <% messages.forEach(function (m) { %>
+                    <tr>
+                        <td><a href="/admin/messages/<%= m.id %>"><%= m.name %></a></td>
+                        <td><%= m.email %></td>
+                        <td><%= m.subject %></td>
+                        <td><span class="badge bg-<%= m.status === 'NEW' ? 'primary' : (m.status === 'READ' ? 'secondary' : 'success') %>"><%= m.status %></span></td>
+                        <td class="text-muted small"><%= m.createdAt.toLocaleDateString('en-IN') %></td>
+                    </tr>
+                <% }) %>
+            </tbody>
+        </table>
+    <% } %>
+</div>

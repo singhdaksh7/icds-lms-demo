@@ -50,14 +50,49 @@
 .admin-stat-card {
     background: #fff;
     border-radius: 14px;
-    padding: 24px;
+    padding: 22px 24px;
     box-shadow: var(--shadow-soft);
+    height: 100%;
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    transition: box-shadow .2s ease, transform .2s ease;
+}
+
+a.admin-stat-card-link {
+    text-decoration: none;
+    display: block;
     height: 100%;
 }
 
+a.admin-stat-card-link:hover .admin-stat-card {
+    box-shadow: var(--shadow-card);
+    transform: translateY(-2px);
+}
+
+.admin-stat-icon {
+    flex-shrink: 0;
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 19px;
+    background: var(--primary-light);
+    color: var(--primary-color);
+}
+
+.admin-stat-card.tone-success .admin-stat-icon { background: var(--success-light); color: var(--success-color); }
+.admin-stat-card.tone-warning .admin-stat-icon { background: var(--warning-light); color: var(--warning-color); }
+.admin-stat-card.tone-danger .admin-stat-icon { background: var(--danger-light); color: var(--danger-color); }
+.admin-stat-card.tone-info .admin-stat-icon { background: var(--info-light); color: var(--info-color); }
+.admin-stat-card.tone-muted .admin-stat-icon { background: var(--light-bg); color: var(--body-color); }
+
 .admin-stat-number {
-    font-size: 30px;
+    font-size: 26px;
     font-weight: 800;
+    line-height: 1.1;
     color: var(--secondary-color);
 }
 
@@ -66,6 +101,7 @@
     color: var(--body-color);
     text-transform: uppercase;
     letter-spacing: .5px;
+    margin-top: 2px;
 }
 
 .admin-card {
@@ -73,6 +109,22 @@
     border-radius: 14px;
     padding: 24px;
     box-shadow: var(--shadow-soft);
+}
+
+/* Visual hint that a data table scrolls sideways on narrow screens —
+   the scroll itself is already contained (no page-level overflow), this
+   just makes it discoverable. */
+@media (max-width: 767.98px) {
+    .admin-card .table-responsive {
+        background:
+            linear-gradient(to right, #fff 30%, rgba(255,255,255,0)),
+            linear-gradient(to right, rgba(255,255,255,0), #fff 70%) 100% 0,
+            radial-gradient(farthest-side at 0 50%, rgba(20,20,60,.12), rgba(0,0,0,0)),
+            radial-gradient(farthest-side at 100% 50%, rgba(20,20,60,.12), rgba(0,0,0,0)) 100% 0;
+        background-repeat: no-repeat;
+        background-size: 40px 100%, 40px 100%, 14px 100%, 14px 100%;
+        background-attachment: local, local, scroll, scroll;
+    }
 }
 
 .admin-table th {

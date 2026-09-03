@@ -52,14 +52,39 @@ app.use(
   })
 );
 
-// Basic abuse protection for all routes; the auth/payment routes
-// additionally get their own stricter, dedicated limiters.
+// Static assets are served before the rate limiter below — a single page
+// load pulls in CSS/JS/icon-font/image requests well beyond a normal user's
+// document-request count, so counting them against the same budget as
+// actual routes let ordinary browsing exhaust the limit and made the app
+// serve a raw "Too Many Requests" page for legitimate visitors. None of this
+// is sensitive: local lesson videos live in storage/videos/ (outside this
+// directory entirely) and are reachable only through the authorized
+// /media/lessons/:lessonId/video route, which IS behind the limiter below.
+app.use(express.static(path.join(__dirname, 'public')));
+
+// Course/instructor thumbnails: served via a dedicated static route (rather
+// than relying on the plain public/ mount above) so THUMBNAIL_STORAGE_ROOT
+// can be pointed at a path outside public/ in production without changing
+// this URL — see src/lib/imageStorage.js.
+app.use('/uploads/thumbnails', express.static(require('./src/lib/imageStorage').STORAGE_ROOT));
+
+// Basic abuse protection for all remaining (non-static) routes; the
+// auth/payment routes additionally get their own stricter, dedicated
+// limiters. A styled `handler` keeps this consistent with the rest of the
+// error pages instead of express-rate-limit's raw plain-text default.
 app.use(
   rateLimit({
     windowMs: 15 * 60 * 1000,
     max: 300,
     standardHeaders: true,
     legacyHeaders: false,
+    // Fires before the session/CSRF/currentUser stack below has run, so
+    // this renders a self-contained view with no dependency on those
+    // locals (see views/public/rate-limited.ejs) rather than the full
+    // site layout.
+    handler(req, res) {
+      res.status(429).render('public/rate-limited');
+    },
   })
 );
 
@@ -76,17 +101,6 @@ app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 // reachable even during the exact DB outage it exists to diagnose. See
 // README "Production Operations — Temporary Network Diagnostics".
 app.use('/internal', internalRoutes);
-
-// Only public/ is ever web-servable. Local lesson videos live in
-// storage/videos/ (outside this directory entirely) and are reachable only
-// through the authorized /media/lessons/:lessonId/video route.
-app.use(express.static(path.join(__dirname, 'public')));
-
-// Course/instructor thumbnails: served via a dedicated static route (rather
-// than relying on the plain public/ mount above) so THUMBNAIL_STORAGE_ROOT
-// can be pointed at a path outside public/ in production without changing
-// this URL — see src/lib/imageStorage.js.
-app.use('/uploads/thumbnails', express.static(require('./src/lib/imageStorage').STORAGE_ROOT));
 
 // Auth stack: cookies -> session -> flash -> CSRF token -> current user.
 // Order matters — CSRF and currentUser both depend on the session existing.

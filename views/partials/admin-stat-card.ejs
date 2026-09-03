@@ -1,0 +1,20 @@
+<%# Locals: value, label, icon (bootstrap-icons class), tone (success/warning/danger/info/muted, optional), href (optional) #%>
+<% if (typeof href !== 'undefined' && href) { %>
+<a href="<%= href %>" class="admin-stat-card-link">
+    <div class="admin-stat-card<%= typeof tone !== 'undefined' && tone ? ' tone-' + tone : '' %>">
+        <div class="admin-stat-icon"><i class="bi <%= icon %>"></i></div>
+        <div>
+            <div class="admin-stat-number"><%= value %></div>
+            <div class="admin-stat-label"><%= label %></div>
+        </div>
+    </div>
+</a>
+<% } else { %>
+<div class="admin-stat-card<%= typeof tone !== 'undefined' && tone ? ' tone-' + tone : '' %>">
+    <div class="admin-stat-icon"><i class="bi <%= icon %>"></i></div>
+    <div>
+        <div class="admin-stat-number"><%= value %></div>
+        <div class="admin-stat-label"><%= label %></div>
+    </div>
+</div>
+<% } %>

@@ -1,1 +1,20 @@
-<h1 class="mb-4">Newsletter Subscribers</h1><div class="admin-card table-responsive"><table class="table"><thead><tr><th>Email</th><th>Subscribed</th></tr></thead><tbody><% subscribers.forEach(s => { %><tr><td><%= s.email %></td><td><%= s.subscribedAt.toLocaleDateString('en-IN') %></td></tr><% }) %></tbody></table></div>
+<h1 class="mb-4">Newsletter Subscribers</h1>
+<div class="admin-card table-responsive">
+    <% if (!subscribers.length) { %>
+        <%- include('../partials/empty-state', { icon: 'bi-megaphone', title: 'No subscribers yet', text: 'Visitors who subscribe via the newsletter form will appear here.' }) %>
+    <% } else { %>
+        <table class="table align-middle mb-0">
+            <thead>
+                <tr><th>Email</th><th>Subscribed</th></tr>
+            </thead>
+            <tbody>
+                <% subscribers.forEach(function (s) { %>
+                    <tr>
+                        <td><%= s.email %></td>
+                        <td class="text-muted small"><%= s.subscribedAt.toLocaleDateString('en-IN') %></td>
+                    </tr>
+                <% }) %>
+            </tbody>
+        </table>
+    <% } %>
+</div>

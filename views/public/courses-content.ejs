@@ -63,10 +63,13 @@
 
         <% if (courses.length === 0) { %>
 
-            <div class="text-center py-5">
-                <p class="section-description mb-3">No courses match your search.</p>
-                <a href="/courses" class="hero-primary-btn d-inline-block">Browse All Courses</a>
-            </div>
+            <%- include('../partials/empty-state', {
+                icon: 'bi-search',
+                title: 'No courses match your search',
+                text: 'Try a different keyword, or clear your filters to see everything we offer.',
+                actionHref: '/courses',
+                actionLabel: 'Browse All Courses',
+            }) %>
 
         <% } else { %>
 

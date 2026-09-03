@@ -13,8 +13,20 @@
             --white-color: #ffffff;
             --border-color: #e8e8f2;
             --success-color: #27ae60;
+            --success-light: #e8f8ee;
+            --warning-color: #e6a417;
+            --warning-light: #fdf3dd;
+            --danger-color: #e14b4b;
+            --danger-light: #fceaea;
+            --info-color: #3b82c4;
+            --info-light: #e8f2fb;
             --shadow-soft: 0 15px 50px rgba(28, 30, 80, .08);
             --shadow-card: 0 20px 60px rgba(39, 42, 100, .10);
+            --shadow-sm: 0 4px 14px rgba(28, 30, 80, .06);
+            --radius-sm: 8px;
+            --radius-md: 14px;
+            --radius-lg: 24px;
+            --container-width: 1280px;
         }
 
         * {
@@ -584,18 +596,6 @@
             font-size: 10px;
             font-weight: 800;
             text-transform: uppercase;
-        }
-
-        .course-wishlist {
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            width: 35px;
-            height: 35px;
-            border: 0;
-            background: rgba(255,255,255,.92);
-            color: var(--secondary-color);
-            border-radius: 50%;
         }
 
         .course-content {
@@ -1286,15 +1286,125 @@
             background: var(--primary-dark);
         }
 
-        .reveal-element {
+        /* Progressive enhancement: content is visible by default. JS adds
+           .reveal-init (see main.js) only once it has confirmed
+           IntersectionObserver support, so a page where the script fails to
+           load/execute never leaves content permanently hidden. */
+        .reveal-init.reveal-element {
             opacity: 0;
             transform: translateY(35px);
             transition: opacity .8s ease, transform .8s ease;
         }
 
-        .reveal-element.visible {
+        .reveal-init.reveal-element.visible {
             opacity: 1;
             transform: translateY(0);
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .reveal-init.reveal-element {
+                opacity: 1;
+                transform: none;
+                transition: none;
+            }
+        }
+
+        /* --- Password show/hide toggle (injected by main.js) --- */
+        .password-field-wrap {
+            position: relative;
+        }
+
+        .password-field-wrap input[type="password"],
+        .password-field-wrap input[type="text"] {
+            padding-right: 44px;
+        }
+
+        .password-toggle-btn {
+            position: absolute;
+            top: 50%;
+            right: 4px;
+            transform: translateY(-50%);
+            width: 34px;
+            height: 34px;
+            border: 0;
+            background: transparent;
+            color: var(--body-color);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        .password-toggle-btn:hover {
+            color: var(--primary-color);
+            background: var(--primary-light);
+        }
+
+        .password-toggle-btn:focus-visible {
+            outline: 2px solid var(--primary-color);
+            outline-offset: 2px;
+        }
+
+        /* --- Error / empty states (403, 404, 429, 500, "no data yet" blocks) --- */
+        .error-state {
+            max-width: 480px;
+            margin: 0 auto;
+        }
+
+        .error-state-icon {
+            width: 84px;
+            height: 84px;
+            margin: 0 auto 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background: var(--primary-light);
+            color: var(--primary-color);
+            font-size: 34px;
+        }
+
+        .error-state-code {
+            font-weight: 800;
+            font-size: 13px;
+            letter-spacing: 2px;
+            color: var(--body-color);
+            text-transform: uppercase;
+            margin-bottom: 6px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 56px 24px;
+        }
+
+        .empty-state-icon {
+            width: 64px;
+            height: 64px;
+            margin: 0 auto 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background: var(--light-bg);
+            color: var(--body-color);
+            font-size: 26px;
+        }
+
+        .empty-state-title {
+            color: var(--secondary-color);
+            font-weight: 700;
+            font-size: 17px;
+            margin-bottom: 6px;
+        }
+
+        .empty-state-text {
+            color: var(--body-color);
+            font-size: 14px;
+            max-width: 380px;
+            margin: 0 auto;
         }
 
         @media (max-width: 991.98px) {

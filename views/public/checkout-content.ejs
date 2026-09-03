@@ -11,7 +11,8 @@
                         <img
                             src="<%= course.thumbnailUrl || '/assets/images/course-placeholder.svg' %>"
                             alt="<%= course.title %>"
-                            style="width:90px;height:90px;border-radius:12px;object-fit:cover;">
+                            style="width:90px;height:90px;border-radius:12px;object-fit:cover;"
+                            onerror="this.onerror=null;this.src='/assets/images/course-placeholder.svg';">
                         <div>
                             <h5 class="mb-1"><%= course.title %></h5>
                             <small class="text-muted">

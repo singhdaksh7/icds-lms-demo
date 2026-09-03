@@ -29,7 +29,8 @@
                     src="<%= course.thumbnailUrl || '/assets/images/course-placeholder.svg' %>"
                     alt="<%= course.title %>"
                     class="w-100 rounded-4 mb-4"
-                    style="max-height:420px; object-fit:cover;">
+                    style="max-height:420px; object-fit:cover;"
+                    onerror="this.onerror=null;this.src='/assets/images/course-placeholder.svg';">
 
                 <% if (course.description) { %>
                     <h3 class="mb-3">About this course</h3>
@@ -43,7 +44,8 @@
                         <img
                             src="<%= course.instructor.photoUrl || '/assets/images/instructor-placeholder.svg' %>"
                             alt="<%= course.instructor.name %>"
-                            style="width:64px;height:64px;border-radius:50%;object-fit:cover;">
+                            style="width:64px;height:64px;border-radius:50%;object-fit:cover;"
+                            onerror="this.onerror=null;this.src='/assets/images/instructor-placeholder.svg';">
                         <div>
                             <strong class="d-block"><%= course.instructor.name %></strong>
                             <small class="text-muted"><%= course.instructor.title || 'Instructor' %></small>

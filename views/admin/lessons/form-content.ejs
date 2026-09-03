@@ -105,8 +105,9 @@
             <div class="col-md-6">
                 <h6 class="small fw-semibold">Option B — Register an uploaded file</h6>
                 <p class="form-text mt-0">
-                    Upload the .mp4/.webm file via Hostinger File Manager or SFTP into
-                    <code>storage/videos/<%= course.slug %>/</code>, then enter its filename here.
+                    Upload the .mp4/.webm file to this course's video folder via
+                    File Manager or SFTP (see README "Video Upload" for the exact
+                    path on this server), then enter just the filename here.
                 </p>
                 <form method="POST" action="/admin/lessons/<%= lesson.id %>/video/register">
                     <input type="hidden" name="_csrf" value="<%= csrfToken %>">

@@ -25,36 +25,45 @@ window.addEventListener("scroll", function () {
 
 /*
  * Scroll Reveal Animation
+ * Elements only get the (opacity: 0) pre-animation state once JS has
+ * actually attached the observer (.reveal-init, added below) — if this
+ * script fails to load or run for any reason, content stays visible
+ * instead of being permanently stuck invisible. See main.css.
  */
-const revealObserver = new IntersectionObserver(
-    function (entries) {
+if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches && "IntersectionObserver" in window) {
 
-        entries.forEach(function (entry) {
+    const revealElements = document.querySelectorAll(".reveal-element");
 
-            if (entry.isIntersecting) {
+    const revealObserver = new IntersectionObserver(
+        function (entries) {
 
-                entry.target.classList.add("visible");
+            entries.forEach(function (entry) {
 
-                revealObserver.unobserve(entry.target);
+                if (entry.isIntersecting) {
 
-            }
+                    entry.target.classList.add("visible");
 
-        });
+                    revealObserver.unobserve(entry.target);
 
-    },
-    {
-        threshold: .12
-    }
-);
+                }
 
+            });
 
-document
-    .querySelectorAll(".reveal-element")
-    .forEach(function (element) {
+        },
+        {
+            threshold: .12
+        }
+    );
+
+    revealElements.forEach(function (element) {
+
+        element.classList.add("reveal-init");
 
         revealObserver.observe(element);
 
     });
+
+}
 
 
 /*
@@ -144,34 +153,34 @@ document
 
 
 /*
- * Wishlist Animation
- * NOTE: client-side only, not persisted to an account yet.
+ * Password show/hide toggle
+ * Applies to every password field on the page (login, signup, reset,
+ * change-password) without needing per-template markup.
  */
 document
-    .querySelectorAll(".course-wishlist")
-    .forEach(function (button) {
+    .querySelectorAll('input[type="password"]')
+    .forEach(function (input) {
 
-        button.addEventListener("click", function () {
+        if (input.closest(".password-field-wrap")) return;
 
-            const icon = this.querySelector("i");
+        const wrap = document.createElement("div");
+        wrap.className = "password-field-wrap";
+        input.parentNode.insertBefore(wrap, input);
+        wrap.appendChild(input);
 
-            if (icon.classList.contains("bi-heart")) {
+        const toggle = document.createElement("button");
+        toggle.type = "button";
+        toggle.className = "password-toggle-btn";
+        toggle.setAttribute("aria-label", "Show password");
+        toggle.innerHTML = '<i class="bi bi-eye"></i>';
+        wrap.appendChild(toggle);
 
-                icon.classList.remove("bi-heart");
+        toggle.addEventListener("click", function () {
 
-                icon.classList.add("bi-heart-fill");
-
-                this.style.color = "#565acf";
-
-            } else {
-
-                icon.classList.remove("bi-heart-fill");
-
-                icon.classList.add("bi-heart");
-
-                this.style.color = "";
-
-            }
+            const showing = input.type === "text";
+            input.type = showing ? "password" : "text";
+            toggle.innerHTML = showing ? '<i class="bi bi-eye"></i>' : '<i class="bi bi-eye-slash"></i>';
+            toggle.setAttribute("aria-label", showing ? "Show password" : "Hide password");
 
         });
 

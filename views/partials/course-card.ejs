@@ -4,7 +4,9 @@
 
         <img
             src="<%= course.thumbnailUrl || '/assets/images/course-placeholder.svg' %>"
-            alt="<%= course.title %>">
+            alt="<%= course.title %>"
+            loading="lazy"
+            onerror="this.onerror=null;this.src='/assets/images/course-placeholder.svg';">
 
         <% if (course.featured) { %>
             <span class="course-badge">Featured</span>

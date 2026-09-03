@@ -1,98 +1,61 @@
 <h1 class="mb-1" style="font-size:24px;">Admin Dashboard</h1>
 <p class="text-muted mb-4">Signed in as <%= currentUser.name %>. Real database counts only — revenue is summed from PAID orders only, never pending/failed ones.</p>
 
+<div class="row g-3 mb-2">
+    <div class="col-6 col-lg-3">
+        <%- include('../partials/admin-stat-card', { value: '₹' + Number(paymentStats.totalPaidRevenue).toLocaleString('en-IN'), label: 'Total Paid Revenue', icon: 'bi-cash-stack', tone: 'success', href: '/admin/orders' }) %>
+    </div>
+    <div class="col-6 col-lg-3">
+        <%- include('../partials/admin-stat-card', { value: stats.pendingEnrollmentRequests, label: 'Pending Enrollment Requests', icon: 'bi-person-plus', tone: stats.pendingEnrollmentRequests > 0 ? 'warning' : 'muted', href: '/admin/enrollment-requests' }) %>
+    </div>
+    <div class="col-6 col-lg-3">
+        <%- include('../partials/admin-stat-card', { value: stats.newMessages, label: 'New Messages', icon: 'bi-envelope', tone: stats.newMessages > 0 ? 'info' : 'muted', href: '/admin/messages' }) %>
+    </div>
+    <div class="col-6 col-lg-3">
+        <%- include('../partials/admin-stat-card', { value: stats.certificatesIssued, label: 'Certificates Issued', icon: 'bi-award', tone: 'success', href: '/admin/certificates' }) %>
+    </div>
+</div>
+
+<div class="row g-3 mb-2">
+    <div class="col-6 col-lg-3">
+        <%- include('../partials/admin-stat-card', { value: paymentStats.paidOrders, label: 'Paid Orders', icon: 'bi-check-circle', tone: 'success', href: '/admin/orders' }) %>
+    </div>
+    <div class="col-6 col-lg-3">
+        <%- include('../partials/admin-stat-card', { value: paymentStats.pendingOrders, label: 'Pending Orders', icon: 'bi-hourglass-split', tone: 'warning', href: '/admin/orders' }) %>
+    </div>
+    <div class="col-6 col-lg-3">
+        <%- include('../partials/admin-stat-card', { value: paymentStats.failedOrders, label: 'Failed Orders', icon: 'bi-x-circle', tone: 'danger', href: '/admin/orders' }) %>
+    </div>
+    <div class="col-6 col-lg-3">
+        <%- include('../partials/admin-stat-card', { value: stats.newsletterSubscribers, label: 'Newsletter Subscribers', icon: 'bi-megaphone', tone: 'info', href: '/admin/newsletter' }) %>
+    </div>
+</div>
+
 <div class="row g-3 mb-4">
-
     <div class="col-6 col-lg-3">
-        <div class="admin-stat-card">
-            <div class="admin-stat-number">₹<%= Number(paymentStats.totalPaidRevenue).toLocaleString('en-IN') %></div>
-            <div class="admin-stat-label">Total Paid Revenue</div>
-        </div>
+        <%- include('../partials/admin-stat-card', { value: stats.totalStudents, label: 'Students', icon: 'bi-people', href: '/admin/students' }) %>
     </div>
-
-    <div class="col-6 col-lg-3"><div class="admin-stat-card"><div class="admin-stat-number"><%= stats.newMessages %></div><div class="admin-stat-label">New Messages</div></div></div>
-    <div class="col-6 col-lg-3"><div class="admin-stat-card"><div class="admin-stat-number"><%= stats.newsletterSubscribers %></div><div class="admin-stat-label">Newsletter Subscribers</div></div></div>
-    <div class="col-6 col-lg-3"><div class="admin-stat-card"><div class="admin-stat-number"><%= stats.certificatesIssued %></div><div class="admin-stat-label">Certificates Issued</div></div></div>
-
     <div class="col-6 col-lg-3">
-        <div class="admin-stat-card">
-            <div class="admin-stat-number"><%= paymentStats.paidOrders %></div>
-            <div class="admin-stat-label">Paid Orders</div>
-        </div>
+        <%- include('../partials/admin-stat-card', { value: stats.totalCourses, label: 'Total Courses', icon: 'bi-collection-play', href: '/admin/courses' }) %>
     </div>
-
     <div class="col-6 col-lg-3">
-        <div class="admin-stat-card">
-            <div class="admin-stat-number"><%= paymentStats.pendingOrders %></div>
-            <div class="admin-stat-label">Pending Orders</div>
-        </div>
+        <%- include('../partials/admin-stat-card', { value: stats.publishedCourses, label: 'Published Courses', icon: 'bi-eye', tone: 'success', href: '/admin/courses' }) %>
     </div>
-
     <div class="col-6 col-lg-3">
-        <div class="admin-stat-card">
-            <div class="admin-stat-number"><%= paymentStats.failedOrders %></div>
-            <div class="admin-stat-label">Failed Orders</div>
-        </div>
+        <%- include('../partials/admin-stat-card', { value: stats.draftCourses, label: 'Draft Courses', icon: 'bi-file-earmark-text', tone: 'muted', href: '/admin/courses' }) %>
     </div>
+</div>
 
+<div class="row g-3 mb-4">
     <div class="col-6 col-lg-3">
-        <div class="admin-stat-card">
-            <div class="admin-stat-number"><%= stats.totalStudents %></div>
-            <div class="admin-stat-label">Students</div>
-        </div>
+        <%- include('../partials/admin-stat-card', { value: stats.totalCategories, label: 'Categories', icon: 'bi-tags', href: '/admin/categories' }) %>
     </div>
-
     <div class="col-6 col-lg-3">
-        <div class="admin-stat-card">
-            <div class="admin-stat-number"><%= stats.totalCourses %></div>
-            <div class="admin-stat-label">Total Courses</div>
-        </div>
+        <%- include('../partials/admin-stat-card', { value: stats.totalInstructors, label: 'Instructors', icon: 'bi-person-badge', href: '/admin/instructors' }) %>
     </div>
-
     <div class="col-6 col-lg-3">
-        <div class="admin-stat-card">
-            <div class="admin-stat-number"><%= stats.publishedCourses %></div>
-            <div class="admin-stat-label">Published Courses</div>
-        </div>
+        <%- include('../partials/admin-stat-card', { value: stats.totalEnrollments, label: 'Total Enrollments', icon: 'bi-mortarboard', tone: 'success' }) %>
     </div>
-
-    <div class="col-6 col-lg-3">
-        <div class="admin-stat-card">
-            <div class="admin-stat-number"><%= stats.draftCourses %></div>
-            <div class="admin-stat-label">Draft Courses</div>
-        </div>
-    </div>
-
-    <div class="col-6 col-lg-3">
-        <div class="admin-stat-card">
-            <div class="admin-stat-number"><%= stats.totalCategories %></div>
-            <div class="admin-stat-label">Categories</div>
-        </div>
-    </div>
-
-    <div class="col-6 col-lg-3">
-        <div class="admin-stat-card">
-            <div class="admin-stat-number"><%= stats.totalInstructors %></div>
-            <div class="admin-stat-label">Instructors</div>
-        </div>
-    </div>
-
-    <div class="col-6 col-lg-3">
-        <div class="admin-stat-card">
-            <div class="admin-stat-number"><%= stats.totalEnrollments %></div>
-            <div class="admin-stat-label">Total Enrollments</div>
-        </div>
-    </div>
-
-    <div class="col-6 col-lg-3">
-        <a href="/admin/enrollment-requests" class="text-decoration-none">
-            <div class="admin-stat-card">
-                <div class="admin-stat-number"><%= stats.pendingEnrollmentRequests %></div>
-                <div class="admin-stat-label">Pending Enrollment Requests</div>
-            </div>
-        </a>
-    </div>
-
 </div>
 
 <div class="admin-card">
@@ -109,6 +72,9 @@
         </a>
         <a href="/admin/students" class="btn btn-sm btn-outline-secondary">
             <i class="bi bi-people"></i> Manage Students
+        </a>
+        <a href="/admin/enrollment-requests" class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-person-plus"></i> Enrollment Requests
         </a>
         <a href="/admin/orders" class="btn btn-sm btn-outline-secondary">
             <i class="bi bi-receipt"></i> View Orders

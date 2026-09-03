@@ -1,0 +1,15 @@
+<%# Shared visual for 403/404/500/429 content views.
+    Locals: code (string), icon (bootstrap-icons class), heading, message, showHome (default true) #%>
+<section class="section-space">
+    <div class="container text-center">
+        <div class="error-state">
+            <div class="error-state-icon"><i class="bi <%= icon %>"></i></div>
+            <div class="error-state-code"><%= code %></div>
+            <h1 class="section-title"><%= heading %></h1>
+            <p class="section-description"><%= message %></p>
+            <% if (typeof showHome === 'undefined' || showHome) { %>
+                <a href="/" class="hero-primary-btn d-inline-block mt-3">Back to Home</a>
+            <% } %>
+        </div>
+    </div>
+</section>

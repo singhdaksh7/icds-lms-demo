@@ -1,0 +1,10 @@
+<%# Reusable empty state for lists with zero rows.
+    Locals: icon (bootstrap-icons class), title, text, actionHref (optional), actionLabel (optional) #%>
+<div class="empty-state">
+    <div class="empty-state-icon"><i class="bi <%= icon %>"></i></div>
+    <div class="empty-state-title"><%= title %></div>
+    <p class="empty-state-text"><%= text %></p>
+    <% if (typeof actionHref !== 'undefined' && actionHref) { %>
+        <a href="<%= actionHref %>" class="btn btn-sm mt-3" style="background:var(--primary-color); color:#fff;"><%= actionLabel %></a>
+    <% } %>
+</div>
