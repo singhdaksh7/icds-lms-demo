@@ -16,12 +16,25 @@
                 </h1>
 
                 <% if (lesson.videoType === 'LOCAL' && lesson.videoPath) { %>
+                    <% const trackProgress = enrolled && !isAdmin; %>
+                    <% const savedProgress = trackProgress ? progressMap[lesson.id] : null; %>
                     <div class="ratio ratio-16x9 mb-4 rounded-4 overflow-hidden bg-dark">
-                        <video controls preload="metadata" playsinline controlsList="nodownload">
+                        <video
+                            <% if (trackProgress) { %>
+                            id="lesson-video"
+                            data-lesson-id="<%= lesson.id %>"
+                            data-resume-seconds="<%= savedProgress ? savedProgress.watchedSeconds : 0 %>"
+                            data-progress-url="/student/lessons/<%= lesson.id %>/progress"
+                            data-csrf="<%= csrfToken %>"
+                            <% } %>
+                            controls preload="metadata" playsinline controlsList="nodownload">
                             <source src="/media/lessons/<%= lesson.id %>/video" type="<%= lesson.videoPath.endsWith('.webm') ? 'video/webm' : 'video/mp4' %>">
                             Your browser does not support the video tag.
                         </video>
                     </div>
+                    <% if (trackProgress) { %>
+                        <script src="/js/lesson-progress.js" defer></script>
+                    <% } %>
                 <% } else if (videoEmbed) { %>
                     <div class="ratio ratio-16x9 mb-4 rounded-4 overflow-hidden bg-dark">
                         <iframe

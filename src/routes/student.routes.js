@@ -21,5 +21,6 @@ router.get('/orders', studentController.listMyOrders);
 router.get('/orders/:id', studentController.getMyOrderDetail);
 
 router.post('/lessons/:lessonId/complete', doubleCsrfProtection, studentController.completeLesson);
+router.post('/lessons/:lessonId/progress', doubleCsrfProtection, studentController.saveProgress);
 
 module.exports = router;

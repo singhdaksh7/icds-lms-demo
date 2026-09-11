@@ -1,5 +1,5 @@
 const { listEnrollmentsForUser } = require('../services/enrollment.service');
-const { markLessonComplete, ProgressError } = require('../services/progress.service');
+const { markLessonComplete, saveLessonProgress, ProgressError } = require('../services/progress.service');
 const orderService = require('../services/order.service');
 const { parsePage } = require('../lib/pagination');
 const { prisma } = require('../config/db');
@@ -56,6 +56,41 @@ async function completeLesson(req, res, next) {
   }
 }
 
+// Called periodically by the lesson video player (see public/js/lesson-progress.js)
+// to persist resume position + progress. JSON in, JSON out — never a
+// redirect, since this is an XHR/sendBeacon call, not a form submission.
+async function saveProgress(req, res, next) {
+  try {
+    const lessonId = parseInt(req.params.lessonId, 10);
+    if (!Number.isInteger(lessonId)) {
+      return res.status(404).json({ success: false, error: 'Not found.' });
+    }
+
+    const positionSeconds = Number(req.body.positionSeconds);
+    const durationSeconds = Number(req.body.durationSeconds);
+    if (!Number.isFinite(positionSeconds) || !Number.isFinite(durationSeconds)) {
+      return res.status(400).json({ success: false, error: 'Invalid progress data.' });
+    }
+
+    const { lessonProgress, progress } = await saveLessonProgress(req.currentUser.id, lessonId, {
+      positionSeconds,
+      durationSeconds,
+    });
+
+    res.json({
+      success: true,
+      completed: lessonProgress.completed,
+      watchedSeconds: lessonProgress.watchedSeconds,
+      progressPercent: progress.percent,
+    });
+  } catch (err) {
+    if (err instanceof ProgressError) {
+      return res.status(403).json({ success: false, error: err.message });
+    }
+    next(err);
+  }
+}
+
 async function listMyOrders(req, res, next) {
   try {
     const page = parsePage(req.query.page);
@@ -99,4 +134,4 @@ async function getMyOrderDetail(req, res, next) {
   }
 }
 
-module.exports = { getDashboard, completeLesson, listMyOrders, getMyOrderDetail, profilePage, updateProfile, securityPage, changePassword, listCertificates, issueCertificate, downloadCertificate };
+module.exports = { getDashboard, completeLesson, saveProgress, listMyOrders, getMyOrderDetail, profilePage, updateProfile, securityPage, changePassword, listCertificates, issueCertificate, downloadCertificate };
