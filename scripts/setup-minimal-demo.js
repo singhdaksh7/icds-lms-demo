@@ -4,7 +4,8 @@
  *   - 2 published courses (Professional Cosmetology Foundations,
  *     Introduction to Aesthetic Practice), each with 1 published, protected
  *     video lesson
- *   - locally-stored, generated placeholder thumbnails for both courses
+ *   - committed, licensed demo photography as thumbnails for both courses
+ *     (see public/images/demo/)
  *   - 1 demo student account (credentials read from the environment only —
  *     never hardcoded, never logged)
  *   - 1 ACTIVE enrollment: demo student -> Course 1 only. Course 2 stays
@@ -31,10 +32,8 @@
  * the demo needs (re)provisioning.
  */
 const fs = require('fs');
-const path = require('path');
 const { PrismaClient } = require('@prisma/client');
 const { hashPassword } = require('../src/lib/password');
-const imageStorage = require('../src/lib/imageStorage');
 const videoStorage = require('../src/lib/videoStorage');
 
 const prisma = new PrismaClient();
@@ -51,46 +50,16 @@ const PLACEHOLDER_PASSWORDS = new Set([
 
 const COURSE_1_VIDEO_FILENAME = 'course-1-demo.mp4';
 const COURSE_2_VIDEO_FILENAME = 'course-2-demo.mp4';
-const COURSE_1_THUMB_FILENAME = 'course-1.svg';
-const COURSE_2_THUMB_FILENAME = 'course-2.svg';
+
+// Committed, licensed demo photography (see public/images/demo/) rather than
+// a generated placeholder — served as plain static files via the normal
+// public/ mount, so no upload storage or DB filename bookkeeping is needed.
+const COURSE_1_THUMB_URL = '/images/demo/course-cosmetology.jpg';
+const COURSE_2_THUMB_URL = '/images/demo/course-aesthetics.jpg';
 
 function fail(message) {
   console.error(`\nsetup-minimal-demo: ${message}\n`);
   process.exit(1);
-}
-
-// A clean, generated (not photographic) placeholder thumbnail — no stock
-// photography, no fabricated instructor identity, no third-party branding.
-// SVG renders fine via a plain <img src>, needs no image library, and is
-// trivially reasoned about (no binary asset to vet).
-function placeholderThumbnailSvg({ titleLines, category, accent }) {
-  const textLines = titleLines
-    .map((line, i) => `<tspan x="80" dy="${i === 0 ? 0 : 62}">${line}</tspan>`)
-    .join('');
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="675" viewBox="0 0 1200 675">
-  <defs>
-    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="${accent[0]}"/>
-      <stop offset="100%" stop-color="${accent[1]}"/>
-    </linearGradient>
-  </defs>
-  <rect width="1200" height="675" fill="url(#g)"/>
-  <circle cx="1040" cy="120" r="140" fill="rgba(255,255,255,0.08)"/>
-  <circle cx="140" cy="580" r="180" fill="rgba(255,255,255,0.06)"/>
-  <text x="80" y="90" font-family="Arial, sans-serif" font-size="26" fill="rgba(255,255,255,0.85)" letter-spacing="2">${category.toUpperCase()}</text>
-  <text x="80" y="420" font-family="Arial, sans-serif" font-size="54" font-weight="700" fill="#ffffff">${textLines}</text>
-</svg>`;
-}
-
-function ensureThumbnail(filename, options) {
-  const dir = imageStorage.STORAGE_ROOT;
-  fs.mkdirSync(dir, { recursive: true });
-  const fullPath = path.join(dir, filename);
-  if (!fs.existsSync(fullPath)) {
-    fs.writeFileSync(fullPath, placeholderThumbnailSvg(options), 'utf8');
-    console.log(`  Created placeholder thumbnail: ${fullPath}`);
-  }
-  return imageStorage.publicUrlFor(filename);
 }
 
 function checkVideoPresence(filename) {
@@ -145,12 +114,6 @@ async function main() {
   // -----------------------------------------------------------------------
   // Course 1: Professional Cosmetology Foundations (student IS enrolled)
   // -----------------------------------------------------------------------
-  const course1ThumbUrl = ensureThumbnail(COURSE_1_THUMB_FILENAME, {
-    titleLines: ['Cosmetology', 'Foundations'],
-    category: 'Cosmetology',
-    accent: ['#6d28d9', '#db2777'],
-  });
-
   const course1 = await prisma.course.upsert({
     where: { slug: 'professional-cosmetology-foundations' },
     update: {
@@ -158,6 +121,7 @@ async function main() {
       status: 'PUBLISHED',
       featured: true,
       categoryId: cosmetology.id,
+      thumbnailUrl: COURSE_1_THUMB_URL,
     },
     create: {
       title: 'Professional Cosmetology Foundations',
@@ -166,7 +130,7 @@ async function main() {
         'A structured introductory program covering the foundations of professional cosmetology, hygiene, client preparation and practical workflow.',
       description:
         'This introductory program lays the groundwork for a career in professional cosmetology. Students are guided through core hygiene and sanitation standards, client consultation and preparation, workstation setup, and the practical workflow expected in a professional salon or clinical setting. The course combines orientation material with structured practical guidance suitable for beginners, building safe, confident, industry-ready habits from day one.',
-      thumbnailUrl: course1ThumbUrl,
+      thumbnailUrl: COURSE_1_THUMB_URL,
       categoryId: cosmetology.id,
       price: 4999,
       currency: 'INR',
@@ -206,12 +170,6 @@ async function main() {
   // -----------------------------------------------------------------------
   // Course 2: Introduction to Aesthetic Practice (student is NOT enrolled)
   // -----------------------------------------------------------------------
-  const course2ThumbUrl = ensureThumbnail(COURSE_2_THUMB_FILENAME, {
-    titleLines: ['Aesthetic', 'Practice'],
-    category: 'Aesthetics',
-    accent: ['#0891b2', '#4f46e5'],
-  });
-
   const course2 = await prisma.course.upsert({
     where: { slug: 'introduction-to-aesthetic-practice' },
     update: {
@@ -219,6 +177,7 @@ async function main() {
       status: 'PUBLISHED',
       featured: true,
       categoryId: aesthetics.id,
+      thumbnailUrl: COURSE_2_THUMB_URL,
     },
     create: {
       title: 'Introduction to Aesthetic Practice',
@@ -227,7 +186,7 @@ async function main() {
         'An introductory program exploring professional practice, hygiene, client interaction and foundational aesthetic concepts.',
       description:
         'This program introduces the foundations of aesthetic practice, covering professional conduct, hygiene and safety standards, client interaction, and the core concepts that underpin day-to-day aesthetic work. It is intended as a starting point for students exploring this field before progressing to more advanced, hands-on coursework.',
-      thumbnailUrl: course2ThumbUrl,
+      thumbnailUrl: COURSE_2_THUMB_URL,
       categoryId: aesthetics.id,
       price: 4999,
       currency: 'INR',

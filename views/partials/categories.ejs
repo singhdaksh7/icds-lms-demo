@@ -7,6 +7,14 @@ const categoryIcons = {
     'dental-sciences': 'bi-heart-pulse',
     'skin-hair': 'bi-person-hearts',
 };
+
+/* Presentation-only demo imagery lookup (image isn't stored in the DB). */
+const categoryImages = {
+    cosmetology: '/images/demo/category-cosmetology.jpg',
+    aesthetics: '/images/demo/category-aesthetics.jpg',
+    'dental-sciences': '/images/demo/category-dental.jpg',
+    'skin-hair': '/images/demo/category-skin-hair.jpg',
+};
 %>
 
 <!-- CATEGORIES -->
@@ -49,6 +57,16 @@ const categoryIcons = {
                         <a href="/courses?category=<%= category.slug %>" class="text-decoration-none">
 
                             <div class="category-card">
+
+                                <% if (categoryImages[category.slug]) { %>
+                                    <div class="category-image-wrap">
+                                        <img
+                                            class="category-image"
+                                            src="<%= categoryImages[category.slug] %>"
+                                            alt="<%= category.name %>"
+                                            loading="lazy">
+                                    </div>
+                                <% } %>
 
                                 <div class="category-icon">
                                     <i class="bi <%= categoryIcons[category.slug] || 'bi-mortarboard' %>"></i>

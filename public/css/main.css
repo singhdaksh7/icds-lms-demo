@@ -514,6 +514,24 @@
             transform: scale(2.5);
         }
 
+        .category-image-wrap {
+            margin: -30px -20px 20px;
+            height: 130px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .category-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform .5s ease;
+        }
+
+        .category-card:hover .category-image {
+            transform: scale(1.06);
+        }
+
         .category-icon {
             width: 66px;
             height: 66px;
@@ -528,6 +546,12 @@
             position: relative;
             z-index: 1;
             transition: .35s ease;
+        }
+
+        .category-image-wrap + .category-icon {
+            margin-top: -53px;
+            border: 3px solid #fff;
+            box-shadow: 0 4px 14px rgba(30,30,70,.14);
         }
 
         .category-card:hover .category-icon {
@@ -1195,7 +1219,9 @@
         }
 
         .auth-brand-panel {
-            background: linear-gradient(145deg, var(--primary-color), #4145ae);
+            background:
+                linear-gradient(165deg, rgba(86,90,207,.92), rgba(65,69,174,.94)),
+                url('/images/demo/auth.jpg') center / cover no-repeat;
             color: #fff;
             padding: 45px 35px;
             height: 100%;
