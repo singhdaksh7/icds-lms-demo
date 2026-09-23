@@ -1,30 +1,76 @@
-<section class="section-space">
+<section class="section-space dashboard-section">
     <div class="container">
 
-        <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 reveal-element">
-            <div class="section-heading" style="text-align:left;">
-                <h1 class="section-title" style="text-align:left;">My Courses</h1>
-                <p class="section-description" style="text-align:left;">
-                    Welcome back, <%= currentUser.name %>. Continue where you left off.
-                </p>
+        <div class="dashboard-welcome reveal-element">
+            <div class="dashboard-welcome-avatar" aria-hidden="true"><%= currentUser.name.trim().charAt(0).toUpperCase() %></div>
+            <div class="dashboard-welcome-text">
+                <h1 class="dashboard-welcome-title">Welcome back, <%= currentUser.name %></h1>
+                <p class="dashboard-welcome-sub">Continue learning and track your course progress.</p>
             </div>
-            <a href="/student/orders" class="hero-secondary-btn">
-                <i class="bi bi-receipt me-1"></i> My Orders
-            </a>
-            <a href="/student/profile" class="hero-secondary-btn"><i class="bi bi-person me-1"></i> Account</a>
         </div>
 
         <% if (enrollments.length === 0) { %>
 
-            <div class="text-center py-5">
+            <div class="dashboard-empty-state">
                 <i class="bi bi-mortarboard fs-1 d-block mb-3" style="color:var(--primary-color);"></i>
-                <p class="section-description mb-3">You haven't enrolled in any courses yet.</p>
+                <p class="section-description mb-3">You have not enrolled in any courses yet.</p>
                 <a href="/courses" class="hero-primary-btn d-inline-block">Browse Courses</a>
             </div>
 
         <% } else { %>
 
-            <div class="row g-3 mb-4"><% [['Enrolled courses', dashboardCounts.enrolledCourses], ['Completed courses', dashboardCounts.completedCourses], ['Certificates', dashboardCounts.certificates], ['Orders', dashboardCounts.orders]].forEach(item => { %><div class="col-6 col-lg-3"><div class="p-3 border rounded text-center"><strong class="fs-4 d-block"><%= item[1] %></strong><span class="small text-muted"><%= item[0] %></span></div></div><% }) %></div><div class="row g-4">
+            <div class="row g-3 g-lg-4 dashboard-summary-row">
+                <% [
+                    ['Enrolled Courses', dashboardCounts.enrolledCourses, 'bi-collection-play'],
+                    ['Courses In Progress', dashboardCounts.inProgressCourses, 'bi-hourglass-split'],
+                    ['Completed Courses', dashboardCounts.completedCourses, 'bi-patch-check'],
+                    ['Certificates Earned', dashboardCounts.certificates, 'bi-award'],
+                ].forEach(function (item) { %>
+                    <div class="col-6 col-lg-3">
+                        <div class="dashboard-summary-card">
+                            <i class="bi <%= item[2] %> dashboard-summary-icon"></i>
+                            <strong class="dashboard-summary-value"><%= item[1] %></strong>
+                            <span class="dashboard-summary-label"><%= item[0] %></span>
+                        </div>
+                    </div>
+                <% }); %>
+            </div>
+
+            <% if (continueLearning) { %>
+                <% const clCourse = continueLearning.course; %>
+                <% const clStarted = continueLearning.progressPercent > 0; %>
+                <div class="dashboard-continue-card reveal-element">
+                    <div class="dashboard-continue-thumb">
+                        <img
+                            src="<%= clCourse.thumbnailUrl || '/assets/images/course-placeholder.svg' %>"
+                            alt="<%= clCourse.title %>"
+                            loading="lazy"
+                            onerror="this.onerror=null;this.src='/assets/images/course-placeholder.svg';">
+                    </div>
+                    <div class="dashboard-continue-body">
+                        <div class="dashboard-continue-eyebrow">Continue Learning</div>
+                        <h2 class="dashboard-continue-title"><%= clCourse.title %></h2>
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between small mb-1">
+                                <span><%= continueLearning.stateLabel %></span>
+                                <span><%= continueLearning.progressPercent %>%</span>
+                            </div>
+                            <div class="progress dashboard-progress">
+                                <div class="progress-bar" role="progressbar" style="width: <%= continueLearning.progressPercent %>%; background: var(--primary-color);"></div>
+                            </div>
+                        </div>
+                        <a href="/learn/<%= clCourse.slug %>" class="auth-submit d-inline-block dashboard-continue-btn text-decoration-none">
+                            <%= clStarted ? 'Continue Learning' : 'Start Course' %>
+                        </a>
+                    </div>
+                </div>
+            <% } %>
+
+            <div class="d-flex justify-content-between align-items-end flex-wrap gap-2 mt-5 mb-3">
+                <h2 class="dashboard-section-title mb-0">My Courses</h2>
+            </div>
+
+            <div class="row g-4 g-lg-4">
                 <% enrollments.forEach(function (enrollment) { %>
                     <% const course = enrollment.course; %>
                     <div class="col-md-6 col-xl-4">
@@ -36,21 +82,19 @@
                                     alt="<%= course.title %>"
                                     loading="lazy"
                                     onerror="this.onerror=null;this.src='/assets/images/course-placeholder.svg';">
-                                <% if (enrollment.status !== 'ACTIVE') { %>
-                                    <span class="course-badge"><%= enrollment.status %></span>
-                                <% } %>
+                                <span class="course-badge dashboard-state-badge dashboard-state-badge-<%= enrollment.stateLabel.replace(/\s+/g, '-').toLowerCase() %>"><%= enrollment.stateLabel %></span>
                             </div>
 
                             <div class="course-content">
 
                                 <div class="course-category">
-                                    <%= course.instructor ? course.instructor.name : 'ICDS' %>
+                                    <%= course.category ? course.category.name : (course.instructor ? course.instructor.name : 'ICDS') %>
                                 </div>
 
                                 <h3 class="course-title"><%= course.title %></h3>
 
                                 <div class="small text-muted mb-2">
-                                    Enrolled <%= enrollment.enrolledAt.toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' }) %>
+                                    <i class="bi bi-play-circle me-1"></i><%= enrollment.lessonCount %> <%= enrollment.lessonCount === 1 ? 'lesson' : 'lessons' %>
                                 </div>
 
                                 <div class="mb-3">
@@ -58,27 +102,49 @@
                                         <span>Progress</span>
                                         <span><%= enrollment.progressPercent %>%</span>
                                     </div>
-                                    <div class="progress" style="height:6px; border-radius:6px;">
-                                        <div class="progress-bar" role="progressbar" style="width: <%= enrollment.progressPercent %>%; background: var(--primary-color);"></div>
+                                    <div class="progress dashboard-progress">
+                                        <div class="progress-bar" role="progressbar" style="width: <%= enrollment.progressPercent %>%; background: <%= enrollment.progressPercent >= 100 ? 'var(--success-color)' : 'var(--primary-color)' %>;"></div>
                                     </div>
                                 </div>
 
-                                <% if (enrollment.status === 'ACTIVE') { %>
-                                    <a href="/learn/<%= course.slug %>" class="auth-submit d-block text-center text-decoration-none">
-                                        Continue Learning
-                                    </a>
-                                    <% if (enrollment.certificateEligible && enrollment.certificate) { %><a class="hero-secondary-btn d-block text-center mt-2" href="/student/certificates/<%= enrollment.certificate.id %>/download">Download Certificate</a><% } else if (enrollment.certificateEligible) { %><form method="POST" action="/student/courses/<%= course.id %>/certificate" class="mt-2"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="hero-secondary-btn w-100">Generate Certificate</button></form><% } %>
-                                <% } else { %>
-                                    <a href="/courses/<%= course.slug %>" class="hero-secondary-btn d-block text-center">
-                                        View Course
-                                    </a>
-                                <% } %>
+                                <a href="/learn/<%= course.slug %>" class="auth-submit d-block text-center text-decoration-none">
+                                    <%= enrollment.buttonLabel %>
+                                </a>
+                                <% if (enrollment.certificateEligible && enrollment.certificate) { %><a class="hero-secondary-btn d-block text-center mt-2" href="/student/certificates/<%= enrollment.certificate.id %>/download">Download Certificate</a><% } else if (enrollment.certificateEligible) { %><form method="POST" action="/student/courses/<%= course.id %>/certificate" class="mt-2"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="hero-secondary-btn w-100">Generate Certificate</button></form><% } %>
 
                             </div>
 
                         </div>
                     </div>
                 <% }); %>
+            </div>
+
+            <div class="dashboard-bottom-grid">
+
+                <div class="dashboard-certificates-card">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                        <div>
+                            <div class="dashboard-certificates-count"><%= dashboardCounts.certificates %></div>
+                            <div class="small text-muted">Certificate<%= dashboardCounts.certificates === 1 ? '' : 's' %> Earned</div>
+                            <% if (latestCertificate) { %>
+                                <div class="small mt-1">Latest: <%= latestCertificate.course.title %></div>
+                            <% } %>
+                        </div>
+                        <a href="/student/certificates" class="hero-secondary-btn">View Certificates</a>
+                    </div>
+                </div>
+
+                <div class="dashboard-quicklinks-card">
+                    <div class="dashboard-quicklinks-title">Quick Links</div>
+                    <div class="dashboard-quicklinks-list">
+                        <a href="/student/dashboard"><i class="bi bi-collection-play"></i> My Courses</a>
+                        <a href="/student/profile"><i class="bi bi-person"></i> Profile</a>
+                        <a href="/student/security"><i class="bi bi-shield-lock"></i> Change Password</a>
+                        <a href="/student/certificates"><i class="bi bi-award"></i> Certificates</a>
+                        <a href="/contact"><i class="bi bi-life-preserver"></i> Contact / Help</a>
+                    </div>
+                </div>
+
             </div>
 
         <% } %>

@@ -6,21 +6,59 @@ const { prisma } = require('../config/db');
 const { validateProfile, validatePasswordChange } = require('../validators/profile.validator');
 const { verifyPassword, hashPassword } = require('../lib/password');
 const certificateService = require('../services/certificate.service');
+const { computeDashboardSummary, pickContinueLearningEnrollment, courseStateLabel, courseButtonLabel } = require('../services/dashboard.service');
 
 async function getDashboard(req, res, next) {
   try {
-    const enrollments = await listEnrollmentsForUser(req.currentUser.id);
-    const [ordersCount, certificatesCount] = await Promise.all([prisma.order.count({ where: { userId: req.currentUser.id } }), prisma.certificate.count({ where: { userId: req.currentUser.id } })]);
-    const completionChecks = await Promise.all(enrollments.map((enrollment) => certificateService.isCertificateEligible(req.currentUser.id, enrollment.courseId)));
-    const certificateRows = await prisma.certificate.findMany({ where: { userId: req.currentUser.id }, select: { courseId: true, id: true } });
+    // listEnrollmentsForUser returns ALL enrollments (any status) so the
+    // "My Courses" grid / continue-learning pick must only ever surface
+    // ACTIVE ones — cancelled/expired enrollments stay out of the student's
+    // active dashboard view entirely (not just visually de-emphasized).
+    const allEnrollments = await listEnrollmentsForUser(req.currentUser.id);
+    const enrollments = allEnrollments.filter((enrollment) => enrollment.status === 'ACTIVE');
+
+    const [certificatesCount, completionChecks, certificateRows] = await Promise.all([
+      prisma.certificate.count({ where: { userId: req.currentUser.id } }),
+      Promise.all(enrollments.map((enrollment) => certificateService.isCertificateEligible(req.currentUser.id, enrollment.courseId))),
+      prisma.certificate.findMany({ where: { userId: req.currentUser.id }, select: { courseId: true, id: true } }),
+    ]);
     const certificateByCourse = Object.fromEntries(certificateRows.map((row) => [row.courseId, row]));
-    enrollments.forEach((enrollment, index) => { enrollment.certificateEligible = completionChecks[index].eligible; enrollment.certificate = certificateByCourse[enrollment.courseId] || null; });
+
+    // Per-course last-activity timestamp (max LessonProgress.updatedAt among
+    // that course's lessons for this user), used only to pick which
+    // enrolled course is "Continue Learning" — Enrollment has no such field
+    // of its own, and this derives it from existing data with no migration.
+    const lastActivityByEnrollmentId = {};
+    await Promise.all(enrollments.map(async (enrollment, index) => {
+      enrollment.certificateEligible = completionChecks[index].eligible;
+      enrollment.certificate = certificateByCourse[enrollment.courseId] || null;
+      enrollment.stateLabel = courseStateLabel(enrollment.progressPercent);
+      enrollment.buttonLabel = courseButtonLabel(enrollment.progressPercent);
+
+      const lessonCount = await prisma.lesson.count({ where: { courseId: enrollment.courseId, status: 'PUBLISHED' } });
+      enrollment.lessonCount = lessonCount;
+
+      const latestProgress = await prisma.lessonProgress.findFirst({
+        where: { userId: req.currentUser.id, lesson: { courseId: enrollment.courseId } },
+        orderBy: { updatedAt: 'desc' },
+        select: { updatedAt: true },
+      });
+      if (latestProgress) lastActivityByEnrollmentId[enrollment.id] = latestProgress.updatedAt;
+    }));
+
+    const continueLearning = pickContinueLearningEnrollment(enrollments, lastActivityByEnrollmentId);
+    const dashboardCounts = computeDashboardSummary(enrollments, certificatesCount);
+    const latestCertificate = certificateRows.length
+      ? await prisma.certificate.findFirst({ where: { userId: req.currentUser.id }, orderBy: { issuedAt: 'desc' }, include: { course: { select: { title: true } } } })
+      : null;
 
     res.render('student/dashboard', {
       pageTitle: 'My Courses | ICDS',
       metaDescription: 'Your enrolled courses and learning progress.',
       enrollments,
-      dashboardCounts: { enrolledCourses: enrollments.length, completedCourses: completionChecks.filter((result) => result.eligible).length, certificates: certificatesCount, orders: ordersCount },
+      continueLearning,
+      dashboardCounts,
+      latestCertificate,
     });
   } catch (err) {
     next(err);
