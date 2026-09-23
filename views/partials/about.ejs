@@ -6,13 +6,16 @@
 
         <div class="row align-items-center g-5">
 
-            <div class="col-lg-6">
+            <div class="col-lg-5">
 
                 <div class="feature-image-wrap reveal-element">
 
+                    <% var whyImageSrc = (typeof settings !== 'undefined' && settings && settings['why.imagePath'])
+                        ? '/uploads/thumbnails/' + settings['why.imagePath']
+                        : '/images/demo/about-training.jpg'; %>
                     <img
                         class="feature-image"
-                        src="/images/demo/about-training.jpg"
+                        src="<%= whyImageSrc %>"
                         alt="Students in a professional cosmetology training environment"
                         loading="lazy"
                         onerror="this.onerror=null;this.src='/assets/images/hero-placeholder.svg';">
@@ -22,7 +25,7 @@
             </div>
 
 
-            <div class="col-lg-6">
+            <div class="col-lg-7">
 
                 <div class="feature-content reveal-element">
 

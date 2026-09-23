@@ -11,6 +11,7 @@ const {
   parseLessonUpdateFields,
 } = require('../middleware/videoUpload.middleware');
 const { uploadThumbnail } = require('../middleware/thumbnailUpload.middleware');
+const { uploadSiteImage } = require('../middleware/siteImageUpload.middleware');
 
 const dashboardController = require('../controllers/admin/dashboard.controller');
 const courseController = require('../controllers/admin/course.controller');
@@ -119,7 +120,12 @@ router.get('/enrollment-requests', enrollmentRequestController.listRequests);
 router.post('/enrollment-requests/:id/approve', doubleCsrfProtection, enrollmentRequestController.approveRequest);
 router.post('/enrollment-requests/:id/status', doubleCsrfProtection, enrollmentRequestController.updateStatus);
 router.get('/settings', settingsController.editSettingsForm);
-router.post('/settings', doubleCsrfProtection, settingsController.updateSettingsAction);
+router.post(
+  '/settings',
+  uploadSiteImage('/admin/settings'),
+  doubleCsrfProtection,
+  settingsController.updateSettingsAction
+);
 
 router.get('/faqs', faqController.listFaqs);
 router.post('/faqs', doubleCsrfProtection, faqController.createFaq);

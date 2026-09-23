@@ -14,7 +14,7 @@
     section visibility only. Leave a text field blank to keep its current value.
 </p>
 
-<form method="POST" action="/admin/settings">
+<form method="POST" action="/admin/settings" enctype="multipart/form-data">
     <input type="hidden" name="_csrf" value="<%= csrfToken %>">
 
     <div class="admin-card mb-4">
@@ -64,6 +64,21 @@
             </div>
         </div>
 
+        <hr class="my-3">
+        <div class="row g-3 mb-3">
+            <div class="col-12">
+                <label class="form-label small fw-semibold">Why ICDS Image</label>
+                <div class="d-flex align-items-center gap-3 mb-2">
+                    <% if (typeof whyImageUrl !== 'undefined' && whyImageUrl) { %>
+                        <img src="<%= whyImageUrl %>" alt="Current Why ICDS image" style="width:96px;height:72px;object-fit:cover;border-radius:6px;border:1px solid #dee2e6;">
+                    <% } else { %>
+                        <span class="text-muted small">Using the default bundled image.</span>
+                    <% } %>
+                </div>
+                <input type="file" name="whyIcdsImage" class="form-control form-control-custom" accept="image/jpeg,image/jpg,image/png,image/webp">
+                <p class="small text-muted mt-1 mb-0">JPG, PNG or WEBP, up to 5MB. The current image will be kept if you don't select a new one.</p>
+            </div>
+        </div>
         <hr class="my-3">
         <div class="row g-3">
             <% [1, 2, 3, 4].forEach(function (n) { %>

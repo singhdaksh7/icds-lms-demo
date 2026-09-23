@@ -29,6 +29,47 @@ function ensureDir() {
   return STORAGE_ROOT;
 }
 
+// Site-wide (non-course, non-instructor) images, e.g. the homepage "Why
+// ICDS" section image, live in a "site/" subfolder of the SAME storage
+// root — reusing the same persistent volume and the same
+// /uploads/thumbnails static mount (express.static serves subdirectories),
+// rather than inventing a second storage root that would need its own
+// deployment/volume wiring.
+const SITE_SUBDIR = 'site';
+
+function ensureSiteDir() {
+  const dir = path.join(STORAGE_ROOT, SITE_SUBDIR);
+  fs.mkdirSync(dir, { recursive: true });
+  return dir;
+}
+
+// Stored DB value shape for site images is always "site/<uuid>.<ext>" — a
+// safe relative reference, never an absolute path.
+const SITE_IMAGE_PATTERN = /^site\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.(?:jpg|jpeg|png|webp))$/;
+
+function siteImagePublicUrl(relPath) {
+  if (typeof relPath !== 'string' || !SITE_IMAGE_PATTERN.test(relPath)) return null;
+  return `/uploads/thumbnails/${relPath}`;
+}
+
+// Resolves a trusted, DB-originated "site/<uuid>.<ext>" reference to an
+// absolute path, defending against traversal even though the value should
+// already be safe.
+function resolveSiteImagePath(relPath) {
+  const match = typeof relPath === 'string' ? relPath.match(SITE_IMAGE_PATTERN) : null;
+  if (!match) return null;
+  const full = path.join(STORAGE_ROOT, SITE_SUBDIR, match[1]);
+  const dir = path.join(STORAGE_ROOT, SITE_SUBDIR) + path.sep;
+  if (!full.startsWith(dir)) return null;
+  return full;
+}
+
+function deleteSiteImageIfOwned(relPath) {
+  const full = resolveSiteImagePath(relPath);
+  if (!full) return;
+  fs.unlink(full, () => {}); // best-effort; never let cleanup fail the request
+}
+
 function isAllowedFile(originalname, mimetype) {
   const ext = path.extname(originalname).toLowerCase();
   const expectedMime = ALLOWED_IMAGE_TYPES[ext];
@@ -105,4 +146,8 @@ module.exports = {
   resolveFilename,
   filenameFromPublicUrl,
   deleteIfOwned,
+  ensureSiteDir,
+  siteImagePublicUrl,
+  resolveSiteImagePath,
+  deleteSiteImageIfOwned,
 };

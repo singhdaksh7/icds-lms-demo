@@ -17,6 +17,11 @@ const DEFAULTS = {
     'Our online learning experience combines structured lessons, practical demonstrations and expert guidance to help students turn knowledge into professional skills.',
   'why.ctaLabel': 'Start Learning',
   'why.ctaTarget': '#courses',
+  // Relative path only (e.g. "site/<uuid>.webp"), never an absolute path —
+  // resolved against the shared thumbnail storage root and served via the
+  // existing /uploads/thumbnails static mount. Empty string means "use the
+  // bundled fallback image" (see views/partials/about.ejs).
+  'why.imagePath': '',
   'why.feature1Title': 'Expert-led video lessons',
   'why.feature1Desc': 'Learn from experienced educators and industry professionals.',
   'why.feature2Title': 'Learn at your own pace',
