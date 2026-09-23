@@ -70,8 +70,11 @@ function validateResetPassword(body) {
 
   const errors = [];
 
-  if (password.length < 8) {
-    errors.push('Password must be at least 8 characters long.');
+  // Scoped to the reset flow only (not signup) — a higher bar is reasonable
+  // here since this is the moment a user is deliberately choosing a fresh
+  // password, without widening the change to the shared signup validator.
+  if (password.length < 12) {
+    errors.push('Password must be at least 12 characters long.');
   }
 
   if (password !== confirmPassword) {
