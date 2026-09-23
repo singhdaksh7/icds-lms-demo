@@ -112,9 +112,30 @@ const uploadLessonVideoForCreate = uploadVideo(
   (req) => `/admin/courses/${req.params.courseId}/lessons/new`
 );
 
+// The main "Save Changes" (title/description/status) form on the edit-lesson
+// page is submitted as multipart/form-data (form-content.ejs is shared with
+// the create form's file input), even though updateLesson never reads
+// req.file — video replacement is strictly handled by the separate
+// /lessons/:id/video/upload endpoint above. Because the body is multipart,
+// Express's body parsers can't populate req.body, so doubleCsrfProtection
+// (which reads req.body._csrf) would never see the token unless multer runs
+// first. This uses .none() — no file part is ever expected on this form —
+// so a stray file field is rejected as a client error rather than silently
+// accepted and ignored.
+const parseLessonUpdateFields = function (req, res, next) {
+  multer().none()(req, res, (err) => {
+    if (!err) {
+      return next();
+    }
+    req.flashError(err.message || 'Could not process the submitted form.');
+    res.redirect(`/admin/lessons/${req.params.id}/edit`);
+  });
+};
+
 module.exports = {
   loadLessonForVideo,
   loadCourseForVideo,
   uploadLessonVideo,
   uploadLessonVideoForCreate,
+  parseLessonUpdateFields,
 };

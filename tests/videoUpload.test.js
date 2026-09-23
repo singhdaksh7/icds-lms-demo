@@ -126,3 +126,24 @@ test('admin.routes.js runs multer (video upload middleware) before CSRF protecti
     'lesson create route must run uploadLessonVideoForCreate (multer) before doubleCsrfProtection'
   );
 });
+
+// Regression test for the "Save Changes on an existing lesson always fails
+// with 'Your session expired'" bug: the edit-lesson form is submitted as
+// multipart/form-data (it's the same form-content.ejs template used for
+// create, which has a file input), but the update route had no multer step
+// at all — doubleCsrfProtection ran against an unparsed multipart body and
+// could never find req.body._csrf. Fixed by running parseLessonUpdateFields
+// (multer().none()) before doubleCsrfProtection, mirroring the create route.
+test('admin.routes.js runs multer (parseLessonUpdateFields) before CSRF protection on the lesson update route', () => {
+  const routesSrc = fs.readFileSync(
+    path.join(__dirname, '..', 'src', 'routes', 'admin.routes.js'),
+    'utf8'
+  );
+  const updateRouteMatch = routesSrc.match(
+    /'\/lessons\/:id',\s*parseLessonUpdateFields,\s*doubleCsrfProtection,\s*lessonController\.updateLesson/
+  );
+  assert.ok(
+    updateRouteMatch,
+    'lesson update route must run parseLessonUpdateFields (multer) before doubleCsrfProtection'
+  );
+});

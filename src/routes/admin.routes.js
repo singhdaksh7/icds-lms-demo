@@ -8,6 +8,7 @@ const {
   loadCourseForVideo,
   uploadLessonVideo,
   uploadLessonVideoForCreate,
+  parseLessonUpdateFields,
 } = require('../middleware/videoUpload.middleware');
 const { uploadThumbnail } = require('../middleware/thumbnailUpload.middleware');
 
@@ -57,7 +58,12 @@ router.post(
   lessonController.createLesson
 );
 router.get('/lessons/:id/edit', lessonController.editLessonForm);
-router.post('/lessons/:id', doubleCsrfProtection, lessonController.updateLesson);
+router.post(
+  '/lessons/:id',
+  parseLessonUpdateFields,
+  doubleCsrfProtection,
+  lessonController.updateLesson
+);
 router.post('/lessons/:id/delete', doubleCsrfProtection, lessonController.deleteLesson);
 
 // --- Local (Hostinger-hosted) lesson video ----------------------------------
