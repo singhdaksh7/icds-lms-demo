@@ -40,7 +40,14 @@ const multerUpload = multer({
   storage,
   limits: { fileSize: MAX_UPLOAD_BYTES, files: 1 },
   fileFilter(req, file, cb) {
-    cb(null, isAllowedFile(file.originalname, file.mimetype));
+    // Rejecting via cb(null, false) here would silently drop the file and
+    // let the rest of the form save as if no image had been submitted —
+    // the admin gets no indication their upload was rejected. Passing an
+    // Error instead surfaces a real, visible flash message.
+    if (!isAllowedFile(file.originalname, file.mimetype)) {
+      return cb(new Error('Unsupported image type. Only JPG, PNG and WEBP are allowed.'));
+    }
+    cb(null, true);
   },
 }).single('whyIcdsImage');
 
