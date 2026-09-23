@@ -159,7 +159,7 @@ async function postForgotPassword(req, res, next) {
   const { errors, values } = validateForgotPassword(req.body);
 
   const genericMessage =
-    'If an account exists for that email, reset instructions have been generated.';
+    'If an account exists for this email, a password reset link has been sent.';
 
   if (errors.length > 0) {
     return res.status(400).render('public/forgot-password', {
@@ -186,12 +186,17 @@ async function postForgotPassword(req, res, next) {
 
       await authService.sendPasswordResetEmail(result.user.email, resetUrl);
     }
-
-    req.flashSuccess(genericMessage);
-    res.redirect('/forgot-password');
   } catch (err) {
-    next(err);
+    // Anti-enumeration: a failure here (lookup error, email send error,
+    // etc.) must never surface as a different response than the happy
+    // path — otherwise response shape/timing could leak whether the
+    // account exists. Log server-side only and still show the generic
+    // success message below.
+    console.error('postForgotPassword: error while processing reset request:', err);
   }
+
+  req.flashSuccess(genericMessage);
+  res.redirect('/forgot-password');
 }
 
 async function postResetPassword(req, res, next) {
