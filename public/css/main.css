@@ -157,6 +157,14 @@
             position: relative;
         }
 
+        /* border: 0 is required here, not decorative: "Courses" also
+           carries Bootstrap's .dropdown-toggle class, which defines its
+           own ::after (the dropdown caret) with a border-based triangle.
+           Only one ::after can render per element, so this rule replaces
+           Bootstrap's — but it never previously reset `border`, so
+           Bootstrap's caret border-width/style/color leaked through and
+           combined with this rule's width/height/background into a small
+           bordered blob that read as a "dot" instead of a clean pill. */
         .navigation-link::after {
             content: "";
             position: absolute;
@@ -165,6 +173,7 @@
             left: 50%;
             bottom: 18px;
             background: var(--primary-color);
+            border: 0;
             border-radius: 20px;
             transform: translateX(-50%);
             transition: width .3s ease;
