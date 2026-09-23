@@ -2,7 +2,7 @@ const path = require('path');
 const lessonService = require('../../services/lesson.service');
 const { prisma } = require('../../config/db');
 const { validateLesson, STATUSES } = require('../../validators/lesson.validator');
-const { findExistingFile } = require('../../lib/videoStorage');
+const { findExistingFile, deleteFile } = require('../../lib/videoStorage');
 
 async function listLessons(req, res, next) {
   try {
@@ -61,6 +61,12 @@ async function createLesson(req, res, next) {
     const { errors, values } = validateLesson(req.body);
 
     if (errors.length > 0) {
+      // A video file may already have been streamed to disk by multer
+      // before validation ran — don't leave it orphaned on disk if the rest
+      // of the form is being re-rendered for correction.
+      if (req.file) {
+        deleteFile(path.posix.join(course.slug, req.file.filename));
+      }
       return res.status(400).render('admin/lessons/form', {
         pageTitle: `New Lesson: ${course.title} | Admin`,
         metaDescription: 'Create a new lesson.',
@@ -72,10 +78,30 @@ async function createLesson(req, res, next) {
       });
     }
 
-    await lessonService.createLesson(courseId, values);
+    const lesson = await lessonService.createLesson(courseId, values);
+
+    // Optional video file uploaded alongside the create form (see
+    // videoUpload.middleware's loadCourseForVideo/uploadLessonVideoForCreate)
+    // — attach it to the lesson that was just created. The file itself is
+    // already safely on disk under storage/videos/<course.slug>/<uuid>.ext;
+    // only the safe relative path is ever written to the DB.
+    if (req.file) {
+      const relativePath = path.posix.join(course.slug, req.file.filename);
+      await prisma.lesson.update({
+        where: { id: lesson.id },
+        data: { videoType: 'LOCAL', videoPath: relativePath },
+      });
+    }
+
     req.flashSuccess('Lesson created successfully.');
     res.redirect(`/admin/courses/${courseId}/lessons`);
   } catch (err) {
+    // Clean up an already-uploaded file if lesson creation/attach failed
+    // partway through, using the course slug the upload middleware resolved
+    // (req.videoCourseSlug) rather than re-deriving anything from user input.
+    if (req.file && req.videoCourseSlug) {
+      deleteFile(path.posix.join(req.videoCourseSlug, req.file.filename));
+    }
     if (err instanceof lessonService.LessonError) {
       req.flashError(err.message);
       return res.redirect(`/admin/courses/${req.params.courseId}/lessons`);

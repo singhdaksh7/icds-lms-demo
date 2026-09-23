@@ -3,7 +3,12 @@ const router = express.Router();
 
 const { requireRole } = require('../middleware/auth.middleware');
 const { doubleCsrfProtection } = require('../config/csrf');
-const { loadLessonForVideo, uploadLessonVideo } = require('../middleware/videoUpload.middleware');
+const {
+  loadLessonForVideo,
+  loadCourseForVideo,
+  uploadLessonVideo,
+  uploadLessonVideoForCreate,
+} = require('../middleware/videoUpload.middleware');
 const { uploadThumbnail } = require('../middleware/thumbnailUpload.middleware');
 
 const dashboardController = require('../controllers/admin/dashboard.controller');
@@ -44,7 +49,13 @@ router.post('/courses/:id/unpublish', doubleCsrfProtection, courseController.unp
 // --- Lessons (nested under a course) ---------------------------------------
 router.get('/courses/:courseId/lessons', lessonController.listLessons);
 router.get('/courses/:courseId/lessons/new', lessonController.newLessonForm);
-router.post('/courses/:courseId/lessons', doubleCsrfProtection, lessonController.createLesson);
+router.post(
+  '/courses/:courseId/lessons',
+  loadCourseForVideo,
+  uploadLessonVideoForCreate,
+  doubleCsrfProtection,
+  lessonController.createLesson
+);
 router.get('/lessons/:id/edit', lessonController.editLessonForm);
 router.post('/lessons/:id', doubleCsrfProtection, lessonController.updateLesson);
 router.post('/lessons/:id/delete', doubleCsrfProtection, lessonController.deleteLesson);

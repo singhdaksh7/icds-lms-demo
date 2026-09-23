@@ -71,6 +71,28 @@ function mimeTypeFor(extension) {
   return ALLOWED_VIDEO_TYPES[extension] || null;
 }
 
+// Server-side validation for an uploaded video file: extension AND declared
+// MIME type must both be in the whitelist (never trust either alone), and a
+// spoofed double-extension (e.g. "lesson.mp4.exe") is rejected. Pure/no I/O
+// so it can be unit tested without multer or a live upload — used by
+// videoUpload.middleware.js's multer fileFilter/destination.
+function isAllowedVideoFile(originalname, mimetype) {
+  if (typeof originalname !== 'string' || originalname.length === 0) {
+    return false;
+  }
+  const ext = path.extname(originalname).toLowerCase();
+  const expectedMime = ALLOWED_VIDEO_TYPES[ext];
+  if (!expectedMime) {
+    return false;
+  }
+  const base = originalname.slice(0, -ext.length);
+  if (/\.(exe|sh|php|js|html?|bat|cmd|jar)$/i.test(base)) {
+    return false;
+  }
+  // Belt-and-suspenders: the browser-declared MIME must roughly match.
+  return mimetype === expectedMime || mimetype === 'application/octet-stream';
+}
+
 function ensureCourseDir(courseSlug) {
   if (!isSafeSlugSegment(courseSlug)) {
     throw new Error('Invalid course slug for video storage path.');
@@ -129,6 +151,7 @@ module.exports = {
   buildVideoPath,
   resolveVideoPath,
   mimeTypeFor,
+  isAllowedVideoFile,
   ensureCourseDir,
   findExistingFile,
   deleteFile,
