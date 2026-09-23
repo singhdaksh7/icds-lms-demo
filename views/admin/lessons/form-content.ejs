@@ -14,7 +14,7 @@
 <% } %>
 
 <div class="admin-card">
-    <form method="POST" action="<%= lesson ? '/admin/lessons/' + lesson.id : '/admin/courses/' + course.id + '/lessons' %>">
+    <form method="POST" action="<%= lesson ? '/admin/lessons/' + lesson.id : '/admin/courses/' + course.id + '/lessons' %>" enctype="multipart/form-data">
         <input type="hidden" name="_csrf" value="<%= csrfToken %>">
 
         <div class="row g-3">
@@ -34,11 +34,29 @@
                 <textarea name="description" class="form-control form-control-custom" rows="3"><%= values.description || '' %></textarea>
             </div>
 
+            <% if (!lesson) { %>
             <div class="col-12">
-                <label class="form-label small fw-semibold">Video URL</label>
-                <input type="text" name="videoUrl" class="form-control form-control-custom" value="<%= values.videoUrl || '' %>" placeholder="https://www.youtube.com/watch?v=... or Vimeo link">
-                <div class="form-text">YouTube and Vimeo links are embedded automatically. Other providers are stored but won't preview yet.</div>
+                <label class="form-label small fw-semibold">Lesson Video</label>
+                <input type="file" name="video" id="lesson-video-input" accept="video/mp4,video/webm,video/quicktime" class="form-control form-control-custom">
+                <div class="form-text">Upload an MP4 video. The file will be available only to enrolled students. Accepted formats: MP4, WebM. Max size: 200MB. You can also add this later from the Edit Lesson page.</div>
+                <div id="lesson-video-selected-name" class="small text-success mt-1" style="display:none;"></div>
             </div>
+            <% } else if (lesson.videoType === 'LOCAL' && lesson.videoPath) { %>
+            <div class="col-12">
+                <label class="form-label small fw-semibold">Lesson Video</label>
+                <div class="form-text mb-1">Current video: <code><%= lesson.videoPath.split('/').pop() %></code></div>
+                <div class="form-text">To replace it, use "Replace video" below. Saving this form does not touch the video.</div>
+            </div>
+            <% } %>
+
+            <details class="col-12">
+                <summary class="small fw-semibold" style="cursor:pointer;">Advanced: external video URL</summary>
+                <div class="mt-2">
+                    <label class="form-label small fw-semibold">Video URL</label>
+                    <input type="text" name="videoUrl" class="form-control form-control-custom" value="<%= values.videoUrl || '' %>" placeholder="https://www.youtube.com/watch?v=... or Vimeo link">
+                    <div class="form-text">YouTube and Vimeo links are embedded automatically. Ignored while a local video is attached above.</div>
+                </div>
+            </details>
 
             <div class="col-md-4">
                 <label class="form-label small fw-semibold">Duration (e.g. "12m")</label>
@@ -78,32 +96,42 @@
 
 <% if (lesson) { %>
 <div class="admin-card mt-4">
-    <h5 class="mb-3">Local (Hostinger-hosted) Video</h5>
+    <h5 class="mb-3">Lesson Video</h5>
 
     <% if (lesson.videoType === 'LOCAL' && lesson.videoPath) { %>
         <p class="small text-success mb-3">
             <i class="bi bi-check-circle-fill me-1"></i>
-            This lesson currently plays a local video file (<code><%= lesson.videoPath %></code>) instead of the Video URL above.
+            Current video: <code><%= lesson.videoPath.split('/').pop() %></code>
         </p>
+
+        <h6 class="small fw-semibold">Replace video</h6>
+        <p class="form-text mt-0">Upload an MP4 video. The file will be available only to enrolled students. Accepted formats: MP4, WebM. Max size: 200MB.</p>
+        <form method="POST" action="/admin/lessons/<%= lesson.id %>/video/upload" enctype="multipart/form-data" class="mb-3">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <input type="file" name="video" id="lesson-video-replace-input" accept="video/mp4,video/webm,video/quicktime" class="form-control form-control-custom mb-1" required>
+            <div id="lesson-video-replace-name" class="small text-success mb-2" style="display:none;"></div>
+            <button type="submit" class="btn btn-sm btn-outline-primary">Replace video</button>
+        </form>
+
         <form method="POST" action="/admin/lessons/<%= lesson.id %>/video/remove" onsubmit="return confirm('Detach the local video? The file itself is not deleted.');">
             <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-            <button type="submit" class="btn btn-sm btn-outline-danger">Detach local video (fall back to Video URL)</button>
+            <button type="submit" class="btn btn-sm btn-outline-danger">Detach local video (fall back to external Video URL)</button>
         </form>
     <% } else { %>
-        <p class="small text-muted mb-3">No local video attached — this lesson uses the Video URL above (YouTube/Vimeo).</p>
+        <p class="small text-muted mb-3">No video uploaded yet for this lesson.</p>
 
-        <div class="row g-4">
-            <div class="col-md-6">
-                <h6 class="small fw-semibold">Option A — Upload directly</h6>
-                <p class="form-text mt-0">Best for small files (well under 200MB). For full-length course videos, prefer Option B.</p>
-                <form method="POST" action="/admin/lessons/<%= lesson.id %>/video/upload" enctype="multipart/form-data">
-                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-                    <input type="file" name="video" accept=".mp4,.webm,video/mp4,video/webm" class="form-control form-control-custom mb-2" required>
-                    <button type="submit" class="btn btn-sm btn-outline-primary">Upload video</button>
-                </form>
-            </div>
-            <div class="col-md-6">
-                <h6 class="small fw-semibold">Option B — Register an uploaded file</h6>
+        <h6 class="small fw-semibold">Upload video</h6>
+        <p class="form-text mt-0">Upload an MP4 video. The file will be available only to enrolled students. Accepted formats: MP4, WebM. Max size: 200MB.</p>
+        <form method="POST" action="/admin/lessons/<%= lesson.id %>/video/upload" enctype="multipart/form-data" class="mb-4">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <input type="file" name="video" id="lesson-video-replace-input" accept="video/mp4,video/webm,video/quicktime" class="form-control form-control-custom mb-1" required>
+            <div id="lesson-video-replace-name" class="small text-success mb-2" style="display:none;"></div>
+            <button type="submit" class="btn btn-sm btn-outline-primary">Upload video</button>
+        </form>
+
+        <details>
+            <summary class="small fw-semibold" style="cursor:pointer;">Advanced: register a file already placed on the server</summary>
+            <div class="mt-2">
                 <p class="form-text mt-0">
                     Upload the .mp4/.webm file to this course's video folder via
                     File Manager or SFTP (see README "Video Upload" for the exact
@@ -115,7 +143,30 @@
                     <button type="submit" class="btn btn-sm btn-outline-primary">Register file</button>
                 </form>
             </div>
-        </div>
+        </details>
     <% } %>
 </div>
 <% } %>
+
+<script>
+(function () {
+    // Purely cosmetic: shows the picked filename next to each file input.
+    // No validation happens here — the server is the source of truth for
+    // accepted types/sizes (see lesson.controller.js / videoUpload.middleware.js).
+    function wireFilenamePreview(inputId, labelId) {
+        var input = document.getElementById(inputId);
+        var label = document.getElementById(labelId);
+        if (!input || !label) return;
+        input.addEventListener('change', function () {
+            if (input.files && input.files.length > 0) {
+                label.textContent = 'Selected: ' + input.files[0].name;
+                label.style.display = 'block';
+            } else {
+                label.style.display = 'none';
+            }
+        });
+    }
+    wireFilenamePreview('lesson-video-input', 'lesson-video-selected-name');
+    wireFilenamePreview('lesson-video-replace-input', 'lesson-video-replace-name');
+})();
+</script>
