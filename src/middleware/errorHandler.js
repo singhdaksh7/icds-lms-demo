@@ -15,6 +15,24 @@ function errorHandler(err, req, res, next) {
   // csrf-csrf throws a plain http-error with code EBADCSRFTOKEN — treat it
   // as a correctable user error (expired/missing form token), not a 500.
   if (err.code === 'EBADCSRFTOKEN') {
+    // A genuinely stale/tampered token is indistinguishable from a
+    // middleware-ordering bug (e.g. a multipart form whose route is missing
+    // the multer step that must run before doubleCsrfProtection so
+    // req.body._csrf actually gets populated) from the user's point of view
+    // — both surface as "no valid _csrf in req.body" to csrf-csrf. The
+    // user-facing message stays generic on purpose (don't leak CSRF
+    // internals), but log which shape we saw server-side so this class of
+    // bug is easy to spot in logs instead of being silently written off as
+    // "session expired": an empty/undefined req.body on a POST is almost
+    // always a missing-body-parser bug, not an expired session.
+    if (req.body === undefined || req.body === null || Object.keys(req.body).length === 0) {
+      console.error(
+        `[csrf] EBADCSRFTOKEN with empty req.body on ${req.method} ${req.path} — ` +
+          'likely a missing body-parser/multer step before doubleCsrfProtection, not an expired session.'
+      );
+    } else {
+      console.error(`[csrf] EBADCSRFTOKEN on ${req.method} ${req.path} — token missing/invalid/expired.`);
+    }
     if (req.path.startsWith('/api/')) {
       return res.status(403).json({ success: false, error: 'Invalid or expired form submission. Please try again.' });
     }
