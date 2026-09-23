@@ -1,0 +1,93 @@
+<h1 style="font-size:24px;" class="mb-4">FAQs</h1>
+
+<% if (errors && errors.length) { %>
+    <div class="alert alert-danger">
+        <ul class="mb-0 ps-3">
+            <% errors.forEach(function (error) { %><li><%= error %></li><% }) %>
+        </ul>
+    </div>
+<% } %>
+
+<div class="row g-4">
+
+    <div class="col-lg-4">
+        <div class="admin-card">
+            <h6 class="mb-3">Add FAQ Entry</h6>
+            <form method="POST" action="/admin/faqs">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+                <div class="mb-3">
+                    <label class="form-label small fw-semibold">Question</label>
+                    <input type="text" name="question" class="form-control form-control-custom" value="<%= values.question || '' %>" maxlength="300" required>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label small fw-semibold">Answer</label>
+                    <textarea name="answer" class="form-control form-control-custom" rows="4" maxlength="5000" required><%= values.answer || '' %></textarea>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label small fw-semibold">Sort Order</label>
+                    <input type="number" name="sortOrder" class="form-control form-control-custom" value="<%= values.sortOrder || 0 %>">
+                </div>
+
+                <div class="form-check mb-3">
+                    <input type="checkbox" name="isActive" class="form-check-input" id="faqActive" value="true" checked>
+                    <label class="form-check-label small" for="faqActive">Active (visible on homepage)</label>
+                </div>
+
+                <button type="submit" class="auth-submit">Create FAQ</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="col-lg-8">
+        <div class="admin-card">
+            <div class="table-responsive">
+                <table class="table admin-table align-middle">
+                    <thead>
+                        <tr>
+                            <th>Question / Answer</th>
+                            <th style="width:90px;">Order</th>
+                            <th style="width:100px;">Active</th>
+                            <th class="text-end" style="width:170px;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% if (faqs.length === 0) { %>
+                            <tr><td colspan="4" class="text-center text-muted py-4">No FAQ entries yet.</td></tr>
+                        <% } %>
+                        <% faqs.forEach(function (faq) { %>
+                            <tr>
+                                <td colspan="4" class="p-0">
+                                    <form method="POST" action="/admin/faqs/<%= faq.id %>" class="d-flex gap-2 align-items-start p-2 m-0 flex-wrap">
+                                        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                        <div style="flex:1; min-width:220px;">
+                                            <input type="text" name="question" class="form-control form-control-sm mb-1" value="<%= faq.question %>" maxlength="300" required>
+                                            <textarea name="answer" class="form-control form-control-sm" rows="2" maxlength="5000" required><%= faq.answer %></textarea>
+                                        </div>
+                                        <input type="number" name="sortOrder" class="form-control form-control-sm" style="width:80px;" value="<%= faq.sortOrder %>">
+                                        <div class="form-check pt-1">
+                                            <input type="checkbox" name="isActive" class="form-check-input" value="true" <%= faq.isActive ? 'checked' : '' %>>
+                                        </div>
+                                        <button type="submit" class="btn btn-sm btn-outline-secondary">Save</button>
+                                    </form>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td colspan="4" class="text-end py-1 border-top-0">
+                                    <form method="POST" action="/admin/faqs/<%= faq.id %>/delete" class="m-0 d-inline"
+                                          onsubmit="return confirm('Delete this FAQ entry?');">
+                                        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        <% }); %>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+</div>

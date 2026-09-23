@@ -92,12 +92,12 @@
 
             <div class="col-lg-4">
 
-                <div class="modal-content p-4" style="position:sticky; top:100px;">
+                <div class="course-pricing-card">
 
-                    <div class="course-price mb-3">
-                        <%= course.currency %> <%= Number(course.salePrice || course.price).toLocaleString('en-IN') %>
+                    <div class="course-price">
+                        <%= course.currency === 'INR' ? '₹' : course.currency + ' ' %><%= Number(course.salePrice || course.price).toLocaleString('en-IN') %>
                         <% if (course.salePrice) { %>
-                            <del><%= course.currency %> <%= Number(course.price).toLocaleString('en-IN') %></del>
+                            <del><%= course.currency === 'INR' ? '₹' : course.currency + ' ' %><%= Number(course.price).toLocaleString('en-IN') %></del>
                         <% } %>
                     </div>
 
@@ -107,7 +107,7 @@
                                 Continue Learning
                             </a>
                         <% } else if (isFree) { %>
-                            <form method="POST" action="/courses/<%= course.slug %>/enroll-free">
+                            <form method="POST" action="/courses/<%= course.slug %>/enroll-free" class="m-0">
                                 <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                                 <button type="submit" class="auth-submit d-block w-100 text-center">Enroll Free</button>
                             </form>
@@ -115,7 +115,7 @@
                             <button class="auth-submit d-block w-100 text-center" disabled>Enrollment Requested</button>
                             <p class="small text-muted mt-2 mb-0">Our team will contact you to complete enrollment.</p>
                         <% } else { %>
-                            <form method="POST" action="/courses/<%= course.slug %>/request-enrollment">
+                            <form method="POST" action="/courses/<%= course.slug %>/request-enrollment" class="m-0">
                                 <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                                 <button type="submit" class="auth-submit d-block w-100 text-center">Request Enrollment</button>
                             </form>
@@ -131,9 +131,9 @@
                         </a>
                     <% } %>
 
-                    <ul class="list-unstyled mt-4 mb-0 small">
-                        <li class="mb-2"><i class="bi bi-check-circle-fill me-2" style="color:var(--success-color);"></i>Lifetime access</li>
-                        <li class="mb-2"><i class="bi bi-check-circle-fill me-2" style="color:var(--success-color);"></i>Learn at your own pace</li>
+                    <ul class="list-unstyled mb-0 small course-access-bullets">
+                        <li><i class="bi bi-check-circle-fill me-2" style="color:var(--success-color);"></i>Access from your student dashboard</li>
+                        <li><i class="bi bi-check-circle-fill me-2" style="color:var(--success-color);"></i>Learn at your own pace</li>
                         <li><i class="bi bi-check-circle-fill me-2" style="color:var(--success-color);"></i>Structured video lessons</li>
                     </ul>
 

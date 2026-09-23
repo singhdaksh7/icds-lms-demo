@@ -1,0 +1,191 @@
+<h1 style="font-size:24px;" class="mb-4">Homepage Settings</h1>
+
+<% if (errors && errors.length) { %>
+    <div class="alert alert-danger">
+        <ul class="mb-0 ps-3">
+            <% errors.forEach(function (error) { %><li><%= error %></li><% }) %>
+        </ul>
+    </div>
+<% } %>
+
+<p class="text-muted small mb-4">
+    Contact email, phone, address, institute name and copyright text are managed via environment
+    configuration (see <code>.env</code>); the fields below cover editable homepage/footer copy and
+    section visibility only. Leave a text field blank to keep its current value.
+</p>
+
+<form method="POST" action="/admin/settings">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+    <div class="admin-card mb-4">
+        <h6 class="mb-3">Brand</h6>
+        <div class="mb-3">
+            <label class="form-label small fw-semibold">Tagline (top bar)</label>
+            <input type="text" name="brand.tagline" class="form-control form-control-custom" value="<%= settings['brand.tagline'] %>" maxlength="150">
+        </div>
+        <div class="mb-3">
+            <label class="form-label small fw-semibold">Footer Description</label>
+            <textarea name="brand.footerDescription" class="form-control form-control-custom" rows="2" maxlength="600"><%= settings['brand.footerDescription'] %></textarea>
+        </div>
+    </div>
+
+    <div class="admin-card mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h6 class="mb-0">Why ICDS Section</h6>
+            <div class="form-check form-switch">
+                <input type="checkbox" name="why.enabled" class="form-check-input" value="true" <%= settings['why.enabled'] === 'true' ? 'checked' : '' %>>
+                <label class="form-check-label small">Enabled</label>
+            </div>
+        </div>
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label class="form-label small fw-semibold">Eyebrow</label>
+                <input type="text" name="why.eyebrow" class="form-control form-control-custom" value="<%= settings['why.eyebrow'] %>" maxlength="150">
+            </div>
+            <div class="col-md-6">
+                <label class="form-label small fw-semibold">CTA Label</label>
+                <input type="text" name="why.ctaLabel" class="form-control form-control-custom" value="<%= settings['why.ctaLabel'] %>" maxlength="150">
+            </div>
+            <div class="col-12">
+                <label class="form-label small fw-semibold">Heading</label>
+                <input type="text" name="why.heading" class="form-control form-control-custom" value="<%= settings['why.heading'] %>" maxlength="150" required>
+            </div>
+            <div class="col-12">
+                <label class="form-label small fw-semibold">Description</label>
+                <textarea name="why.description" class="form-control form-control-custom" rows="2" maxlength="600"><%= settings['why.description'] %></textarea>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label small fw-semibold">CTA Target</label>
+                <select name="why.ctaTarget" class="form-select form-control-custom">
+                    <% ctaTargets.forEach(function (target) { %>
+                        <option value="<%= target %>" <%= settings['why.ctaTarget'] === target ? 'selected' : '' %>><%= target %></option>
+                    <% }); %>
+                </select>
+            </div>
+        </div>
+
+        <hr class="my-3">
+        <div class="row g-3">
+            <% [1, 2, 3, 4].forEach(function (n) { %>
+                <div class="col-md-6">
+                    <label class="form-label small fw-semibold">Feature <%= n %> Title</label>
+                    <input type="text" name="why.feature<%= n %>Title" class="form-control form-control-custom mb-2" value="<%= settings['why.feature' + n + 'Title'] %>" maxlength="150">
+                    <label class="form-label small fw-semibold">Feature <%= n %> Description</label>
+                    <textarea name="why.feature<%= n %>Desc" class="form-control form-control-custom" rows="2" maxlength="600"><%= settings['why.feature' + n + 'Desc'] %></textarea>
+                </div>
+            <% }); %>
+        </div>
+    </div>
+
+    <div class="admin-card mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h6 class="mb-0">Learning Process Section</h6>
+            <div class="form-check form-switch">
+                <input type="checkbox" name="process.enabled" class="form-check-input" value="true" <%= settings['process.enabled'] === 'true' ? 'checked' : '' %>>
+                <label class="form-check-label small">Enabled</label>
+            </div>
+        </div>
+        <div class="row g-3 mb-3">
+            <div class="col-md-6">
+                <label class="form-label small fw-semibold">Eyebrow</label>
+                <input type="text" name="process.eyebrow" class="form-control form-control-custom" value="<%= settings['process.eyebrow'] %>" maxlength="150">
+            </div>
+            <div class="col-12">
+                <label class="form-label small fw-semibold">Heading</label>
+                <input type="text" name="process.heading" class="form-control form-control-custom" value="<%= settings['process.heading'] %>" maxlength="150" required>
+            </div>
+            <div class="col-12">
+                <label class="form-label small fw-semibold">Description</label>
+                <textarea name="process.description" class="form-control form-control-custom" rows="2" maxlength="600"><%= settings['process.description'] %></textarea>
+            </div>
+        </div>
+        <div class="row g-3">
+            <% [1, 2, 3, 4].forEach(function (n) { %>
+                <div class="col-md-6">
+                    <label class="form-label small fw-semibold">Step <%= n %> Title</label>
+                    <input type="text" name="process.step<%= n %>Title" class="form-control form-control-custom mb-2" value="<%= settings['process.step' + n + 'Title'] %>" maxlength="150">
+                    <label class="form-label small fw-semibold">Step <%= n %> Description</label>
+                    <textarea name="process.step<%= n %>Desc" class="form-control form-control-custom" rows="2" maxlength="600"><%= settings['process.step' + n + 'Desc'] %></textarea>
+                </div>
+            <% }); %>
+        </div>
+    </div>
+
+    <div class="admin-card mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h6 class="mb-0">Instructors Section</h6>
+            <div class="form-check form-switch">
+                <input type="checkbox" name="instructors.enabled" class="form-check-input" value="true" <%= settings['instructors.enabled'] === 'true' ? 'checked' : '' %>>
+                <label class="form-check-label small">Enabled</label>
+            </div>
+        </div>
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label class="form-label small fw-semibold">Eyebrow</label>
+                <input type="text" name="instructors.eyebrow" class="form-control form-control-custom" value="<%= settings['instructors.eyebrow'] %>" maxlength="150">
+            </div>
+            <div class="col-md-6">
+                <label class="form-label small fw-semibold">Empty-State Text</label>
+                <input type="text" name="instructors.emptyStateText" class="form-control form-control-custom" value="<%= settings['instructors.emptyStateText'] %>" maxlength="150">
+            </div>
+            <div class="col-12">
+                <label class="form-label small fw-semibold">Heading</label>
+                <input type="text" name="instructors.heading" class="form-control form-control-custom" value="<%= settings['instructors.heading'] %>" maxlength="150">
+            </div>
+            <div class="col-12">
+                <label class="form-label small fw-semibold">Description</label>
+                <textarea name="instructors.description" class="form-control form-control-custom" rows="2" maxlength="600"><%= settings['instructors.description'] %></textarea>
+            </div>
+        </div>
+        <p class="small text-muted mt-2 mb-0">Instructor cards themselves are managed under Instructors, not here.</p>
+    </div>
+
+    <div class="admin-card mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h6 class="mb-0">Newsletter Section</h6>
+            <div class="form-check form-switch">
+                <input type="checkbox" name="newsletter.enabled" class="form-check-input" value="true" <%= settings['newsletter.enabled'] === 'true' ? 'checked' : '' %>>
+                <label class="form-check-label small">Enabled</label>
+            </div>
+        </div>
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label class="form-label small fw-semibold">Eyebrow</label>
+                <input type="text" name="newsletter.eyebrow" class="form-control form-control-custom" value="<%= settings['newsletter.eyebrow'] %>" maxlength="150">
+            </div>
+            <div class="col-12">
+                <label class="form-label small fw-semibold">Heading</label>
+                <input type="text" name="newsletter.heading" class="form-control form-control-custom" value="<%= settings['newsletter.heading'] %>" maxlength="150">
+            </div>
+            <div class="col-12">
+                <label class="form-label small fw-semibold">Description</label>
+                <textarea name="newsletter.description" class="form-control form-control-custom" rows="2" maxlength="600"><%= settings['newsletter.description'] %></textarea>
+            </div>
+        </div>
+    </div>
+
+    <div class="admin-card mb-4">
+        <h6 class="mb-3">Navigation Visibility</h6>
+        <p class="small text-muted">Routes stay fixed — this only hides/shows the nav link and the corresponding homepage section link.</p>
+        <div class="row g-3">
+            <div class="col-md-3 form-check form-switch">
+                <input type="checkbox" name="nav.showAbout" class="form-check-input" value="true" <%= settings['nav.showAbout'] === 'true' ? 'checked' : '' %>>
+                <label class="form-check-label small">About</label>
+            </div>
+            <div class="col-md-3 form-check form-switch">
+                <input type="checkbox" name="nav.showInstructors" class="form-check-input" value="true" <%= settings['nav.showInstructors'] === 'true' ? 'checked' : '' %>>
+                <label class="form-check-label small">Instructors</label>
+            </div>
+            <div class="col-md-3 form-check form-switch">
+                <input type="checkbox" name="nav.showReviews" class="form-check-input" value="true" <%= settings['nav.showReviews'] === 'true' ? 'checked' : '' %>>
+                <label class="form-check-label small">Reviews</label>
+            </div>
+            <div class="col-md-3 form-check form-switch">
+                <input type="checkbox" name="nav.showFaq" class="form-check-input" value="true" <%= settings['nav.showFaq'] === 'true' ? 'checked' : '' %>>
+                <label class="form-check-label small">FAQ</label>
+            </div>
+        </div>
+    </div>
+
+    <button type="submit" class="auth-submit" style="width:auto; padding:0 32px;">Save Settings</button>
+</form>

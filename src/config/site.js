@@ -7,8 +7,10 @@ function digits(value) {
 const site = {
   name: process.env.SITE_NAME || 'Institute of Cosmetology & Dental Sciences',
   copyrightName: process.env.COPYRIGHT_NAME || process.env.SITE_NAME || 'Institute of Cosmetology & Dental Sciences',
-  supportEmail: process.env.SUPPORT_EMAIL || 'support@example.com',
-  contactEmail: process.env.CONTACT_EMAIL || 'info@example.com',
+  // No example.com fallback: an unconfigured contact email renders nothing
+  // on the public site (see footer/contact views) rather than a fake address.
+  supportEmail: process.env.SUPPORT_EMAIL || process.env.CONTACT_EMAIL || '',
+  contactEmail: process.env.CONTACT_EMAIL || process.env.SUPPORT_EMAIL || '',
   contactPhone: process.env.CONTACT_PHONE || '',
   whatsappNumber: digits(process.env.WHATSAPP_NUMBER || ''),
   address: process.env.SITE_ADDRESS || '',

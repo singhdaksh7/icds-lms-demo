@@ -1,3 +1,4 @@
+<% if (typeof settings === 'undefined' || !settings || settings.whyEnabled) { %>
 <!-- ABOUT / WHY US -->
 <section class="section-space feature-section" id="about">
 
@@ -26,90 +27,48 @@
                 <div class="feature-content reveal-element">
 
                     <div class="section-tag">
-                        Why ICDS
+                        <%= (typeof settings !== 'undefined' && settings) ? settings['why.eyebrow'] : 'Why ICDS' %>
                     </div>
 
                     <h2 class="section-title">
-                        Education that goes beyond watching videos.
+                        <%= (typeof settings !== 'undefined' && settings) ? settings['why.heading'] : 'Education that goes beyond watching videos.' %>
                     </h2>
 
                     <p class="section-description">
-                        Our online learning experience combines structured lessons,
-                        practical demonstrations, expert guidance and assessments
-                        to help students turn knowledge into professional skills.
+                        <%= (typeof settings !== 'undefined' && settings) ? settings['why.description'] : 'Our online learning experience combines structured lessons, practical demonstrations and expert guidance to help students turn knowledge into professional skills.' %>
                     </p>
 
 
                     <ul class="feature-list">
 
-                        <li>
+                        <% [1, 2, 3, 4].forEach(function (n) { %>
+                            <% var title = (typeof settings !== 'undefined' && settings) ? settings['why.feature' + n + 'Title'] : ''; %>
+                            <% var desc = (typeof settings !== 'undefined' && settings) ? settings['why.feature' + n + 'Desc'] : ''; %>
+                            <% if (title) { %>
+                                <li>
 
-                            <div class="feature-check">
-                                <i class="bi bi-check-lg"></i>
-                            </div>
+                                    <div class="feature-check">
+                                        <i class="bi bi-check-lg"></i>
+                                    </div>
 
-                            <div>
-                                <strong>Expert-led video lessons</strong>
-                                <span>
-                                    Learn from experienced educators and industry professionals.
-                                </span>
-                            </div>
+                                    <div>
+                                        <strong><%= title %></strong>
+                                        <% if (desc) { %>
+                                            <span>
+                                                <%= desc %>
+                                            </span>
+                                        <% } %>
+                                    </div>
 
-                        </li>
-
-
-                        <li>
-
-                            <div class="feature-check">
-                                <i class="bi bi-check-lg"></i>
-                            </div>
-
-                            <div>
-                                <strong>Learn at your own pace</strong>
-                                <span>
-                                    Access purchased courses whenever and wherever you want.
-                                </span>
-                            </div>
-
-                        </li>
-
-
-                        <li>
-
-                            <div class="feature-check">
-                                <i class="bi bi-check-lg"></i>
-                            </div>
-
-                            <div>
-                                <strong>Practical demonstrations</strong>
-                                <span>
-                                    Watch real-world techniques explained step-by-step.
-                                </span>
-                            </div>
-
-                        </li>
-
-
-                        <li>
-
-                            <div class="feature-check">
-                                <i class="bi bi-check-lg"></i>
-                            </div>
-
-                            <div>
-                                <strong>Certificates of completion</strong>
-                                <span>
-                                    Complete eligible courses and receive your certificate.
-                                </span>
-                            </div>
-
-                        </li>
+                                </li>
+                            <% } %>
+                        <% }); %>
 
                     </ul>
 
 
-                    <a href="#courses" class="hero-primary-btn d-inline-block">
-                        Start Learning
+                    <a href="<%= (typeof settings !== 'undefined' && settings) ? settings['why.ctaTarget'] : '#courses' %>" class="hero-primary-btn d-inline-block">
+                        <%= (typeof settings !== 'undefined' && settings) ? settings['why.ctaLabel'] : 'Start Learning' %>
                         <i class="bi bi-arrow-right ms-2"></i>
                     </a>
 
@@ -122,3 +81,4 @@
     </div>
 
 </section>
+<% } %>

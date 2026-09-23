@@ -38,7 +38,7 @@
         <div class="d-flex justify-content-between align-items-center">
             <div>
                 <i class="bi bi-stars me-1"></i>
-                Learn. Practice. Grow. Build Your Professional Future.
+                <%= (typeof settings !== 'undefined' && settings) ? settings['brand.tagline'] : 'Learn. Practice. Grow. Build Your Professional Future.' %>
             </div>
 
             <div class="d-flex gap-3">
@@ -46,9 +46,11 @@
                     <i class="bi bi-telephone me-1"></i> <%= site.contactPhone %>
                 </a><% } %>
 
-                <a href="mailto:<%= site.contactEmail %>">
-                    <i class="bi bi-envelope me-1"></i> <%= site.contactEmail %>
-                </a>
+                <% if (site.contactEmail) { %>
+                    <a href="mailto:<%= site.contactEmail %>">
+                        <i class="bi bi-envelope me-1"></i> <%= site.contactEmail %>
+                    </a>
+                <% } %>
             </div>
         </div>
     </div>
@@ -139,29 +141,37 @@
 
                 </li>
 
-                <li class="nav-item">
-                    <a class="nav-link navigation-link" href="/#about">
-                        About
-                    </a>
-                </li>
+                <% if (typeof settings === 'undefined' || !settings || settings.navShowAbout) { %>
+                    <li class="nav-item">
+                        <a class="nav-link navigation-link" href="/#about">
+                            About
+                        </a>
+                    </li>
+                <% } %>
 
-                <li class="nav-item">
-                    <a class="nav-link navigation-link" href="/#instructors">
-                        Instructors
-                    </a>
-                </li>
+                <% if (typeof settings === 'undefined' || !settings || settings.navShowInstructors) { %>
+                    <li class="nav-item">
+                        <a class="nav-link navigation-link" href="/#instructors">
+                            Instructors
+                        </a>
+                    </li>
+                <% } %>
 
-                <li class="nav-item">
-                    <a class="nav-link navigation-link" href="/#testimonials">
-                        Reviews
-                    </a>
-                </li>
+                <% if (typeof settings === 'undefined' || !settings || settings.navShowReviews) { %>
+                    <li class="nav-item">
+                        <a class="nav-link navigation-link" href="/#testimonials">
+                            Reviews
+                        </a>
+                    </li>
+                <% } %>
 
-                <li class="nav-item">
-                    <a class="nav-link navigation-link" href="/#faq">
-                        FAQ
-                    </a>
-                </li>
+                <% if (typeof settings === 'undefined' || !settings || settings.navShowFaq) { %>
+                    <li class="nav-item">
+                        <a class="nav-link navigation-link" href="/#faq">
+                            FAQ
+                        </a>
+                    </li>
+                <% } %>
 
             </ul>
 

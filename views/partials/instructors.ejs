@@ -1,3 +1,4 @@
+<% if (typeof settings === 'undefined' || !settings || settings.instructorsEnabled) { %>
 <!-- INSTRUCTORS -->
 <section class="section-space" id="instructors">
 
@@ -6,16 +7,15 @@
         <div class="section-heading reveal-element">
 
             <div class="section-tag">
-                Meet Your Mentors
+                <%= (typeof settings !== 'undefined' && settings) ? settings['instructors.eyebrow'] : 'Meet Your Mentors' %>
             </div>
 
             <h2 class="section-title">
-                Learn from experienced professionals
+                <%= (typeof settings !== 'undefined' && settings) ? settings['instructors.heading'] : 'Learn from experienced professionals' %>
             </h2>
 
             <p class="section-description">
-                Our instructors bring practical knowledge and
-                professional experience into every lesson.
+                <%= (typeof settings !== 'undefined' && settings) ? settings['instructors.description'] : 'Our instructors bring practical knowledge and professional experience into every lesson.' %>
             </p>
 
         </div>
@@ -24,7 +24,7 @@
         <% if (instructors.length === 0) { %>
 
             <p class="text-center text-muted">
-                Instructor profiles will appear here once they are added.
+                <%= (typeof settings !== 'undefined' && settings) ? settings['instructors.emptyStateText'] : 'Instructor profiles are being updated.' %>
             </p>
 
         <% } else { %>
@@ -87,3 +87,4 @@
     </div>
 
 </section>
+<% } %>

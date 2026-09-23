@@ -15,6 +15,8 @@ const studentController = require('../controllers/admin/student.controller');
 const orderController = require('../controllers/admin/order.controller');
 const engagementController = require('../controllers/admin/engagement.controller');
 const enrollmentRequestController = require('../controllers/admin/enrollmentRequest.controller');
+const faqController = require('../controllers/admin/faq.controller');
+const settingsController = require('../controllers/admin/settings.controller');
 
 // Every route in this file is admin-only — enforced once here rather than
 // repeated per-route, so it's impossible to accidentally add an
@@ -99,6 +101,14 @@ router.get('/orders/:id', orderController.getOrderDetail);
 router.get('/enrollment-requests', enrollmentRequestController.listRequests);
 router.post('/enrollment-requests/:id/approve', doubleCsrfProtection, enrollmentRequestController.approveRequest);
 router.post('/enrollment-requests/:id/status', doubleCsrfProtection, enrollmentRequestController.updateStatus);
+router.get('/settings', settingsController.editSettingsForm);
+router.post('/settings', doubleCsrfProtection, settingsController.updateSettingsAction);
+
+router.get('/faqs', faqController.listFaqs);
+router.post('/faqs', doubleCsrfProtection, faqController.createFaq);
+router.post('/faqs/:id', doubleCsrfProtection, faqController.updateFaq);
+router.post('/faqs/:id/delete', doubleCsrfProtection, faqController.deleteFaq);
+
 router.get('/certificates', engagementController.certificates);
 router.get('/newsletter', engagementController.newsletter);
 router.get('/messages', engagementController.messages);

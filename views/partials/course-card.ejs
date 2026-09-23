@@ -61,10 +61,10 @@
         <div class="course-footer">
 
             <div class="course-price">
-                <%= course.currency %> <%= Number(course.salePrice || course.price).toLocaleString('en-IN') %>
+                <%= course.currency === 'INR' ? '₹' : course.currency + ' ' %><%= Number(course.salePrice || course.price).toLocaleString('en-IN') %>
 
                 <% if (course.salePrice) { %>
-                    <del><%= course.currency %> <%= Number(course.price).toLocaleString('en-IN') %></del>
+                    <del><%= course.currency === 'INR' ? '₹' : course.currency + ' ' %><%= Number(course.price).toLocaleString('en-IN') %></del>
                 <% } %>
             </div>
 

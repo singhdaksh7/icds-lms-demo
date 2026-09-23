@@ -68,6 +68,12 @@ async function saveProgress(req, res, next) {
 
     const positionSeconds = Number(req.body.positionSeconds);
     const durationSeconds = Number(req.body.durationSeconds);
+    // Optional: only present once the client has accumulated genuine
+    // playback time since its last save (see public/js/lesson-progress.js).
+    // Absent/invalid simply means "no additional watched time to report" —
+    // never treated as an error, since a plain resume-position save (e.g.
+    // on pagehide right after a seek) legitimately has no delta.
+    const watchedDeltaSeconds = Number(req.body.watchedDeltaSeconds) || 0;
     if (!Number.isFinite(positionSeconds) || !Number.isFinite(durationSeconds)) {
       return res.status(400).json({ success: false, error: 'Invalid progress data.' });
     }
@@ -75,6 +81,7 @@ async function saveProgress(req, res, next) {
     const { lessonProgress, progress } = await saveLessonProgress(req.currentUser.id, lessonId, {
       positionSeconds,
       durationSeconds,
+      watchedDeltaSeconds,
     });
 
     res.json({

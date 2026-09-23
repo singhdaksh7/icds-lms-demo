@@ -1,3 +1,5 @@
+<% var faqList = typeof faqs !== 'undefined' && Array.isArray(faqs) ? faqs : []; %>
+<% if (faqList.length > 0) { %>
 <!-- FAQ -->
 <section class="section-space faq-section" id="faq">
 
@@ -22,164 +24,36 @@
 
                 <div class="accordion faq-accordion" id="faqAccordion">
 
-                    <div class="accordion-item reveal-element">
+                    <% faqList.forEach(function (faq, index) { %>
+                        <div class="accordion-item reveal-element">
 
-                        <h2 class="accordion-header">
+                            <h2 class="accordion-header">
 
-                            <button
-                                class="accordion-button"
-                                type="button"
-                                data-bs-toggle="collapse"
-                                data-bs-target="#faqOne">
+                                <button
+                                    class="accordion-button <%= index === 0 ? '' : 'collapsed' %>"
+                                    type="button"
+                                    data-bs-toggle="collapse"
+                                    data-bs-target="#faqItem<%= faq.id %>">
 
-                                How do I purchase a course?
+                                    <%= faq.question %>
 
-                            </button>
+                                </button>
 
-                        </h2>
+                            </h2>
 
-                        <div
-                            id="faqOne"
-                            class="accordion-collapse collapse show"
-                            data-bs-parent="#faqAccordion">
+                            <div
+                                id="faqItem<%= faq.id %>"
+                                class="accordion-collapse collapse <%= index === 0 ? 'show' : '' %>"
+                                data-bs-parent="#faqAccordion">
 
-                            <div class="accordion-body">
-                                Create your student account and open the course
-                                you're interested in. Free courses give you
-                                instant access. For paid courses, submit a
-                                Request Enrollment and our team will contact you
-                                to complete enrollment — once confirmed, the
-                                course appears in your student dashboard.
+                                <div class="accordion-body" style="white-space:pre-line;">
+                                    <%= faq.answer %>
+                                </div>
+
                             </div>
 
                         </div>
-
-                    </div>
-
-
-                    <div class="accordion-item reveal-element">
-
-                        <h2 class="accordion-header">
-
-                            <button
-                                class="accordion-button collapsed"
-                                type="button"
-                                data-bs-toggle="collapse"
-                                data-bs-target="#faqTwo">
-
-                                Can I access my course from mobile?
-
-                            </button>
-
-                        </h2>
-
-                        <div
-                            id="faqTwo"
-                            class="accordion-collapse collapse"
-                            data-bs-parent="#faqAccordion">
-
-                            <div class="accordion-body">
-                                Yes. The learning platform is designed to work
-                                across desktop, tablet and mobile devices.
-                            </div>
-
-                        </div>
-
-                    </div>
-
-
-                    <div class="accordion-item reveal-element">
-
-                        <h2 class="accordion-header">
-
-                            <button
-                                class="accordion-button collapsed"
-                                type="button"
-                                data-bs-toggle="collapse"
-                                data-bs-target="#faqThree">
-
-                                Do courses have certificates?
-
-                            </button>
-
-                        </h2>
-
-                        <div
-                            id="faqThree"
-                            class="accordion-collapse collapse"
-                            data-bs-parent="#faqAccordion">
-
-                            <div class="accordion-body">
-                                Eligible courses provide a certificate once you
-                                complete every lesson in the course.
-                            </div>
-
-                        </div>
-
-                    </div>
-
-
-                    <div class="accordion-item reveal-element">
-
-                        <h2 class="accordion-header">
-
-                            <button
-                                class="accordion-button collapsed"
-                                type="button"
-                                data-bs-toggle="collapse"
-                                data-bs-target="#faqFour">
-
-                                How long will I have access to a purchased course?
-
-                            </button>
-
-                        </h2>
-
-                        <div
-                            id="faqFour"
-                            class="accordion-collapse collapse"
-                            data-bs-parent="#faqAccordion">
-
-                            <div class="accordion-body">
-                                Course access duration can be configured by the
-                                institute. The course detail page should clearly
-                                display the access period before purchase.
-                            </div>
-
-                        </div>
-
-                    </div>
-
-
-                    <div class="accordion-item reveal-element">
-
-                        <h2 class="accordion-header">
-
-                            <button
-                                class="accordion-button collapsed"
-                                type="button"
-                                data-bs-toggle="collapse"
-                                data-bs-target="#faqFive">
-
-                                Can I watch the videos more than once?
-
-                            </button>
-
-                        </h2>
-
-                        <div
-                            id="faqFive"
-                            class="accordion-collapse collapse"
-                            data-bs-parent="#faqAccordion">
-
-                            <div class="accordion-body">
-                                Yes. Students can revisit available lessons
-                                according to the access rules of their purchased course.
-                            </div>
-
-                        </div>
-
-                    </div>
+                    <% }); %>
 
                 </div>
 
@@ -190,3 +64,4 @@
     </div>
 
 </section>
+<% } %>

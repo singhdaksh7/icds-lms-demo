@@ -8,10 +8,19 @@ class ProgressError extends Error {
   }
 }
 
-// A lesson is auto-marked complete once the viewer has reached this fraction
-// of the reported duration — matches typical "effectively finished" demo
-// behavior without requiring the very last second to play.
+// A lesson is auto-marked complete once the viewer has genuinely watched
+// this fraction of the reported duration — matches typical "effectively
+// finished" demo behavior without requiring the very last second to play.
 const COMPLETION_THRESHOLD = 0.9;
+
+// The client throttles saves to roughly every 12 seconds (see
+// public/js/lesson-progress.js SAVE_INTERVAL_MS) and only ever reports a
+// delta accumulated between two saves while the video was genuinely
+// playing. This is the server-side ceiling on a single reported delta —
+// generous enough to absorb normal timer jitter/backgrounding, but far too
+// small for a seek-to-end to pass as "watched". Never trust the client's
+// delta beyond this regardless of what it claims.
+const MAX_WATCHED_DELTA_SECONDS = 30;
 
 // Never trust client-sent numbers as-is: coerce to a finite, non-negative
 // integer, defaulting anything invalid to 0. Exported for testing.
@@ -20,19 +29,61 @@ function clampNonNegativeInt(value) {
   return Number.isFinite(num) && num > 0 ? num : 0;
 }
 
-// Pure decision of whether a (position, duration) pair counts as "complete",
-// given whether the lesson was already completed before (completion never
-// un-sets itself on a later, smaller position — e.g. a student seeking back
-// to rewatch a section shouldn't lose their completed status). Exported for
-// testing without touching the database.
+// Same coercion, but also rejects negative deltas (a delta must never
+// subtract watched time) and caps at MAX_WATCHED_DELTA_SECONDS so a client
+// claiming an implausible jump (seek, reload, clock skew, tampering) can
+// only ever add a small, bounded amount. Exported for testing.
+function clampWatchedDelta(value) {
+  const num = Math.trunc(Number(value));
+  if (!Number.isFinite(num) || num <= 0) return 0;
+  return Math.min(num, MAX_WATCHED_DELTA_SECONDS);
+}
+
+// Pure decision of whether a (watchedSeconds, durationSeconds) pair counts
+// as "complete", given whether the lesson was already completed before
+// (completion never un-sets itself later — e.g. a student seeking back to
+// rewatch a section shouldn't lose their completed status). Deliberately
+// takes watchedSeconds (accumulated legitimate watch time), NEVER the raw
+// playback position — that distinction is what stops "seek to the end"
+// from completing a lesson. Exported for testing without touching the
+// database.
 function isLessonComplete(alreadyCompleted, watchedSeconds, durationSeconds) {
   if (alreadyCompleted) return true;
   return durationSeconds > 0 && watchedSeconds / durationSeconds >= COMPLETION_THRESHOLD;
 }
 
+// Pure computation of the next LessonProgress row state from the existing
+// row (or null) plus one client-reported save. Exported so the exact bug
+// scenario (seeking must not fake completion, resume is independent of
+// watched time) can be tested directly without a database. This is the
+// single place watchedSeconds, lastPositionSeconds and completed are
+// derived — saveLessonProgress below just persists whatever this returns.
+function computeProgressUpdate(existing, { positionSeconds, durationSeconds, watchedDeltaSeconds }) {
+  const lastPositionSeconds = clampNonNegativeInt(positionSeconds);
+  const duration = clampNonNegativeInt(durationSeconds);
+  const delta = clampWatchedDelta(watchedDeltaSeconds);
+
+  const priorWatched = existing ? existing.watchedSeconds : 0;
+  const watchedSeconds = duration > 0
+    ? Math.min(priorWatched + delta, duration)
+    : priorWatched + delta;
+
+  const wasCompleted = Boolean(existing && existing.completed);
+  const completed = isLessonComplete(wasCompleted, watchedSeconds, duration);
+
+  return {
+    watchedSeconds,
+    lastPositionSeconds,
+    durationSeconds: duration,
+    completed,
+    completedAt: completed ? (existing && existing.completedAt) || new Date() : null,
+  };
+}
+
 // Per-lesson progress percent used to drive the course-level percentage
 // below. Completed lessons always read as 100; an in-progress (not yet
-// completed) lesson is capped at 99 so only real completion ever shows 100%.
+// completed) lesson is capped at 99 so only real completion ever shows
+// 100%. Driven by watchedSeconds, never lastPositionSeconds.
 function lessonPercent(row) {
   if (!row) return 0;
   if (row.completed) return 100;
@@ -104,9 +155,21 @@ async function markLessonComplete(userId, lessonId) {
     throw new ProgressError('You are not enrolled in this course.');
   }
 
+  const existing = await prisma.lessonProgress.findUnique({
+    where: { userId_lessonId: { userId, lessonId } },
+  });
+
   await prisma.lessonProgress.upsert({
     where: { userId_lessonId: { userId, lessonId } },
-    update: { completed: true, completedAt: new Date() },
+    update: {
+      completed: true,
+      completedAt: new Date(),
+      // Manual "Mark Complete" is an explicit, user-initiated action, so
+      // watchedSeconds is set to the full known duration (if any) — it's
+      // not derived from playback deltas here, but it's a one-time
+      // authenticated user action, not a client-reported measurement.
+      watchedSeconds: existing?.durationSeconds || existing?.watchedSeconds || 0,
+    },
     create: { userId, lessonId, completed: true, completedAt: new Date() },
   });
 
@@ -122,14 +185,26 @@ async function markLessonComplete(userId, lessonId) {
   return { lesson, progress };
 }
 
-// Saves the current playback position + duration for the authenticated
-// user, called periodically (throttled client-side, never on every
-// timeupdate tick) while a lesson video plays. Enforces enrollment and
-// lesson-published status server-side exactly like markLessonComplete —
-// userId always comes from the session, never the request body, which is
-// also what prevents one student from overwriting another's progress
-// (IDOR): the (userId, lessonId) upsert key is never client-controlled.
-async function saveLessonProgress(userId, lessonId, { positionSeconds, durationSeconds }) {
+// Saves playback state for the authenticated user, called periodically
+// (throttled client-side, never on every timeupdate tick) while a lesson
+// video plays. Enforces enrollment and lesson-published status
+// server-side exactly like markLessonComplete — userId always comes from
+// the session, never the request body, which is also what prevents one
+// student from overwriting another's progress (IDOR): the
+// (userId, lessonId) upsert key is never client-controlled.
+//
+// Three independent inputs, never conflated:
+//   - positionSeconds: raw playback position -> stored as
+//     lastPositionSeconds, used only for resume. Can legitimately be
+//     anywhere in the video (including near the end) without implying
+//     anything was "watched".
+//   - watchedDeltaSeconds: additional legitimate watched time accumulated
+//     client-side since the last save (see public/js/lesson-progress.js) -
+//     ADDED to the existing watchedSeconds total, clamped to a small
+//     per-save ceiling so the client can never report a huge jump (e.g.
+//     "watched 580 seconds" from one seek) as real watch time.
+//   - durationSeconds: real video duration from <video> metadata.
+async function saveLessonProgress(userId, lessonId, { positionSeconds, durationSeconds, watchedDeltaSeconds }) {
   const lesson = await prisma.lesson.findUnique({ where: { id: lessonId } });
   if (!lesson || lesson.status !== 'PUBLISHED') {
     throw new ProgressError('Lesson not found.');
@@ -140,22 +215,15 @@ async function saveLessonProgress(userId, lessonId, { positionSeconds, durationS
     throw new ProgressError('You are not enrolled in this course.');
   }
 
-  const watchedSeconds = clampNonNegativeInt(positionSeconds);
-  const duration = clampNonNegativeInt(durationSeconds);
-
   const existing = await prisma.lessonProgress.findUnique({
     where: { userId_lessonId: { userId, lessonId } },
   });
 
-  const wasCompleted = Boolean(existing && existing.completed);
-  const completed = isLessonComplete(wasCompleted, watchedSeconds, duration);
-
-  const data = {
-    watchedSeconds,
-    durationSeconds: duration,
-    completed,
-    completedAt: completed ? existing?.completedAt || new Date() : null,
-  };
+  // Server ADDS the (already-clamped) delta rather than trusting a
+  // client-sent total — the client can only ever move watchedSeconds
+  // forward by a small, bounded amount per save, entirely independent of
+  // lastPositionSeconds (raw playback position, resume-only).
+  const data = computeProgressUpdate(existing, { positionSeconds, durationSeconds, watchedDeltaSeconds });
 
   const lessonProgress = await prisma.lessonProgress.upsert({
     where: { userId_lessonId: { userId, lessonId } },
@@ -175,8 +243,11 @@ async function saveLessonProgress(userId, lessonId, { positionSeconds, durationS
 module.exports = {
   ProgressError,
   COMPLETION_THRESHOLD,
+  MAX_WATCHED_DELTA_SECONDS,
   clampNonNegativeInt,
+  clampWatchedDelta,
   isLessonComplete,
+  computeProgressUpdate,
   computeCourseProgress,
   getLessonProgressMap,
   markLessonComplete,

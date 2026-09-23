@@ -1,15 +1,17 @@
 const homeService = require('../services/home.service');
+const faqService = require('../services/faq.service');
 const site = require('../config/site');
 const { buildSeo, PUBLIC_ROBOTS } = require('../lib/seo');
 
 async function getHomePage(req, res, next) {
   try {
-    const [categories, featuredCourses, instructors, reviews, stats] = await Promise.all([
+    const [categories, featuredCourses, instructors, reviews, stats, faqs] = await Promise.all([
       homeService.getActiveCategories(),
       homeService.getFeaturedCourses(),
       homeService.getActiveInstructors(),
       homeService.getApprovedReviews(),
       homeService.getPlatformStats(),
+      faqService.listActiveFaqs(),
     ]);
 
     const title = `${site.name} | Courses & Training`;
@@ -37,6 +39,7 @@ async function getHomePage(req, res, next) {
       instructors,
       reviews,
       stats,
+      faqs,
     });
   } catch (err) {
     next(err);

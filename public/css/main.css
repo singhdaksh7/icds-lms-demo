@@ -33,6 +33,17 @@
             scroll-behavior: smooth;
         }
 
+        /* Bootstrap's .row negative gutter margins (e.g. `row g-5` = -12px
+           each side) are normally absorbed by the matching .container
+           padding, but `overflow-x: hidden` on body alone doesn't stop the
+           initial containing block (html) from reporting that extra width,
+           which is what produced ~12px of real horizontal scroll on mobile
+           (measured via document.documentElement.scrollWidth). html needs
+           the same rule body already had. */
+        html {
+            overflow-x: hidden;
+        }
+
         body {
             margin: 0;
             color: var(--body-color);
@@ -678,6 +689,51 @@
             font-weight: 800;
         }
 
+        /* Compact course-detail pricing/enrollment card — deliberately its
+           own class rather than reusing Bootstrap's .modal-content (which
+           had no built-in size discipline and produced the oversized card
+           with large empty gaps around the CTA button). */
+        .course-pricing-card {
+            position: sticky;
+            top: 100px;
+            background: #fff;
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 6px 24px rgba(17, 17, 17, 0.06);
+        }
+
+        .course-pricing-card .course-price {
+            margin-bottom: 14px;
+        }
+
+        .course-pricing-card .auth-submit {
+            height: 50px;
+        }
+
+        .course-pricing-card .course-access-bullets {
+            margin-top: 18px;
+            padding-top: 16px;
+            border-top: 1px solid rgba(0, 0, 0, 0.06);
+        }
+
+        .course-pricing-card .course-access-bullets li {
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+        }
+
+        .course-pricing-card .course-access-bullets li:last-child {
+            margin-bottom: 0;
+        }
+
+        @media (max-width: 767.98px) {
+            .course-pricing-card {
+                position: static;
+                padding: 16px;
+            }
+        }
+
         .course-price del {
             color: #aaa;
             font-size: 12px;
@@ -685,11 +741,21 @@
             margin-left: 5px;
         }
 
-        .course-view-btn {
+        .course-view-btn,
+        .course-view-btn:hover,
+        .course-view-btn:focus,
+        .course-view-btn:visited,
+        .course-view-btn:active {
             color: var(--primary-color);
             font-size: 13px;
             font-weight: 800;
             text-decoration: none;
+        }
+
+        .course-view-btn:focus-visible {
+            outline: 2px solid var(--primary-color);
+            outline-offset: 2px;
+            border-radius: 2px;
         }
 
         .course-view-btn i {

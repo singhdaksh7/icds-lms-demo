@@ -125,6 +125,14 @@ app.use('/', indexRoutes);
 app.use(notFound);
 app.use(errorHandler);
 
+// Idempotent: only inserts default FAQ entries when the table is
+// completely empty, so this never duplicates rows across restarts/deploys.
+// Never blocks server startup on failure (e.g. DB not yet reachable) — the
+// FAQ section simply renders empty until this succeeds on a later start.
+require('./src/services/faq.service')
+  .ensureDefaultFaqs()
+  .catch((err) => console.error('Failed to seed default FAQs:', err.message));
+
 const server = app.listen(PORT, () => {
   console.log(`Server listening on port ${PORT} (${IS_PRODUCTION ? 'production' : 'development'})`);
 });

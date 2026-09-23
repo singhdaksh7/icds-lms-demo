@@ -331,10 +331,16 @@ model LessonProgress {
   userId        Int
   lessonId      Int
   completed     Boolean   @default(false)
-  // Last playback position, in seconds — doubles as the resume-position
-  // field (client seeks here on return); saved on pause/end/visibility
-  // change and throttled during playback, never on every timeupdate tick.
+  // Legitimate ACCUMULATED watched time, in seconds — never set directly
+  // from currentTime/position. Only incremented server-side by small,
+  // playback-verified deltas the client reports while the video is
+  // genuinely playing (not seeking, not paused, not an implausible jump).
+  // This is the value completion and progress-percent are computed from.
   watchedSeconds Int      @default(0)
+  // Last playback position, in seconds — resume-only. Set directly from
+  // currentTime on every save, completely independent of watchedSeconds,
+  // so seeking to the end of a video does NOT by itself mark it watched.
+  lastPositionSeconds Int @default(0)
   // Video duration, in seconds, as reported by the client at save time.
   // Needed (alongside watchedSeconds) to compute an in-progress percentage
   // before completion — Lesson.duration is a display string, not seconds.
@@ -372,6 +378,35 @@ model Certificate {
 // ---------------------------------------------------------------------------
 // Marketing / support
 // ---------------------------------------------------------------------------
+
+// Generic admin-editable site content: one row per setting key. Kept as a
+// single key/value table (not a bespoke model per homepage section) so this
+// stays a small, reusable "Site Settings" mechanism rather than a large CMS
+// framework. Missing keys fall back to the hard-coded defaults in
+// src/services/settings.service.js, so partial/empty configuration is
+// always safe.
+model SiteSetting {
+  key       String   @id @db.VarChar(100)
+  value     String   @db.Text
+  updatedAt DateTime @updatedAt
+
+  @@map("site_settings")
+}
+
+// Admin-managed homepage FAQ entries. Public site loads only isActive rows,
+// ordered by sortOrder.
+model Faq {
+  id        Int      @id @default(autoincrement())
+  question  String   @db.VarChar(300)
+  answer    String   @db.Text
+  sortOrder Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isActive, sortOrder])
+  @@map("faqs")
+}
 
 model NewsletterSubscriber {
   id           Int      @id @default(autoincrement())

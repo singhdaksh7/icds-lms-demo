@@ -1,3 +1,4 @@
+<% if (typeof settings === 'undefined' || !settings || settings.newsletterEnabled) { %>
 <!-- NEWSLETTER -->
 <section class="newsletter-section">
 
@@ -10,16 +11,15 @@
                 <div class="col-lg-7">
 
                     <div class="section-tag text-white-50">
-                        Stay Updated
+                        <%= (typeof settings !== 'undefined' && settings) ? settings['newsletter.eyebrow'] : 'Stay Updated' %>
                     </div>
 
                     <h2>
-                        Get new course updates in your inbox.
+                        <%= (typeof settings !== 'undefined' && settings) ? settings['newsletter.heading'] : 'Get new course updates in your inbox.' %>
                     </h2>
 
                     <p>
-                        Subscribe for new course announcements, educational
-                        resources, special offers and upcoming learning programs.
+                        <%= (typeof settings !== 'undefined' && settings) ? settings['newsletter.description'] : 'Subscribe for new course announcements, educational resources, special offers and upcoming learning programs.' %>
                     </p>
 
                     <form class="newsletter-form" method="POST" action="/newsletter/subscribe">
@@ -45,3 +45,4 @@
     </div>
 
 </section>
+<% } %>
