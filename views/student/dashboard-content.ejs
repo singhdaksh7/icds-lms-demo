@@ -45,7 +45,7 @@
                             src="<%= clCourse.thumbnailUrl || '/assets/images/course-placeholder.svg' %>"
                             alt="<%= clCourse.title %>"
                             loading="lazy"
-                            onerror="this.onerror=null;this.src='/assets/images/course-placeholder.svg';">
+                            data-fallback-src="/assets/images/course-placeholder.svg">
                     </div>
                     <div class="dashboard-continue-body">
                         <div class="dashboard-continue-eyebrow">Continue Learning</div>
@@ -81,7 +81,7 @@
                                     src="<%= course.thumbnailUrl || '/assets/images/course-placeholder.svg' %>"
                                     alt="<%= course.title %>"
                                     loading="lazy"
-                                    onerror="this.onerror=null;this.src='/assets/images/course-placeholder.svg';">
+                                    data-fallback-src="/assets/images/course-placeholder.svg">
                                 <span class="course-badge dashboard-state-badge dashboard-state-badge-<%= enrollment.stateLabel.replace(/\s+/g, '-').toLowerCase() %>"><%= enrollment.stateLabel %></span>
                             </div>
 

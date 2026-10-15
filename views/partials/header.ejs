@@ -28,6 +28,7 @@
 
     <!-- Site styles (extracted from the original inline <style> block) -->
     <link rel="stylesheet" href="/css/main.css">
+    <script src="/js/ui-guards.js"></script>
 </head>
 
 <body>
@@ -69,8 +70,13 @@
             </span>
 
             <span class="brand-logo-text">
-                Institute of Cosmetology
-                <small>& Dental Sciences</small>
+                <% const brandParts = String(site.name).split(' & '); %>
+                <% if (brandParts.length === 2) { %>
+                    <%= brandParts[0] %>
+                    <small>&amp; <%= brandParts[1] %></small>
+                <% } else { %>
+                    <%= site.name %>
+                <% } %>
             </span>
 
         </a>
@@ -95,51 +101,44 @@
                     </a>
                 </li>
 
-                <li class="nav-item dropdown">
+                <% const navCategories = (typeof footerCategories !== 'undefined' && footerCategories) ? footerCategories : []; %>
+                <% if (navCategories.length) { %>
+                    <li class="nav-item dropdown">
 
-                    <a
-                        class="nav-link navigation-link dropdown-toggle"
-                        href="/courses"
-                        data-bs-toggle="dropdown">
+                        <a
+                            class="nav-link navigation-link dropdown-toggle"
+                            href="/courses"
+                            data-bs-toggle="dropdown">
 
-                        Courses
-                    </a>
+                            Courses
+                        </a>
 
-                    <ul class="dropdown-menu border-0 shadow-lg">
+                        <ul class="dropdown-menu border-0 shadow-lg">
 
-                        <li>
-                            <a class="dropdown-item py-2" href="/courses">
-                                All Courses
-                            </a>
-                        </li>
+                            <li>
+                                <a class="dropdown-item py-2" href="/courses">
+                                    All Courses
+                                </a>
+                            </li>
 
-                        <li>
-                            <a class="dropdown-item py-2" href="/courses?category=cosmetology">
-                                Cosmetology
-                            </a>
-                        </li>
+                            <% navCategories.forEach(function (category) { %>
+                                <li>
+                                    <a class="dropdown-item py-2" href="/courses?category=<%= encodeURIComponent(category.slug) %>">
+                                        <%= category.name %>
+                                    </a>
+                                </li>
+                            <% }); %>
 
-                        <li>
-                            <a class="dropdown-item py-2" href="/courses?category=aesthetics">
-                                Aesthetics
-                            </a>
-                        </li>
+                        </ul>
 
-                        <li>
-                            <a class="dropdown-item py-2" href="/courses?category=dental-sciences">
-                                Dental Sciences
-                            </a>
-                        </li>
-
-                        <li>
-                            <a class="dropdown-item py-2" href="/courses?category=skin-hair">
-                                Skin & Hair
-                            </a>
-                        </li>
-
-                    </ul>
-
-                </li>
+                    </li>
+                <% } else { %>
+                    <li class="nav-item">
+                        <a class="nav-link navigation-link" href="/courses">
+                            Courses
+                        </a>
+                    </li>
+                <% } %>
 
                 <% if (typeof settings === 'undefined' || !settings || settings.navShowAbout) { %>
                     <li class="nav-item">

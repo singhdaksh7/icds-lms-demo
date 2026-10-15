@@ -9,13 +9,35 @@
 <% } %>
 
 <p class="text-muted small mb-4">
-    Contact email, phone, address, institute name and copyright text are managed via environment
-    configuration (see <code>.env</code>); the fields below cover editable homepage/footer copy and
-    section visibility only. Leave a text field blank to keep its current value.
+    Edit the institute details, homepage copy, section visibility and legal pages below. Changes appear on the
+    public site within about 30 seconds without a redeploy. For the institute name and contact details, leaving a field
+    blank uses the server's default value (shown as the placeholder).
 </p>
 
 <form method="POST" action="/admin/settings" enctype="multipart/form-data">
     <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+    <div class="admin-card mb-4">
+        <h6 class="mb-3">Institute &amp; Contact</h6>
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label class="form-label small fw-semibold">Institute name</label>
+                <input type="text" name="site.name" class="form-control form-control-custom" value="<%= settings['site.name'] %>" placeholder="<%= env.name %>" maxlength="120">
+            </div>
+            <div class="col-md-6">
+                <label class="form-label small fw-semibold">Contact email</label>
+                <input type="email" name="contact.email" class="form-control form-control-custom" value="<%= settings['contact.email'] %>" placeholder="<%= env.email %>" maxlength="254">
+            </div>
+            <div class="col-md-6">
+                <label class="form-label small fw-semibold">Phone</label>
+                <input type="text" name="contact.phone" class="form-control form-control-custom" value="<%= settings['contact.phone'] %>" placeholder="<%= env.phone %>" maxlength="30">
+            </div>
+            <div class="col-12">
+                <label class="form-label small fw-semibold">Address</label>
+                <textarea name="contact.address" class="form-control form-control-custom" rows="2" maxlength="300" placeholder="<%= env.address %>"><%= settings['contact.address'] %></textarea>
+            </div>
+        </div>
+    </div>
 
     <div class="admin-card mb-4">
         <h6 class="mb-3">Brand</h6>
@@ -71,6 +93,7 @@
                 <div class="d-flex align-items-center gap-3 mb-2">
                     <% if (typeof whyImageUrl !== 'undefined' && whyImageUrl) { %>
                         <img src="<%= whyImageUrl %>" alt="Current Why ICDS image" style="width:96px;height:72px;object-fit:cover;border-radius:6px;border:1px solid #dee2e6;">
+                        <button type="submit" form="remove-why-image-form" formnovalidate class="btn btn-outline-danger btn-sm" data-confirm="Remove the current image and use the default image?">Remove current image</button>
                     <% } else { %>
                         <span class="text-muted small">Using the default bundled image.</span>
                     <% } %>
@@ -202,5 +225,59 @@
         </div>
     </div>
 
+    <div class="admin-card mb-4">
+        <h6 class="mb-2">Privacy Policy page</h6>
+        <% if (legalProvisional.privacy) { %>
+            <div class="alert alert-warning py-2 small">
+                This page is still showing the built-in provisional wording. Replace it with the client-approved
+                text before launch. (This notice is shown only here in Admin, never on the public site.)
+            </div>
+        <% } %>
+        <div class="row g-3">
+            <div class="col-md-8">
+                <label class="form-label small fw-semibold">Page heading</label>
+                <input type="text" name="legal.privacy.heading" class="form-control form-control-custom" value="<%= settings['legal.privacy.heading'] %>" maxlength="150">
+            </div>
+            <div class="col-md-4">
+                <label class="form-label small fw-semibold">Last updated</label>
+                <input type="date" name="legal.privacy.updated" class="form-control form-control-custom" value="<%= settings['legal.privacy.updated'] %>">
+            </div>
+            <div class="col-12">
+                <label class="form-label small fw-semibold">Content</label>
+                <textarea name="legal.privacy.body" class="form-control form-control-custom" rows="14" maxlength="20000"><%= settings['legal.privacy.body'] %></textarea>
+                <p class="small text-muted mt-1 mb-0">Plain text only. Separate paragraphs with a blank line, start a line with <code>## </code> for a heading and with <code>- </code> for a list item. HTML is not interpreted.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="admin-card mb-4">
+        <h6 class="mb-2">Terms &amp; Conditions page</h6>
+        <% if (legalProvisional.terms) { %>
+            <div class="alert alert-warning py-2 small">
+                This page is still showing the built-in provisional wording. Replace it with the client-approved
+                text before launch. (This notice is shown only here in Admin, never on the public site.)
+            </div>
+        <% } %>
+        <div class="row g-3">
+            <div class="col-md-8">
+                <label class="form-label small fw-semibold">Page heading</label>
+                <input type="text" name="legal.terms.heading" class="form-control form-control-custom" value="<%= settings['legal.terms.heading'] %>" maxlength="150">
+            </div>
+            <div class="col-md-4">
+                <label class="form-label small fw-semibold">Last updated</label>
+                <input type="date" name="legal.terms.updated" class="form-control form-control-custom" value="<%= settings['legal.terms.updated'] %>">
+            </div>
+            <div class="col-12">
+                <label class="form-label small fw-semibold">Content</label>
+                <textarea name="legal.terms.body" class="form-control form-control-custom" rows="14" maxlength="20000"><%= settings['legal.terms.body'] %></textarea>
+                <p class="small text-muted mt-1 mb-0">Plain text only. Separate paragraphs with a blank line, start a line with <code>## </code> for a heading and with <code>- </code> for a list item. HTML is not interpreted.</p>
+            </div>
+        </div>
+    </div>
+
     <button type="submit" class="auth-submit" style="width:auto; padding:0 32px;">Save Settings</button>
+</form>
+
+<form id="remove-why-image-form" method="POST" action="/admin/settings/why-image/remove" class="d-none">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
 </form>

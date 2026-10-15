@@ -73,7 +73,7 @@
                                     <td class="text-end">
                                         <% if (enrollment.status === 'ACTIVE') { %>
                                             <form method="POST" action="/admin/students/<%= student.id %>/unenroll" class="m-0 d-inline"
-                                                  onsubmit="return confirm('Cancel this enrollment?');">
+                                                  data-confirm="Cancel this enrollment?">
                                                 <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                                                 <input type="hidden" name="courseId" value="<%= enrollment.courseId %>">
                                                 <button type="submit" class="btn btn-sm btn-outline-danger">Cancel</button>

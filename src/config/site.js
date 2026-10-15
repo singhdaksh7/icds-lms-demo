@@ -27,6 +27,39 @@ const site = {
   googleSiteVerification: process.env.GOOGLE_SITE_VERIFICATION || '',
 };
 
+// Env values stay as the fallback defaults; Admin > Settings can override
+// name / contact email / phone / address at runtime (see
+// settings.service.js getSettings, which calls applyOverrides). The `site`
+// object is a shared singleton read at render time everywhere, so mutating
+// it in place makes a change visible site-wide without a redeploy.
+const envDefaults = {
+  name: site.name,
+  copyrightName: site.copyrightName,
+  supportEmail: site.supportEmail,
+  contactEmail: site.contactEmail,
+  contactPhone: site.contactPhone,
+  address: site.address,
+};
+const copyrightFromEnv = Boolean(process.env.COPYRIGHT_NAME);
+
+function pick(value, fallback) {
+  return typeof value === 'string' && value.trim() ? value.trim() : fallback;
+}
+
+site.envDefaults = envDefaults;
+
+site.applyOverrides = function applyOverrides(overrides = {}) {
+  site.name = pick(overrides.name, envDefaults.name);
+  site.copyrightName = copyrightFromEnv
+    ? envDefaults.copyrightName
+    : (pick(overrides.name, '') || envDefaults.copyrightName);
+  site.contactEmail = pick(overrides.email, envDefaults.contactEmail);
+  site.supportEmail = pick(overrides.email, envDefaults.supportEmail);
+  site.contactPhone = pick(overrides.phone, envDefaults.contactPhone);
+  site.address = pick(overrides.address, envDefaults.address);
+  site.phoneHref = site.contactPhone ? `tel:${digits(site.contactPhone)}` : '';
+};
+
 site.phoneHref = site.contactPhone ? `tel:${digits(site.contactPhone)}` : '';
 site.whatsappHref = site.whatsappNumber ? `https://wa.me/${site.whatsappNumber}` : '';
 site.hasSocialLinks = Object.values(site.social).some(Boolean);

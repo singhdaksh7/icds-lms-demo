@@ -31,7 +31,7 @@
                             <div class="d-flex justify-content-end gap-2">
                                 <a href="/admin/instructors/<%= instructor.id %>/edit" class="btn btn-sm btn-outline-secondary">Edit</a>
                                 <form method="POST" action="/admin/instructors/<%= instructor.id %>/delete" class="m-0"
-                                      onsubmit="return confirm('Delete this instructor? <%= instructor._count.courses %> course(s) will lose their instructor.');">
+                                      data-confirm="Delete this instructor? <%= instructor._count.courses %> course(s) will lose their instructor.">
                                     <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                                     <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
                                 </form>

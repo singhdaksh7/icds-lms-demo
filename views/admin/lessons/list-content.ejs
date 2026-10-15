@@ -49,7 +49,7 @@
                             <div class="d-flex justify-content-end gap-2">
                                 <a href="/admin/lessons/<%= lesson.id %>/edit" class="btn btn-sm btn-outline-secondary">Edit</a>
                                 <form method="POST" action="/admin/lessons/<%= lesson.id %>/delete" class="m-0"
-                                      onsubmit="return confirm('Delete this lesson?');">
+                                      data-confirm="Delete this lesson?">
                                     <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                                     <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
                                 </form>

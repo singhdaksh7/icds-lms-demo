@@ -1,4 +1,6 @@
 const { prisma } = require('../config/db');
+const { getSettings } = require('../services/settings.service');
+const { parseLegalText, formatLegalDate } = require('../lib/legalText');
 const { validateContact, validateNewsletter } = require('../validators/contact.validator');
 const site = require('../config/site');
 const { buildSeo, PUBLIC_ROBOTS, DEFAULT_ROBOTS } = require('../lib/seo');
@@ -97,16 +99,24 @@ async function verifyCertificate(req, res, next) {
   }
 }
 
-function legal(page) {
-  return (req, res) => {
-    const title = `${page} | ${site.name}`;
-    const description = `${page} for ${site.name}.`;
-    res.render('public/legal', {
-      pageTitle: title,
-      metaDescription: description,
-      seo: buildSeo(req, { title, description, robots: PUBLIC_ROBOTS }),
-      heading: page,
-    });
+function legal(page, keyPrefix) {
+  return async (req, res, next) => {
+    try {
+      const settings = await getSettings();
+      const heading = settings[`${keyPrefix}.heading`] || page;
+      const title = `${heading} | ${site.name}`;
+      const description = `${heading} for ${site.name}.`;
+      res.render('public/legal', {
+        pageTitle: title,
+        metaDescription: description,
+        seo: buildSeo(req, { title, description, robots: PUBLIC_ROBOTS }),
+        heading,
+        blocks: parseLegalText(settings[`${keyPrefix}.body`]),
+        updatedLabel: formatLegalDate(settings[`${keyPrefix}.updated`]),
+      });
+    } catch (err) {
+      next(err);
+    }
   };
 }
 
@@ -115,6 +125,6 @@ module.exports = {
   postContact,
   subscribe,
   verifyCertificate,
-  privacy: legal('Privacy Policy'),
-  terms: legal('Terms & Conditions'),
+  privacy: legal('Privacy Policy', 'legal.privacy'),
+  terms: legal('Terms & Conditions', 'legal.terms'),
 };

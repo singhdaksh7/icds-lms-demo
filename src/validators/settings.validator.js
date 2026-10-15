@@ -8,6 +8,28 @@ function text(body, key, max) {
   return value;
 }
 
+// Multi-line plain text (legal pages): normalises line endings, strips
+// control characters other than newline/tab and caps the length. Never HTML -
+// it is escaped on render.
+function longText(body, key, max) {
+  const raw = typeof body[key] === 'string' ? body[key] : '';
+  return raw
+    .replace(/\r\n?/g, '\n')
+    .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, '')
+    .trim()
+    .slice(0, max);
+}
+
+function isRealIsoDate(value) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const date = new Date(`${value}T00:00:00Z`);
+  return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value;
+}
+
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const PHONE_PATTERN = /^[0-9+()\-.\s]*$/;
+const LEGAL_BODY_MAX = 20000;
+
 function bool(body, key) {
   return body[key] === 'true' || body[key] === 'on' || body[key] === true ? 'true' : 'false';
 }
@@ -73,7 +95,31 @@ function validateSettings(body) {
     'nav.showInstructors': bool(body, 'nav.showInstructors'),
     'nav.showReviews': bool(body, 'nav.showReviews'),
     'nav.showFaq': bool(body, 'nav.showFaq'),
+
+    'site.name': text(body, 'site.name', 120),
+    'contact.email': text(body, 'contact.email', 254),
+    'contact.phone': text(body, 'contact.phone', 30),
+    'contact.address': text(body, 'contact.address', 300),
+
+    'legal.privacy.heading': text(body, 'legal.privacy.heading', SHORT_MAX),
+    'legal.privacy.body': longText(body, 'legal.privacy.body', LEGAL_BODY_MAX),
+    'legal.privacy.updated': text(body, 'legal.privacy.updated', 10),
+    'legal.terms.heading': text(body, 'legal.terms.heading', SHORT_MAX),
+    'legal.terms.body': longText(body, 'legal.terms.body', LEGAL_BODY_MAX),
+    'legal.terms.updated': text(body, 'legal.terms.updated', 10),
   };
+
+  if (values['contact.email'] && !EMAIL_PATTERN.test(values['contact.email'])) {
+    errors.push('Contact email must be a valid email address.');
+  }
+  if (values['contact.phone'] && !PHONE_PATTERN.test(values['contact.phone'])) {
+    errors.push('Phone may contain only digits, spaces and + ( ) - .');
+  }
+  ['legal.privacy.updated', 'legal.terms.updated'].forEach((key) => {
+    if (values[key] && !isRealIsoDate(values[key])) {
+      errors.push('Legal page "last updated" must be a valid date (YYYY-MM-DD).');
+    }
+  });
 
   // Required, non-empty fields — everything else may be blank (falls back
   // to the hard-coded default on next read via settings.service defaults).

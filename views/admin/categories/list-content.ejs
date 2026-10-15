@@ -79,7 +79,7 @@
                                 <td><%= category._count.courses %></td>
                                 <td class="text-end">
                                     <form method="POST" action="/admin/categories/<%= category.id %>/delete" class="m-0"
-                                          onsubmit="return confirm('Delete this category? <%= category._count.courses %> course(s) will become uncategorized.');">
+                                          data-confirm="Delete this category? <%= category._count.courses %> course(s) will become uncategorized.">
                                         <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                                         <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
                                     </form>

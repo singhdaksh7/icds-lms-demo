@@ -1,4 +1,5 @@
 const path = require('path');
+const crypto = require('crypto');
 const express = require('express');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
@@ -9,6 +10,7 @@ const { disconnectDatabase } = require('./src/config/db');
 const { sessionMiddleware, sessionStore } = require('./src/config/session');
 const { exposeCsrfToken } = require('./src/config/csrf');
 const flashMiddleware = require('./src/lib/flash');
+const saveSessionBeforeRedirect = require('./src/middleware/saveSessionBeforeRedirect');
 const currentUser = require('./src/middleware/currentUser.middleware');
 const siteMiddleware = require('./src/middleware/site.middleware');
 const site = require('./src/config/site');
@@ -43,12 +45,66 @@ app.set('views', path.join(__dirname, 'views'));
 // session store) — siteMiddleware still overrides this per-request below.
 app.locals.site = site;
 
+// Per-request nonce for the few remaining inline scripts (exposed to views
+// as `cspNonce`). Registered before Helmet so the CSP directive below can
+// read it.
+app.use((req, res, next) => {
+  res.locals.cspNonce = crypto.randomBytes(16).toString('base64');
+  next();
+});
+
+// Content-Security-Policy. Scoped to what the site actually loads:
+//   - scripts: same origin, nonce'd inline scripts, Bootstrap bundle (jsDelivr),
+//     Razorpay Checkout and (only when configured) Google Analytics. Inline
+//     event-handler attributes are NOT allowed (script-src-attr 'none') - they
+//     were moved into /js/ui-guards.js.
+//   - styles: 'unsafe-inline' remains for style="" attributes used throughout
+//     the templates; style sources are still limited to our own origin,
+//     jsDelivr and Google Fonts.
+//   - images: https: and data: because course/instructor thumbnails may be
+//     admin-entered external URLs.
+//   - frames: only the supported video embed providers and Razorpay.
+//   - media: same origin only (lesson videos are streamed from /media).
 app.use(
   helmet({
-    // Bootstrap/fonts/icons are loaded from CDNs; a strict default-src would
-    // break the existing design, so CSP is left to Helmet's other safe
-    // defaults for now rather than hand-rolling a directive list here.
-    contentSecurityPolicy: false,
+    contentSecurityPolicy: {
+      useDefaults: false,
+      directives: {
+        'default-src': ["'self'"],
+        'script-src': [
+          "'self'",
+          (req, res) => `'nonce-${res.locals.cspNonce}'`,
+          'https://cdn.jsdelivr.net',
+          'https://checkout.razorpay.com',
+          'https://www.googletagmanager.com',
+        ],
+        'script-src-attr': ["'none'"],
+        'style-src': ["'self'", "'unsafe-inline'", 'https://cdn.jsdelivr.net', 'https://fonts.googleapis.com'],
+        'font-src': ["'self'", 'https://fonts.gstatic.com', 'https://cdn.jsdelivr.net', 'data:'],
+        'img-src': ["'self'", 'data:', 'https:'],
+        'media-src': ["'self'"],
+        'frame-src': [
+          'https://www.youtube.com',
+          'https://www.youtube-nocookie.com',
+          'https://player.vimeo.com',
+          'https://api.razorpay.com',
+          'https://checkout.razorpay.com',
+        ],
+        'connect-src': [
+          "'self'",
+          'https://api.razorpay.com',
+          'https://lumberjack.razorpay.com',
+          'https://www.google-analytics.com',
+          'https://*.analytics.google.com',
+          'https://*.googletagmanager.com',
+        ],
+        'form-action': ["'self'"],
+        'base-uri': ["'self'"],
+        'object-src': ["'none'"],
+        'frame-ancestors': ["'self'"],
+        ...(IS_PRODUCTION ? { 'upgrade-insecure-requests': [] } : {}),
+      },
+    },
   })
 );
 
@@ -106,6 +162,7 @@ app.use('/internal', internalRoutes);
 // Order matters — CSRF and currentUser both depend on the session existing.
 app.use(cookieParser());
 app.use(sessionMiddleware);
+app.use(saveSessionBeforeRedirect);
 app.use(flashMiddleware);
 app.use(exposeCsrfToken);
 app.use(currentUser);
@@ -132,6 +189,10 @@ app.use(errorHandler);
 require('./src/services/faq.service')
   .ensureDefaultFaqs()
   .catch((err) => console.error('Failed to seed default FAQs:', err.message));
+
+require('./src/services/settings.service')
+  .getSettings()
+  .catch((err) => console.error('Failed to load site settings:', err.message));
 
 const server = app.listen(PORT, () => {
   console.log(`Server listening on port ${PORT} (${IS_PRODUCTION ? 'production' : 'development'})`);

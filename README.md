@@ -39,7 +39,7 @@ cp .env.example .env
 npm run prisma:migrate      # creates tables from prisma/schema.prisma
 npm run prisma:seed         # loads placeholder categories/instructors/courses
 
-npm run dev                 # starts the server with nodemon
+npm run dev                 # starts the server with node --watch
 ```
 
 Then open `http://localhost:3000` (or whatever `PORT` you set).
@@ -365,7 +365,7 @@ subscriptions, no refunds UI yet — see "Next Phase".
 
 ## Development
 
-- `npm run dev` — nodemon, auto-restarts on file changes.
+- `npm run dev` — `node --watch`, auto-restarts on file changes.
 - `npm test` — runs the automated test suite (Node's built-in `node:test`
   runner, no extra dependency). Currently covers the SEO helpers, email
   templates, the SMTP-unconfigured fallback, and the seed script's

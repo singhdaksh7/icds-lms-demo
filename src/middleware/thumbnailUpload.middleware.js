@@ -4,6 +4,7 @@
 // generates a random filename — the original uploaded filename is never
 // used for anything beyond reporting errors.
 const multer = require('multer');
+const imageStorage = require('../lib/imageStorage');
 
 const {
   ALLOWED_IMAGE_TYPES,
@@ -50,7 +51,16 @@ function uploadThumbnail(redirectTo) {
   return function (req, res, next) {
     multerUpload(req, res, (err) => {
       if (!err) {
-        return next();
+        // Extension + declared MIME already passed; now verify the real file
+        // signature so a renamed text/other file cannot be stored as an image.
+        return imageStorage
+          .rejectIfSpoofed(req.file)
+          .then((spoofed) => {
+            if (!spoofed) return next();
+            req.flashError('The uploaded file is not a valid JPG, PNG or WEBP image.');
+            return res.redirect(typeof redirectTo === 'function' ? redirectTo(req) : redirectTo);
+          })
+          .catch(next);
       }
       if (err.code === 'LIMIT_FILE_SIZE') {
         req.flashError('Image is too large (max 5MB).');

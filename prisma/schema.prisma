@@ -345,6 +345,10 @@ model LessonProgress {
   // Needed (alongside watchedSeconds) to compute an in-progress percentage
   // before completion — Lesson.duration is a display string, not seconds.
   durationSeconds Int     @default(0)
+  // Server-side credit clock for watched-time validation: watchedSeconds can
+  // only grow by as much real server time as has elapsed past this timestamp
+  // (see computeCreditedDelta in progress.service.js). Never client-supplied.
+  lastCreditAt  DateTime?
   completedAt   DateTime?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt

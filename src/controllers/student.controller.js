@@ -116,11 +116,17 @@ async function saveProgress(req, res, next) {
       return res.status(400).json({ success: false, error: 'Invalid progress data.' });
     }
 
+    // Server-recorded time this lesson page was served (see
+    // learn.controller.js) - the trusted starting point for the very first
+    // save, so credited watch time can never exceed real elapsed time.
+    const views = (req.session && req.session.lessonViews) || {};
+    const viewStartedAtMs = Number.isFinite(views[lessonId]) ? views[lessonId] : null;
+
     const { lessonProgress, progress } = await saveLessonProgress(req.currentUser.id, lessonId, {
       positionSeconds,
       durationSeconds,
       watchedDeltaSeconds,
-    });
+    }, { viewStartedAtMs });
 
     res.json({
       success: true,

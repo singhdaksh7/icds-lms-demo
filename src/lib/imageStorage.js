@@ -79,6 +79,63 @@ function isAllowedFile(originalname, mimetype) {
   return mimetype === expectedMime;
 }
 
+// --- Content (magic-byte) validation ---------------------------------------
+// Extension and the browser-declared MIME type are both attacker-controlled,
+// so an uploaded file is also checked against the real file signature.
+const PNG_SIGNATURE = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+const SIGNATURE_BYTES = 12;
+
+// Returns 'image/jpeg' | 'image/png' | 'image/webp' from the leading bytes,
+// or null when they match none of the allowed formats. Pure; exported for
+// tests.
+function detectImageType(buffer) {
+  if (!Buffer.isBuffer(buffer)) return null;
+  if (buffer.length >= 3 && buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff) {
+    return 'image/jpeg';
+  }
+  if (buffer.length >= 8 && buffer.subarray(0, 8).equals(PNG_SIGNATURE)) {
+    return 'image/png';
+  }
+  if (
+    buffer.length >= 12 &&
+    buffer.toString('latin1', 0, 4) === 'RIFF' &&
+    buffer.toString('latin1', 8, 12) === 'WEBP'
+  ) {
+    return 'image/webp';
+  }
+  return null;
+}
+
+// True when the leading bytes are a real allowed image AND agree with the
+// type implied by the filename extension (so a PNG renamed .jpg is also
+// rejected). Pure; exported for tests.
+function signatureMatchesFilename(buffer, originalname) {
+  const detected = detectImageType(buffer);
+  const expected = ALLOWED_IMAGE_TYPES[path.extname(originalname || '').toLowerCase()];
+  return Boolean(detected && expected && detected === expected);
+}
+
+// Checks an already-written upload (multer diskStorage) and deletes it when
+// it is not a genuine image. Resolves true when the file was rejected.
+async function rejectIfSpoofed(file) {
+  if (!file || !file.path) return false;
+  let handle;
+  let head = Buffer.alloc(0);
+  try {
+    handle = await fs.promises.open(file.path, 'r');
+    const buf = Buffer.alloc(SIGNATURE_BYTES);
+    const { bytesRead } = await handle.read(buf, 0, SIGNATURE_BYTES, 0);
+    head = buf.subarray(0, bytesRead);
+  } catch (err) {
+    head = Buffer.alloc(0);
+  } finally {
+    if (handle) await handle.close().catch(() => {});
+  }
+  if (signatureMatchesFilename(head, file.originalname)) return false;
+  await fs.promises.unlink(file.path).catch(() => {});
+  return true;
+}
+
 // Builds a server-generated filename for a freshly uploaded image — never
 // derived from the original uploaded filename.
 function buildFilename(extension) {
@@ -136,6 +193,9 @@ function deleteIfOwned(url) {
 }
 
 module.exports = {
+  detectImageType,
+  signatureMatchesFilename,
+  rejectIfSpoofed,
   STORAGE_ROOT,
   ALLOWED_IMAGE_TYPES,
   MAX_UPLOAD_BYTES,

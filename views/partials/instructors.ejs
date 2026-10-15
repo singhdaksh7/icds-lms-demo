@@ -44,7 +44,7 @@
                                     src="<%= instructor.photoUrl || '/assets/images/instructor-placeholder.svg' %>"
                                     alt="<%= instructor.name %>"
                                     loading="lazy"
-                                    onerror="this.onerror=null;this.src='/assets/images/instructor-placeholder.svg';">
+                                    data-fallback-src="/assets/images/instructor-placeholder.svg">
 
                                 <% if (instructor.linkedinUrl || instructor.instagramUrl) { %>
                                     <div class="instructor-social">

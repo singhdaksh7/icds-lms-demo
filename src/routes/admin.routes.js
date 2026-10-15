@@ -30,6 +30,18 @@ const settingsController = require('../controllers/admin/settings.controller');
 // unprotected admin route.
 router.use(requireRole('ADMIN'));
 
+// Numeric route params are validated before any controller/Prisma call (and
+// before multer on upload routes), so a malformed or out-of-range id such as
+// /admin/courses/abc/edit is a clean 404 instead of a Prisma error -> 500.
+const MAX_INT32 = 2147483647;
+function requireNumericId(req, res, next, value) {
+  if (!/^\d{1,10}$/.test(value) || Number(value) < 1 || Number(value) > MAX_INT32) {
+    return res.status(404).render('public/404', { pageTitle: 'Not Found' });
+  }
+  return next();
+}
+['id', 'courseId', 'lessonId'].forEach((name) => router.param(name, requireNumericId));
+
 router.get('/', dashboardController.getDashboard);
 
 // --- Courses ---------------------------------------------------------------
@@ -126,6 +138,8 @@ router.post(
   doubleCsrfProtection,
   settingsController.updateSettingsAction
 );
+
+router.post('/settings/why-image/remove', doubleCsrfProtection, settingsController.removeWhyImage);
 
 router.get('/faqs', faqController.listFaqs);
 router.post('/faqs', doubleCsrfProtection, faqController.createFaq);

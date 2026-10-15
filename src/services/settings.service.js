@@ -1,10 +1,65 @@
 const { prisma } = require('../config/db');
+const site = require('../config/site');
 
 // A single, small key/value "Site Settings" store — deliberately not a
 // bespoke model per homepage section, so this stays reusable rather than
 // growing into a large CMS framework. Every key has a hard-coded default
 // here, so a missing/partial DB row is always safe: the public site never
 // renders "undefined" or an empty section by accident.
+const PRIVACY_BODY = `## Overview
+This Privacy Policy explains what information this website collects and how it is used. By creating an account or using the website you acknowledge this policy.
+
+## Information we collect
+- Account details you provide, such as your name and email address.
+- Learning activity, such as course enrollments, lesson progress and certificates.
+- Messages you send through the contact form and, if you subscribe, your email address for course updates.
+- Order details when you purchase a course. Card and bank details are handled by the payment provider and are not stored on this website.
+- Technical information, such as cookies that keep you signed in and protect forms.
+
+## How we use information
+- To provide access to your courses and record your progress.
+- To respond to enquiries and send account or course messages.
+- To keep the website secure and working properly.
+
+## Cookies
+We use essential cookies to keep you signed in and to protect forms against misuse.
+
+## Sharing
+Information is shared only with service providers needed to run the platform, such as hosting, email delivery and payment processing, or where required by law.
+
+## Your choices
+You can contact us to ask about, correct or delete your account information using the contact details shown on this website.
+
+## Updates
+This policy may be updated from time to time. The date of the latest update is shown on this page.`;
+
+const TERMS_BODY = `## Using this website
+By creating an account or using this website you agree to these terms.
+
+## Your account
+You are responsible for keeping your login details confidential and for activity under your account. Please provide accurate information when you register.
+
+## Course access
+Access to a course is granted to the enrolled student for personal learning only. Accounts and course access may not be shared or transferred.
+
+## Course content
+Course videos, materials and certificates belong to the institute or its instructors. You may not copy, record, download, redistribute or resell them without written permission.
+
+## Acceptable use
+Do not attempt to gain unauthorised access to the website, interfere with its operation, or submit false progress or completion information.
+
+## Certificates
+Certificates are issued to students who complete all lessons of a course, as recorded by the platform.
+
+## Payments and enrollment
+Course prices and enrollment arrangements are shown on each course page. For questions about payments or enrollment, please contact us.
+
+## Availability and changes
+We aim to keep the website available but do not guarantee uninterrupted access. Courses, these terms and the website may be updated from time to time.
+
+## Contact
+Questions about these terms can be sent through the contact page.`;
+
 const DEFAULTS = {
   'brand.tagline': 'Learn. Practice. Grow. Build Your Professional Future.',
   'brand.footerDescription':
@@ -61,6 +116,25 @@ const DEFAULTS = {
   'nav.showInstructors': 'true',
   'nav.showReviews': 'true',
   'nav.showFaq': 'true',
+
+  // Institute / contact details. An empty value means "use the environment
+  // default" (see src/config/site.js), so these can stay blank.
+  'site.name': '',
+  'contact.email': '',
+  'contact.phone': '',
+  'contact.address': '',
+
+  // Legal pages: plain text only. Blank lines separate paragraphs, a line
+  // starting with "## " is a heading, lines starting with "- " are list
+  // items. Always HTML-escaped on render (see src/lib/legalText.js). The
+  // default copy is neutral provisional wording; the admin settings page
+  // flags it until it is replaced.
+  'legal.privacy.heading': 'Privacy Policy',
+  'legal.privacy.body': PRIVACY_BODY,
+  'legal.privacy.updated': '',
+  'legal.terms.heading': 'Terms & Conditions',
+  'legal.terms.body': TERMS_BODY,
+  'legal.terms.updated': '',
 };
 
 // Only these values are accepted for CTA-style link settings — never a raw
@@ -92,6 +166,8 @@ async function getSettings() {
 
   const merged = { ...DEFAULTS };
   for (const row of rows) {
+    // A blank saved value always means "use the default".
+    if (row.value === '') continue;
     if (Object.prototype.hasOwnProperty.call(DEFAULTS, row.key)) {
       merged[row.key] = row.value;
     }
@@ -107,6 +183,15 @@ async function getSettings() {
   merged.navShowInstructors = toBool(merged['nav.showInstructors']);
   merged.navShowReviews = toBool(merged['nav.showReviews']);
   merged.navShowFaq = toBool(merged['nav.showFaq']);
+
+  // Admin-managed institute/contact details override the env defaults on
+  // the shared `site` config (blank = env fallback).
+  site.applyOverrides({
+    name: merged['site.name'],
+    email: merged['contact.email'],
+    phone: merged['contact.phone'],
+    address: merged['contact.address'],
+  });
 
   cache = { data: merged, expiresAt: Date.now() + CACHE_TTL_MS };
   return merged;

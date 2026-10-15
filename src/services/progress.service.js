@@ -39,6 +39,38 @@ function clampWatchedDelta(value) {
   return Math.min(num, MAX_WATCHED_DELTA_SECONDS);
 }
 
+// Trusted-time crediting. The client-reported delta is only an UPPER bound:
+// the server also refuses to credit more watch time than real wall-clock
+// time has passed on the server since the last credit "clock" position.
+// This is what stops a crafted request (watchedDeltaSeconds: 9999, or the
+// same request replayed every 100ms) from minting watch time faster than
+// real time passes.
+//
+// The clock is a reference timestamp (LessonProgress.lastCreditAt) that
+// advances only by the amount actually credited, never straight to "now".
+// Unspent elapsed time therefore stays available for the next save (so
+// normal network/timer jitter never costs a real viewer any credit), but
+// it is capped at MAX_CLOCK_BANK_SECONDS so a long idle gap can't be
+// banked into a big burst. Invariant: total credited watch time can never
+// exceed the real time elapsed since the clock started.
+const MAX_CLOCK_BANK_SECONDS = 15;
+
+// referenceMs: the current clock position (lastCreditAt, or - for a first
+// save - the server-recorded time the lesson page was served), or null when
+// nothing trustworthy exists. With no reference nothing is credited and the
+// clock simply starts now. Pure; exported for testing.
+function computeCreditedDelta({ reportedDelta, referenceMs, nowMs }) {
+  const reported = clampWatchedDelta(reportedDelta);
+  if (referenceMs === null || referenceMs === undefined || !Number.isFinite(referenceMs)) {
+    return { credited: 0, nextReferenceMs: nowMs };
+  }
+  // A reference in the future (clock change) is treated as "no time has passed".
+  const elapsedSeconds = Math.max(0, (nowMs - referenceMs) / 1000);
+  const credited = Math.min(reported, Math.floor(elapsedSeconds));
+  const advanced = Math.max(referenceMs + credited * 1000, nowMs - MAX_CLOCK_BANK_SECONDS * 1000);
+  return { credited, nextReferenceMs: Math.min(advanced, nowMs) };
+}
+
 // Pure decision of whether a (watchedSeconds, durationSeconds) pair counts
 // as "complete", given whether the lesson was already completed before
 // (completion never un-sets itself later — e.g. a student seeking back to
@@ -58,10 +90,25 @@ function isLessonComplete(alreadyCompleted, watchedSeconds, durationSeconds) {
 // watched time) can be tested directly without a database. This is the
 // single place watchedSeconds, lastPositionSeconds and completed are
 // derived — saveLessonProgress below just persists whatever this returns.
-function computeProgressUpdate(existing, { positionSeconds, durationSeconds, watchedDeltaSeconds }) {
+function computeProgressUpdate(existing, { positionSeconds, durationSeconds, watchedDeltaSeconds }, timing) {
   const lastPositionSeconds = clampNonNegativeInt(positionSeconds);
   const duration = clampNonNegativeInt(durationSeconds);
-  const delta = clampWatchedDelta(watchedDeltaSeconds);
+
+  // With `timing` ({ nowMs, viewStartedAtMs }) the credited delta is bounded
+  // by real server time (see computeCreditedDelta). Without it (pure unit
+  // tests of the per-save clamp) only the per-save ceiling applies;
+  // saveLessonProgress always supplies timing.
+  let delta;
+  let lastCreditAt = null;
+  if (timing) {
+    const existingRef = existing && existing.lastCreditAt ? new Date(existing.lastCreditAt).getTime() : null;
+    const referenceMs = existingRef !== null ? existingRef : (timing.viewStartedAtMs ?? null);
+    const credit = computeCreditedDelta({ reportedDelta: watchedDeltaSeconds, referenceMs, nowMs: timing.nowMs });
+    delta = credit.credited;
+    lastCreditAt = new Date(credit.nextReferenceMs);
+  } else {
+    delta = clampWatchedDelta(watchedDeltaSeconds);
+  }
 
   const priorWatched = existing ? existing.watchedSeconds : 0;
   const watchedSeconds = duration > 0
@@ -71,13 +118,15 @@ function computeProgressUpdate(existing, { positionSeconds, durationSeconds, wat
   const wasCompleted = Boolean(existing && existing.completed);
   const completed = isLessonComplete(wasCompleted, watchedSeconds, duration);
 
-  return {
+  const update = {
     watchedSeconds,
     lastPositionSeconds,
     durationSeconds: duration,
     completed,
     completedAt: completed ? (existing && existing.completedAt) || new Date() : null,
   };
+  if (lastCreditAt) update.lastCreditAt = lastCreditAt;
+  return update;
 }
 
 // Per-lesson progress percent used to drive the course-level percentage
@@ -155,6 +204,14 @@ async function markLessonComplete(userId, lessonId) {
     throw new ProgressError('You are not enrolled in this course.');
   }
 
+  // Self-hosted videos are tracked by real playback time, so a manual
+  // "Mark Complete" would be a way to skip the lesson entirely (and then
+  // unlock the certificate). It stays available only for externally
+  // embedded videos, whose playback the server cannot observe.
+  if (lesson.videoType === 'LOCAL') {
+    throw new ProgressError('This lesson is completed by watching the video.');
+  }
+
   const existing = await prisma.lessonProgress.findUnique({
     where: { userId_lessonId: { userId, lessonId } },
   });
@@ -204,7 +261,7 @@ async function markLessonComplete(userId, lessonId) {
 //     per-save ceiling so the client can never report a huge jump (e.g.
 //     "watched 580 seconds" from one seek) as real watch time.
 //   - durationSeconds: real video duration from <video> metadata.
-async function saveLessonProgress(userId, lessonId, { positionSeconds, durationSeconds, watchedDeltaSeconds }) {
+async function saveLessonProgress(userId, lessonId, { positionSeconds, durationSeconds, watchedDeltaSeconds }, options = {}) {
   const lesson = await prisma.lesson.findUnique({ where: { id: lessonId } });
   if (!lesson || lesson.status !== 'PUBLISHED') {
     throw new ProgressError('Lesson not found.');
@@ -215,21 +272,44 @@ async function saveLessonProgress(userId, lessonId, { positionSeconds, durationS
     throw new ProgressError('You are not enrolled in this course.');
   }
 
-  const existing = await prisma.lessonProgress.findUnique({
-    where: { userId_lessonId: { userId, lessonId } },
-  });
+  const report = { positionSeconds, durationSeconds, watchedDeltaSeconds };
+  const where = { userId_lessonId: { userId, lessonId } };
+  let lessonProgress = null;
 
-  // Server ADDS the (already-clamped) delta rather than trusting a
-  // client-sent total — the client can only ever move watchedSeconds
-  // forward by a small, bounded amount per save, entirely independent of
-  // lastPositionSeconds (raw playback position, resume-only).
-  const data = computeProgressUpdate(existing, { positionSeconds, durationSeconds, watchedDeltaSeconds });
+  // Optimistic concurrency: the credit clock is read-modify-write, so two
+  // simultaneous requests must not both spend the same elapsed time. The
+  // update only applies if the row is unchanged since it was read
+  // (updatedAt is the version); the loser re-reads and recomputes against
+  // the winner's clock. Prevents parallel-replay amplification.
+  for (let attempt = 0; attempt < 4 && !lessonProgress; attempt += 1) {
+    const existing = await prisma.lessonProgress.findUnique({ where });
+    const data = computeProgressUpdate(existing, report, {
+      nowMs: options.nowMs ?? Date.now(),
+      viewStartedAtMs: options.viewStartedAtMs ?? null,
+    });
 
-  const lessonProgress = await prisma.lessonProgress.upsert({
-    where: { userId_lessonId: { userId, lessonId } },
-    update: data,
-    create: { userId, lessonId, ...data },
-  });
+    if (!existing) {
+      try {
+        lessonProgress = await prisma.lessonProgress.create({ data: { userId, lessonId, ...data } });
+      } catch (err) {
+        if (err && err.code === 'P2002') continue; // concurrent create: retry as an update
+        throw err;
+      }
+    } else {
+      const result = await prisma.lessonProgress.updateMany({
+        where: { id: existing.id, updatedAt: existing.updatedAt },
+        data,
+      });
+      if (result.count === 1) {
+        lessonProgress = await prisma.lessonProgress.findUnique({ where });
+      }
+    }
+  }
+
+  if (!lessonProgress) {
+    // Persistent contention: keep what exists, credit nothing.
+    lessonProgress = await prisma.lessonProgress.findUnique({ where });
+  }
 
   const progress = await computeCourseProgress(userId, lesson.courseId);
   await prisma.enrollment.updateMany({
@@ -244,6 +324,8 @@ module.exports = {
   ProgressError,
   COMPLETION_THRESHOLD,
   MAX_WATCHED_DELTA_SECONDS,
+  MAX_CLOCK_BANK_SECONDS,
+  computeCreditedDelta,
   clampNonNegativeInt,
   clampWatchedDelta,
   isLessonComplete,

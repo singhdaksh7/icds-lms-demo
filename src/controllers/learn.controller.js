@@ -101,6 +101,16 @@ async function getLessonPage(req, res, next) {
       ]);
     }
 
+    // Record (server-side, in the session) when a tracked local-video lesson
+    // page was served. Progress credit for the first save is bounded by real
+    // time since this moment. Kept small: only the most recent lessons.
+    if (req.session && req.currentUser && enrolled && !isAdmin && lesson.videoType === 'LOCAL') {
+      const views = req.session.lessonViews || {};
+      views[lesson.id] = Date.now();
+      const keep = Object.entries(views).sort((a, b) => b[1] - a[1]).slice(0, 10);
+      req.session.lessonViews = Object.fromEntries(keep);
+    }
+
     const previousLesson = lessonIndex > 0 ? publishedLessons[lessonIndex - 1] : null;
     const nextLesson =
       lessonIndex < publishedLessons.length - 1 ? publishedLessons[lessonIndex + 1] : null;

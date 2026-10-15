@@ -113,7 +113,7 @@
             <button type="submit" class="btn btn-sm btn-outline-primary">Replace video</button>
         </form>
 
-        <form method="POST" action="/admin/lessons/<%= lesson.id %>/video/remove" onsubmit="return confirm('Detach the local video? The file itself is not deleted.');">
+        <form method="POST" action="/admin/lessons/<%= lesson.id %>/video/remove" data-confirm="Detach the local video? The file itself is not deleted.">
             <input type="hidden" name="_csrf" value="<%= csrfToken %>">
             <button type="submit" class="btn btn-sm btn-outline-danger">Detach local video (fall back to external Video URL)</button>
         </form>
@@ -148,7 +148,7 @@
 </div>
 <% } %>
 
-<script>
+<script nonce="<%= cspNonce %>">
 (function () {
     // Purely cosmetic: shows the picked filename next to each file input.
     // No validation happens here — the server is the source of truth for
