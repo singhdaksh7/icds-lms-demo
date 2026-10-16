@@ -138,6 +138,7 @@ async function buildInvoicePdf({ order, settings, siteName }) {
       right(value, width - M - 10, y);
       y -= 16;
     }
+    y -= 12; // clear gap so the total band never overlaps the GST row
   }
   page.drawRectangle({ x: width - M - 240, y: y - 8, width: 240, height: 28, color: accent });
   text('Total paid', width - M - 230, y + 2, { size: 11, font: bold, color: white });
