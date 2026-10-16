@@ -69,6 +69,14 @@ app.use((req, res, next) => {
 //   - media: same origin only (lesson videos are streamed from /media).
 app.use(
   helmet({
+    // Razorpay Checkout opens popup windows (card / 3-D Secure / bank pages)
+    // and talks to them via window.opener. Helmet's default
+    // Cross-Origin-Opener-Policy: same-origin severs that link and leaves the
+    // popup blank, so popups must be allowed. no-referrer is also stricter
+    // than Razorpay supports; strict-origin-when-cross-origin is the
+    // standard safe default.
+    crossOriginOpenerPolicy: { policy: 'same-origin-allow-popups' },
+    referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
     contentSecurityPolicy: {
       useDefaults: false,
       directives: {
@@ -100,7 +108,7 @@ app.use(
           'https://*.analytics.google.com',
           'https://*.googletagmanager.com',
         ],
-        'form-action': ["'self'"],
+        'form-action': ["'self'", 'https://api.razorpay.com', 'https://checkout.razorpay.com'],
         'base-uri': ["'self'"],
         'object-src': ["'none'"],
         'frame-ancestors': ["'self'"],
