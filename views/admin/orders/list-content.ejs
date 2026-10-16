@@ -44,7 +44,7 @@
                             <div class="small text-muted"><%= order.user.email %></div>
                         </td>
                         <td><%= order.items.map(function (i) { return i.course.title; }).join(', ') %></td>
-                        <td><%= order.currency %> <%= Number(order.amount).toLocaleString('en-IN') %></td>
+                        <td><%= order.currency === 'INR' ? '₹' : order.currency + ' ' %><%= Number(order.amount).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %></td>
                         <td>
                             <span class="status-pill <%= order.status.toLowerCase() %>"><%= order.status %></span>
                         </td>

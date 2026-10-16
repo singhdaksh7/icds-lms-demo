@@ -141,3 +141,15 @@ test('admin invoice download works for paid orders and the design preview works 
   assert.equal(preview.status, 200);
   assert.equal(preview.body.subarray(0, 5).toString(), '%PDF-');
 });
+
+test('REFUNDED orders keep their invoice (marked Refunded); PENDING/FAILED/CANCELLED never get one', async () => {
+  const bytesFor = async (status) => {
+    orderService.getOrderByIdAdmin = async () => order({ status });
+    return call(invoiceController.adminInvoice, { params: { id: '7' } });
+  };
+  assert.equal((await bytesFor('REFUNDED')).status, 200);
+  assert.equal((await bytesFor('PAID')).status, 200);
+  for (const s of ['PENDING', 'FAILED', 'CANCELLED']) assert.equal((await bytesFor(s)).status, 404, s);
+  const pdf = await buildInvoicePdf({ order: order({ status: 'REFUNDED' }), settings, siteName: 'ICDS' });
+  assert.equal(Buffer.from(pdf).subarray(0, 5).toString(), '%PDF-');
+});
