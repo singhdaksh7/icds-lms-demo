@@ -8,7 +8,7 @@ const orderService = require('../services/order.service');
 const { toPaise } = require('../lib/money');
 
 async function handleRazorpayWebhook(req, res) {
-  if (!razorpayService.isWebhookConfigured()) {
+  if (!(await razorpayService.isWebhookConfigured())) {
     console.error('[webhook] Razorpay webhook secret not configured — rejecting request.');
     return res.status(503).end();
   }
@@ -18,7 +18,7 @@ async function handleRazorpayWebhook(req, res) {
 
   let validSignature;
   try {
-    validSignature = razorpayService.verifyWebhookSignature(rawBody, signature);
+    validSignature = await razorpayService.verifyWebhookSignature(rawBody, signature);
   } catch (err) {
     console.error('[webhook] signature verification error:', err.message);
     return res.status(400).end();

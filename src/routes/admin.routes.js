@@ -27,6 +27,7 @@ const faqController = require('../controllers/admin/faq.controller');
 const siteContentController = require('../controllers/admin/siteContent.controller');
 const reviewController = require('../controllers/admin/review.controller');
 const certificateController = require('../controllers/admin/certificate.controller');
+const paymentSettingsController = require('../controllers/admin/paymentSettings.controller');
 const emailSettingsController = require('../controllers/admin/emailSettings.controller');
 const paymentLimiter = require('../middleware/paymentRateLimit');
 
@@ -160,6 +161,14 @@ router.post(
   siteContentController.saveForm
 );
 router.get('/settings', siteContentController.legacyRedirect);
+
+// --- Payment (Razorpay) settings -------------------------------------------
+// Secrets are write-only (stored encrypted, never rendered). Live keys need
+// an explicit confirmation tick before payments can be enabled.
+router.get('/payment-settings', paymentSettingsController.showPage);
+router.post('/payment-settings', doubleCsrfProtection, paymentSettingsController.save);
+router.post('/payment-settings/reset', doubleCsrfProtection, paymentSettingsController.reset);
+router.post('/payment-settings/test', paymentLimiter, doubleCsrfProtection, paymentSettingsController.testConnection);
 
 // --- Email (SMTP) settings -------------------------------------------------
 // Admin-managed SMTP. The password is write-only (stored encrypted, never

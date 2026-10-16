@@ -29,7 +29,7 @@ async function verifyPayment(req, res, next) {
 
     let validSignature;
     try {
-      validSignature = razorpayService.verifyCheckoutSignature({
+      validSignature = await razorpayService.verifyCheckoutSignature({
         orderId: razorpay_order_id,
         paymentId: razorpay_payment_id,
         signature: razorpay_signature,

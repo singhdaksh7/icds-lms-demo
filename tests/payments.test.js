@@ -218,18 +218,18 @@ test('paise conversion: Rs 4,999 -> 499900, no float drift', () => {
   assert.equal(toPaise('1999.99'), 199999);
 });
 
-test('checkout signature: valid accepted; tampered order/payment/signature rejected', () => {
+test('checkout signature: valid accepted; tampered order/payment/signature rejected', async () => {
   const sig = sign(process.env.RAZORPAY_KEY_SECRET, 'order_ABC|pay_1');
-  assert.equal(razorpayService.verifyCheckoutSignature({ orderId: 'order_ABC', paymentId: 'pay_1', signature: sig }), true);
-  assert.equal(razorpayService.verifyCheckoutSignature({ orderId: 'order_ABC', paymentId: 'pay_2', signature: sig }), false);
-  assert.equal(razorpayService.verifyCheckoutSignature({ orderId: 'order_XYZ', paymentId: 'pay_1', signature: sig }), false);
-  assert.equal(razorpayService.verifyCheckoutSignature({ orderId: 'order_ABC', paymentId: 'pay_1', signature: 'deadbeef' }), false);
-  assert.equal(razorpayService.verifyCheckoutSignature({ orderId: 'order_ABC', paymentId: 'pay_1', signature: undefined }), false);
+  assert.equal(await razorpayService.verifyCheckoutSignature({ orderId: 'order_ABC', paymentId: 'pay_1', signature: sig }), true);
+  assert.equal(await razorpayService.verifyCheckoutSignature({ orderId: 'order_ABC', paymentId: 'pay_2', signature: sig }), false);
+  assert.equal(await razorpayService.verifyCheckoutSignature({ orderId: 'order_XYZ', paymentId: 'pay_1', signature: sig }), false);
+  assert.equal(await razorpayService.verifyCheckoutSignature({ orderId: 'order_ABC', paymentId: 'pay_1', signature: 'deadbeef' }), false);
+  assert.equal(await razorpayService.verifyCheckoutSignature({ orderId: 'order_ABC', paymentId: 'pay_1', signature: undefined }), false);
 });
 
-test('only the public key id is exposed; secrets never appear in public helpers', () => {
-  assert.equal(razorpayService.getPublicKeyId(), 'rzp_test_KEYID123');
-  assert.equal(razorpayService.isConfigured(), true);
+test('only the public key id is exposed; secrets never appear in public helpers', async () => {
+  assert.equal(await razorpayService.getPublicKeyId(), 'rzp_test_KEYID123');
+  assert.equal(await razorpayService.isConfigured(), true);
   const exposed = JSON.stringify(Object.keys(razorpayService));
   assert.ok(!exposed.includes('SECRET'));
 });

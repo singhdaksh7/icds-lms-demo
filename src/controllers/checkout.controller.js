@@ -39,8 +39,8 @@ async function getCheckoutPage(req, res, next) {
       course,
       amount,
       isFree,
-      razorpayConfigured: razorpayService.isConfigured(),
-      razorpayKeyId: razorpayService.getPublicKeyId(),
+      razorpayConfigured: await razorpayService.isConfigured(),
+      razorpayKeyId: await razorpayService.getPublicKeyId(),
     });
   } catch (err) {
     next(err);
@@ -74,7 +74,7 @@ async function createOrder(req, res, next) {
         .json({ success: false, error: 'This course is free — use the free enrollment option instead.' });
     }
 
-    if (!razorpayService.isConfigured()) {
+    if (!(await razorpayService.isConfigured())) {
       return res.status(503).json({ success: false, error: 'Payments are not available right now.' });
     }
 
@@ -116,7 +116,7 @@ async function createOrder(req, res, next) {
       providerOrderId: providerOrder.id,
       amount: providerOrder.amount,
       currency: providerOrder.currency,
-      keyId: razorpayService.getPublicKeyId(),
+      keyId: await razorpayService.getPublicKeyId(),
       courseName: course.title,
       studentName: req.currentUser.name,
       studentEmail: req.currentUser.email,

@@ -1,9 +1,11 @@
 // Razorpay provider abstraction — every direct SDK/crypto call for payments
 // lives here, kept separate from business logic (order.service.js) and out
-// of controllers entirely.
+// of controllers entirely. Credentials come from the admin-saved settings or
+// the environment (see razorpaySettings.service.js) and are read per call, so
+// an admin changing keys takes effect without a restart.
 const crypto = require('crypto');
 const Razorpay = require('razorpay');
-const { RAZORPAY_ENABLED, RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET, RAZORPAY_WEBHOOK_SECRET } = require('../config/env');
+const settings = require('./razorpaySettings.service');
 
 class PaymentConfigError extends Error {
   constructor(message) {
@@ -13,34 +15,37 @@ class PaymentConfigError extends Error {
   }
 }
 
-let client = null;
+let client = null; // { fingerprint, instance }
 
-function getClient() {
-  if (!RAZORPAY_ENABLED || !RAZORPAY_KEY_ID || !RAZORPAY_KEY_SECRET) {
+async function getClient() {
+  const cfg = await settings.getEffectiveConfig();
+  if (!cfg.enabled || !cfg.keyId || !cfg.keySecret) {
     throw new PaymentConfigError('Payments are not configured on this server yet.');
   }
-  if (!client) {
-    client = new Razorpay({ key_id: RAZORPAY_KEY_ID, key_secret: RAZORPAY_KEY_SECRET });
+  const fingerprint = `${cfg.keyId}|${cfg.keySecret}`;
+  if (!client || client.fingerprint !== fingerprint) {
+    client = { fingerprint, instance: new Razorpay({ key_id: cfg.keyId, key_secret: cfg.keySecret }) };
   }
-  return client;
+  return client.instance;
 }
 
 // The only Razorpay credential ever safe to hand to the browser — the
 // Razorpay Checkout script needs it to open the payment popup.
-function getPublicKeyId() {
-  return RAZORPAY_KEY_ID || null;
+async function getPublicKeyId() {
+  return (await settings.getEffectiveConfig()).keyId || null;
 }
 
-function isConfigured() {
-  return Boolean(RAZORPAY_ENABLED && RAZORPAY_KEY_ID && RAZORPAY_KEY_SECRET);
+async function isConfigured() {
+  const cfg = await settings.getEffectiveConfig();
+  return Boolean(cfg.enabled && cfg.keyId && cfg.keySecret);
 }
 
-function isWebhookConfigured() {
-  return Boolean(RAZORPAY_WEBHOOK_SECRET);
+async function isWebhookConfigured() {
+  return Boolean((await settings.getEffectiveConfig()).webhookSecret);
 }
 
 async function createProviderOrder({ amountPaise, currency, receipt }) {
-  const razorpay = getClient();
+  const razorpay = await getClient();
   return razorpay.orders.create({
     amount: amountPaise,
     currency,
@@ -50,8 +55,16 @@ async function createProviderOrder({ amountPaise, currency, receipt }) {
 }
 
 async function fetchPayment(paymentId) {
-  const razorpay = getClient();
+  const razorpay = await getClient();
   return razorpay.payments.fetch(paymentId);
+}
+
+// Read-only credential check used by the admin "Test connection" button —
+// lists one order; never creates anything or moves money.
+async function testConnection() {
+  const razorpay = await getClient();
+  await razorpay.orders.all({ count: 1 });
+  return true;
 }
 
 function timingSafeEqualHex(expectedHex, actualHex) {
@@ -67,33 +80,30 @@ function timingSafeEqualHex(expectedHex, actualHex) {
 
 // Documented Razorpay Checkout signature formula:
 //   generated_signature = HMAC_SHA256(order_id + "|" + payment_id, key_secret)
-// Implemented directly (rather than the SDK's internal helper, which uses a
-// plain `===` string compare) so the comparison itself is constant-time.
-function verifyCheckoutSignature({ orderId, paymentId, signature }) {
-  if (!RAZORPAY_KEY_SECRET) {
+// Implemented directly so the comparison itself is constant-time.
+async function verifyCheckoutSignature({ orderId, paymentId, signature }) {
+  const { keySecret } = await settings.getEffectiveConfig();
+  if (!keySecret) {
     throw new PaymentConfigError('Payments are not configured on this server yet.');
   }
-  const payload = `${orderId}|${paymentId}`;
-  const expected = crypto.createHmac('sha256', RAZORPAY_KEY_SECRET).update(payload).digest('hex');
+  const expected = crypto.createHmac('sha256', keySecret).update(`${orderId}|${paymentId}`).digest('hex');
   return timingSafeEqualHex(expected, signature);
 }
 
 // Same HMAC-SHA256 formula Razorpay documents for webhooks, computed over
-// the exact raw request bytes (a Buffer) — never a re-serialized/parsed
-// version of the body, which can differ byte-for-byte from what Razorpay
-// signed.
-function verifyWebhookSignature(rawBody, signatureHeader) {
-  if (!RAZORPAY_WEBHOOK_SECRET) {
+// the exact raw request bytes (a Buffer) — never a re-serialized body.
+async function verifyWebhookSignature(rawBody, signatureHeader) {
+  const { webhookSecret } = await settings.getEffectiveConfig();
+  if (!webhookSecret) {
     throw new PaymentConfigError('Razorpay webhook secret is not configured on this server.');
   }
-  const expected = crypto.createHmac('sha256', RAZORPAY_WEBHOOK_SECRET).update(rawBody).digest('hex');
+  const expected = crypto.createHmac('sha256', webhookSecret).update(rawBody).digest('hex');
   return timingSafeEqualHex(expected, signatureHeader);
 }
 
 // The Razorpay SDK rejects with `{ statusCode, error: { description, code } }`
-// rather than a normal Error with `.message` — this normalizes either shape
-// into a loggable string without ever including request/response bodies
-// that might carry sensitive data.
+// rather than a normal Error — normalize into a loggable string without
+// request/response bodies.
 function describeError(err) {
   if (err && err.error && err.error.description) {
     return `${err.error.code || 'ERROR'}: ${err.error.description}`;
@@ -108,6 +118,7 @@ module.exports = {
   isWebhookConfigured,
   createProviderOrder,
   fetchPayment,
+  testConnection,
   verifyCheckoutSignature,
   verifyWebhookSignature,
   describeError,

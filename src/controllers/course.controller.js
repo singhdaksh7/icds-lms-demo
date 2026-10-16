@@ -90,7 +90,7 @@ async function getCourseDetail(req, res, next) {
 
     const purchasePrice = getCoursePurchasePrice(course);
     const isFree = Number(purchasePrice) === 0;
-    const paymentsEnabled = !isFree && razorpayService.isConfigured();
+    const paymentsEnabled = !isFree && (await razorpayService.isConfigured());
     const priceLabel = `${course.currency === 'INR' ? '₹' : `${course.currency} `}${Number(purchasePrice).toLocaleString('en-IN')}`;
 
     const title = `${course.title} | ${site.name}`;

@@ -533,3 +533,18 @@ model SmtpSetting {
 
   @@map("smtp_settings")
 }
+
+// Admin-managed Razorpay configuration (single row, id = 1). Key secret and
+// webhook secret are stored encrypted (AES-256-GCM, src/lib/secretBox.js) and
+// are never rendered back to any page. Environment RAZORPAY_* values remain
+// the fallback when no row exists.
+model RazorpaySetting {
+  id               Int      @id
+  enabled          Boolean  @default(false)
+  keyId            String   @db.VarChar(100)
+  keySecretEnc     String   @db.Text
+  webhookSecretEnc String?  @db.Text
+  updatedAt        DateTime @updatedAt
+
+  @@map("razorpay_settings")
+}

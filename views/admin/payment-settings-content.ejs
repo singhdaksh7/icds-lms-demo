@@ -1,0 +1,89 @@
+<h1 style="font-size:24px;" class="mb-2">Payment Settings (Razorpay)</h1>
+<p class="text-muted mb-4">
+    Connect Razorpay so students can pay for courses online. The Key Secret and Webhook Secret are stored encrypted
+    and are never shown again after saving.
+</p>
+
+<% if (errors && errors.length) { %>
+    <div class="alert alert-danger"><ul class="mb-0"><% errors.forEach(function (e) { %><li><%= e %></li><% }); %></ul></div>
+<% } %>
+
+<div class="admin-card mb-4">
+    <p class="mb-1 small">
+        <strong>Online payments:</strong>
+        <% if (current.activeEnabled) { %>
+            <span class="badge bg-success">ON</span>
+            <span class="badge bg-<%= current.activeMode === 'live' ? 'danger' : 'warning text-dark' %>"><%= current.activeMode === 'live' ? 'LIVE — real money' : 'TEST MODE' %></span>
+        <% } else { %>
+            <span class="badge bg-secondary">OFF — students use "Request Enrollment"</span>
+        <% } %>
+    </p>
+    <p class="mb-0 small text-muted">
+        Using: <%= current.activeSource === 'admin' ? 'settings saved here' : 'server default (environment)' %>
+    </p>
+</div>
+
+<div class="admin-card mb-4">
+    <h6 class="mb-2">1. Razorpay Dashboard → Webhook</h6>
+    <p class="small text-muted mb-2">Settings → Webhooks → Add webhook, with this URL and a secret of your choice (paste the same secret below):</p>
+    <input type="text" class="form-control form-control-custom mb-2" readonly data-no-format value="<%= webhookUrl %>">
+    <p class="small mb-0"><strong>Events:</strong> payment.captured, order.paid, payment.failed, refund.processed</p>
+</div>
+
+<div class="admin-card mb-4">
+    <h6 class="mb-3">2. Keys</h6>
+    <form method="POST" action="/admin/payment-settings" autocomplete="off">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label class="form-label">Key ID</label>
+                <input type="text" name="keyId" class="form-control form-control-custom" required maxlength="100" placeholder="rzp_test_xxxxxxxxxxxxxx" autocomplete="off" value="<%= values.keyId %>">
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Key Secret</label>
+                <input type="password" name="keySecret" class="form-control form-control-custom" maxlength="100" autocomplete="new-password"
+                       placeholder="<%= current.hasKeySecret ? '•••••••• (saved — leave blank to keep)' : '' %>">
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Webhook Secret</label>
+                <input type="password" name="webhookSecret" class="form-control form-control-custom" maxlength="100" autocomplete="new-password"
+                       placeholder="<%= current.hasWebhookSecret ? '•••••••• (saved — leave blank to keep)' : '' %>">
+                <div class="form-text">Must match the secret you entered in the Razorpay webhook.</div>
+            </div>
+            <div class="col-12">
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" name="enabled" id="enabled" value="1" <%= values.enabled ? 'checked' : '' %>>
+                    <label class="form-check-label" for="enabled">Enable online payments</label>
+                </div>
+                <div class="form-check mt-2">
+                    <input class="form-check-input" type="checkbox" name="confirmLive" id="confirmLive" value="1">
+                    <label class="form-check-label small" for="confirmLive">
+                        I understand that <code>rzp_live_</code> keys charge <strong>real money</strong> (only needed when enabling Live keys).
+                    </label>
+                </div>
+            </div>
+        </div>
+        <p class="small text-muted mt-3 mb-0">Start with Test Mode keys (<code>rzp_test_…</code>), complete a test purchase, then switch to Live keys.</p>
+        <button type="submit" class="auth-submit mt-3" style="width:auto;padding:0 28px;">Save payment settings</button>
+    </form>
+</div>
+
+<div class="admin-card mb-4">
+    <h6 class="mb-2">3. Test connection</h6>
+    <p class="small text-muted">Checks that Razorpay accepts the saved keys. Read-only — nothing is charged or created.</p>
+    <form method="POST" action="/admin/payment-settings/test" class="m-0">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <button type="submit" class="hero-secondary-btn" style="padding:10px 22px;">Test connection</button>
+    </form>
+</div>
+
+<% if (current.savedByAdmin) { %>
+<div class="admin-card">
+    <h6 class="mb-2">Remove saved settings</h6>
+    <p class="small text-muted">Deletes the keys saved here (including the encrypted secrets) and goes back to the server default configuration.</p>
+    <form method="POST" action="/admin/payment-settings/reset" class="m-0" data-confirm="Remove the saved payment settings? Payments may switch off.">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <button type="submit" class="btn btn-outline-danger btn-sm">Remove saved settings</button>
+    </form>
+</div>
+<% } %>

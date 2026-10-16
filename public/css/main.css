@@ -1967,3 +1967,73 @@
             border-radius: 18px;
             padding: 28px;
         }
+
+        /* ---- UI polish: consistent alignment across dashboard + CTAs ---- */
+        .auth-submit,
+        .hero-primary-btn,
+        .hero-secondary-btn {
+            min-height: 48px;
+            padding-top: 0;
+            padding-bottom: 0;
+            white-space: normal;
+        }
+
+        .auth-submit:focus-visible,
+        .hero-primary-btn:focus-visible,
+        .hero-secondary-btn:focus-visible {
+            outline: 3px solid rgba(86, 90, 207, .35);
+            outline-offset: 2px;
+        }
+
+        /* Equal-height course cards with the primary button pinned to the
+           bottom, so buttons line up even when a card has extra content. */
+        .course-card {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .course-card .course-content {
+            flex: 1 1 auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .course-card .course-content > .auth-submit:first-of-type,
+        .course-card .course-content > a.auth-submit {
+            margin-top: auto;
+        }
+
+        .dashboard-continue-btn {
+            align-self: flex-start;
+        }
+
+        .dashboard-certificates-card > .d-flex {
+            height: 100%;
+            align-items: center;
+        }
+
+        .dashboard-quicklinks-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px 16px;
+        }
+
+        .dashboard-quicklinks-list a {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+        }
+
+        .footer-brand a,
+        footer .footer-logo,
+        footer a.footer-brand {
+            text-decoration: none;
+        }
+
+        @media (max-width: 767.98px) {
+            .dashboard-continue-btn {
+                align-self: stretch;
+            }
+        }
