@@ -86,6 +86,7 @@ app.use(
           (req, res) => `'nonce-${res.locals.cspNonce}'`,
           'https://cdn.jsdelivr.net',
           'https://checkout.razorpay.com',
+          'https://cdn.razorpay.com',
           'https://www.googletagmanager.com',
         ],
         'script-src-attr': ["'none'"],
@@ -103,6 +104,7 @@ app.use(
         'connect-src': [
           "'self'",
           'https://api.razorpay.com',
+          'https://cdn.razorpay.com',
           'https://lumberjack.razorpay.com',
           'https://www.google-analytics.com',
           'https://*.analytics.google.com',
