@@ -1,4 +1,5 @@
-<% if (typeof settings === 'undefined' || !settings || settings.newsletterEnabled) { %>
+<% const sec = cms.newsletter; %>
+<% if (sec.enabled) { %>
 <!-- NEWSLETTER -->
 <section class="newsletter-section">
 
@@ -11,15 +12,15 @@
                 <div class="col-lg-7">
 
                     <div class="section-tag text-white-50">
-                        <%= (typeof settings !== 'undefined' && settings) ? settings['newsletter.eyebrow'] : 'Stay Updated' %>
+                        <%= sec.eyebrow %>
                     </div>
 
                     <h2>
-                        <%= (typeof settings !== 'undefined' && settings) ? settings['newsletter.heading'] : 'Get new course updates in your inbox.' %>
+                        <%= sec.heading %>
                     </h2>
 
                     <p>
-                        <%= (typeof settings !== 'undefined' && settings) ? settings['newsletter.description'] : 'Subscribe for new course announcements, educational resources, special offers and upcoming learning programs.' %>
+                        <%= sec.description %>
                     </p>
 
                     <form class="newsletter-form" method="POST" action="/newsletter/subscribe">
@@ -27,11 +28,12 @@
 
                         <input
                             type="email" name="email"
-                            placeholder="Enter your email address"
+                            placeholder="<%= sec.placeholder %>"
+                            aria-label="<%= sec.placeholder %>"
                             required>
 
                         <button type="submit">
-                            Subscribe
+                            <%= sec.buttonLabel %>
                         </button>
 
                     </form>

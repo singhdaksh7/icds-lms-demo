@@ -1,23 +1,26 @@
-const { SAFE_CTA_TARGETS } = require('../services/settings.service');
+const { SAFE_CTA_TARGETS, TABS, FIELD_BY_KEY } = require('../config/siteContent');
 
-const SHORT_MAX = 150;
-const DESC_MAX = 600;
+// Registry-driven validation for Admin > Site Content. Every field is
+// length-capped and coerced to a safe type. Nothing here ever accepts HTML,
+// script or a free-form URL: link targets come from a fixed list and all
+// values are escaped again when rendered.
 
-function text(body, key, max) {
-  const value = typeof body[key] === 'string' ? body[key].trim().slice(0, max) : '';
-  return value;
-}
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const PHONE_PATTERN = /^[0-9+()\-.\s]*$/;
 
-// Multi-line plain text (legal pages): normalises line endings, strips
-// control characters other than newline/tab and caps the length. Never HTML -
-// it is escaped on render.
-function longText(body, key, max) {
-  const raw = typeof body[key] === 'string' ? body[key] : '';
-  return raw
-    .replace(/\r\n?/g, '\n')
-    .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, '')
-    .trim()
-    .slice(0, max);
+// Anything that looks like an HTML tag/comment, or a script-ish URL scheme.
+// Admin copy is plain text, so rejecting these outright is safer than trying
+// to "clean" them.
+const TAG_PATTERN = /<\/?[a-z!][^>]*>?/i;
+const UNSAFE_SCHEME_PATTERN = /(?:javascript|vbscript)\s*:|data\s*:\s*text\/html/i;
+
+const CONTROL_CHARS = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g;
+
+function clean(raw, { multiline, max }) {
+  const value = typeof raw === 'string' ? raw : '';
+  let out = value.replace(/\r\n?/g, '\n').replace(CONTROL_CHARS, '');
+  if (!multiline) out = out.replace(/\s*\n\s*/g, ' ');
+  return out.trim().slice(0, max);
 }
 
 function isRealIsoDate(value) {
@@ -26,110 +29,73 @@ function isRealIsoDate(value) {
   return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value;
 }
 
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const PHONE_PATTERN = /^[0-9+()\-.\s]*$/;
-const LEGAL_BODY_MAX = 20000;
-
-function bool(body, key) {
-  return body[key] === 'true' || body[key] === 'on' || body[key] === true ? 'true' : 'false';
+function unsafeContent(value) {
+  return TAG_PATTERN.test(value) || UNSAFE_SCHEME_PATTERN.test(value);
 }
 
-// Validates and whitelists the full settings form submission. Every field
-// is length-capped and coerced to a safe type — nothing here ever accepts
-// raw HTML/script, and CTA targets are restricted to a fixed whitelist so
-// an admin account can never turn this into an XSS or open-redirect
-// vector. Returns { errors, values } like the other validators in this
-// codebase (see category.validator.js).
-function validateSettings(body) {
+// Validates the submitted fields of ONE form definition. Fields not in the
+// form are ignored entirely (a form can never write another form's keys).
+// Image fields are not handled here - uploads go through the multer
+// middleware and the controller.
+function validateForm(form, body = {}) {
   const errors = [];
+  const values = {};
 
-  const ctaTarget = typeof body['why.ctaTarget'] === 'string' ? body['why.ctaTarget'].trim() : '';
-  if (ctaTarget && !SAFE_CTA_TARGETS.includes(ctaTarget)) {
-    errors.push('Why ICDS CTA target must be one of the predefined page sections.');
-  }
+  for (const field of form.fields) {
+    if (field.heading || field.type === 'image') continue;
+    const raw = body[field.key];
+    const name = field.label;
 
-  const values = {
-    'brand.tagline': text(body, 'brand.tagline', SHORT_MAX),
-    'brand.footerDescription': text(body, 'brand.footerDescription', DESC_MAX),
-
-    'why.enabled': bool(body, 'why.enabled'),
-    'why.eyebrow': text(body, 'why.eyebrow', SHORT_MAX),
-    'why.heading': text(body, 'why.heading', SHORT_MAX),
-    'why.description': text(body, 'why.description', DESC_MAX),
-    'why.ctaLabel': text(body, 'why.ctaLabel', SHORT_MAX),
-    'why.ctaTarget': SAFE_CTA_TARGETS.includes(ctaTarget) ? ctaTarget : '#courses',
-    'why.feature1Title': text(body, 'why.feature1Title', SHORT_MAX),
-    'why.feature1Desc': text(body, 'why.feature1Desc', DESC_MAX),
-    'why.feature2Title': text(body, 'why.feature2Title', SHORT_MAX),
-    'why.feature2Desc': text(body, 'why.feature2Desc', DESC_MAX),
-    'why.feature3Title': text(body, 'why.feature3Title', SHORT_MAX),
-    'why.feature3Desc': text(body, 'why.feature3Desc', DESC_MAX),
-    'why.feature4Title': text(body, 'why.feature4Title', SHORT_MAX),
-    'why.feature4Desc': text(body, 'why.feature4Desc', DESC_MAX),
-
-    'process.enabled': bool(body, 'process.enabled'),
-    'process.eyebrow': text(body, 'process.eyebrow', SHORT_MAX),
-    'process.heading': text(body, 'process.heading', SHORT_MAX),
-    'process.description': text(body, 'process.description', DESC_MAX),
-    'process.step1Title': text(body, 'process.step1Title', SHORT_MAX),
-    'process.step1Desc': text(body, 'process.step1Desc', DESC_MAX),
-    'process.step2Title': text(body, 'process.step2Title', SHORT_MAX),
-    'process.step2Desc': text(body, 'process.step2Desc', DESC_MAX),
-    'process.step3Title': text(body, 'process.step3Title', SHORT_MAX),
-    'process.step3Desc': text(body, 'process.step3Desc', DESC_MAX),
-    'process.step4Title': text(body, 'process.step4Title', SHORT_MAX),
-    'process.step4Desc': text(body, 'process.step4Desc', DESC_MAX),
-
-    'instructors.enabled': bool(body, 'instructors.enabled'),
-    'instructors.eyebrow': text(body, 'instructors.eyebrow', SHORT_MAX),
-    'instructors.heading': text(body, 'instructors.heading', SHORT_MAX),
-    'instructors.description': text(body, 'instructors.description', DESC_MAX),
-    'instructors.emptyStateText': text(body, 'instructors.emptyStateText', SHORT_MAX),
-
-    'newsletter.enabled': bool(body, 'newsletter.enabled'),
-    'newsletter.eyebrow': text(body, 'newsletter.eyebrow', SHORT_MAX),
-    'newsletter.heading': text(body, 'newsletter.heading', SHORT_MAX),
-    'newsletter.description': text(body, 'newsletter.description', DESC_MAX),
-
-    'nav.showAbout': bool(body, 'nav.showAbout'),
-    'nav.showInstructors': bool(body, 'nav.showInstructors'),
-    'nav.showReviews': bool(body, 'nav.showReviews'),
-    'nav.showFaq': bool(body, 'nav.showFaq'),
-
-    'site.name': text(body, 'site.name', 120),
-    'contact.email': text(body, 'contact.email', 254),
-    'contact.phone': text(body, 'contact.phone', 30),
-    'contact.address': text(body, 'contact.address', 300),
-
-    'legal.privacy.heading': text(body, 'legal.privacy.heading', SHORT_MAX),
-    'legal.privacy.body': longText(body, 'legal.privacy.body', LEGAL_BODY_MAX),
-    'legal.privacy.updated': text(body, 'legal.privacy.updated', 10),
-    'legal.terms.heading': text(body, 'legal.terms.heading', SHORT_MAX),
-    'legal.terms.body': longText(body, 'legal.terms.body', LEGAL_BODY_MAX),
-    'legal.terms.updated': text(body, 'legal.terms.updated', 10),
-  };
-
-  if (values['contact.email'] && !EMAIL_PATTERN.test(values['contact.email'])) {
-    errors.push('Contact email must be a valid email address.');
-  }
-  if (values['contact.phone'] && !PHONE_PATTERN.test(values['contact.phone'])) {
-    errors.push('Phone may contain only digits, spaces and + ( ) - .');
-  }
-  ['legal.privacy.updated', 'legal.terms.updated'].forEach((key) => {
-    if (values[key] && !isRealIsoDate(values[key])) {
-      errors.push('Legal page "last updated" must be a valid date (YYYY-MM-DD).');
+    if (field.type === 'bool') {
+      values[field.key] = raw === 'true' || raw === 'on' || raw === true ? 'true' : 'false';
+      continue;
     }
-  });
 
-  // Required, non-empty fields — everything else may be blank (falls back
-  // to the hard-coded default on next read via settings.service defaults).
-  ['why.heading', 'process.heading'].forEach((key) => {
-    if (values[key] === '') {
-      errors.push(`${key} cannot be empty.`);
+    if (field.type === 'target') {
+      const chosen = typeof raw === 'string' ? raw.trim() : '';
+      if (chosen && !SAFE_CTA_TARGETS.includes(chosen)) {
+        errors.push(`${name} must be one of the predefined page links.`);
+        values[field.key] = field.def;
+      } else {
+        values[field.key] = chosen || field.def;
+      }
+      continue;
     }
-  });
+
+    const multiline = field.type === 'textarea' || field.type === 'longtext';
+    const max = field.max || (field.type === 'email' ? 254 : field.type === 'phone' ? 30 : field.type === 'date' ? 10 : 150);
+    const value = clean(raw, { multiline, max });
+    values[field.key] = value;
+
+    if (!value) continue;
+
+    if (field.type === 'email' && !EMAIL_PATTERN.test(value)) {
+      errors.push(`${name} must be a valid email address.`);
+    } else if (field.type === 'phone' && (!PHONE_PATTERN.test(value) || value.length < 5)) {
+      errors.push(`${name} may contain only digits, spaces and + ( ) - . (at least 5 characters).`);
+    } else if (field.type === 'date' && !isRealIsoDate(value)) {
+      errors.push(`${name} must be a valid date (YYYY-MM-DD).`);
+    } else if (unsafeContent(value)) {
+      errors.push(`${name}: HTML tags and script links are not allowed - use plain text only.`);
+    }
+  }
 
   return { errors, values };
 }
 
-module.exports = { validateSettings, SAFE_CTA_TARGETS };
+// Compatibility wrapper: validates every known field present in `body`
+// (absent text fields become blank = default, absent toggles become off).
+function validateSettings(body = {}) {
+  const errors = [];
+  const values = {};
+  for (const tab of TABS) {
+    for (const form of tab.forms) {
+      const result = validateForm(form, body);
+      errors.push(...result.errors);
+      Object.assign(values, result.values);
+    }
+  }
+  return { errors, values };
+}
+
+module.exports = { validateForm, validateSettings, SAFE_CTA_TARGETS, FIELD_BY_KEY };

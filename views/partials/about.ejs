@@ -1,4 +1,5 @@
-<% if (typeof settings === 'undefined' || !settings || settings.whyEnabled) { %>
+<% const why = cms.why; %>
+<% if (why.enabled) { %>
 <!-- ABOUT / WHY US -->
 <section class="section-space feature-section" id="about">
 
@@ -10,13 +11,10 @@
 
                 <div class="feature-image-wrap reveal-element">
 
-                    <% var whyImageSrc = (typeof settings !== 'undefined' && settings && settings['why.imagePath'])
-                        ? '/uploads/thumbnails/' + settings['why.imagePath']
-                        : '/images/demo/about-training.jpg'; %>
                     <img
                         class="feature-image"
-                        src="<%= whyImageSrc %>"
-                        alt="Students in a professional cosmetology training environment"
+                        src="<%= why.imageUrl || '/images/demo/about-training.jpg' %>"
+                        alt="<%= why.imageAlt %>"
                         loading="lazy"
                         data-fallback-src="/assets/images/hero-placeholder.svg">
 
@@ -30,23 +28,23 @@
                 <div class="feature-content reveal-element">
 
                     <div class="section-tag">
-                        <%= (typeof settings !== 'undefined' && settings) ? settings['why.eyebrow'] : 'Why ICDS' %>
+                        <%= why.eyebrow %>
                     </div>
 
                     <h2 class="section-title">
-                        <%= (typeof settings !== 'undefined' && settings) ? settings['why.heading'] : 'Education that goes beyond watching videos.' %>
+                        <%= why.heading %>
                     </h2>
 
                     <p class="section-description">
-                        <%= (typeof settings !== 'undefined' && settings) ? settings['why.description'] : 'Our online learning experience combines structured lessons, practical demonstrations and expert guidance to help students turn knowledge into professional skills.' %>
+                        <%= why.description %>
                     </p>
 
 
                     <ul class="feature-list">
 
                         <% [1, 2, 3, 4].forEach(function (n) { %>
-                            <% var title = (typeof settings !== 'undefined' && settings) ? settings['why.feature' + n + 'Title'] : ''; %>
-                            <% var desc = (typeof settings !== 'undefined' && settings) ? settings['why.feature' + n + 'Desc'] : ''; %>
+                            <% var title = why['feature' + n + 'Title']; %>
+                            <% var desc = why['feature' + n + 'Desc']; %>
                             <% if (title) { %>
                                 <li>
 
@@ -70,8 +68,8 @@
                     </ul>
 
 
-                    <a href="<%= (typeof settings !== 'undefined' && settings) ? settings['why.ctaTarget'] : '#courses' %>" class="hero-primary-btn d-inline-block">
-                        <%= (typeof settings !== 'undefined' && settings) ? settings['why.ctaLabel'] : 'Start Learning' %>
+                    <a href="<%= why.ctaTarget %>" class="hero-primary-btn d-inline-block">
+                        <%= why.ctaLabel %>
                         <i class="bi bi-arrow-right ms-2"></i>
                     </a>
 

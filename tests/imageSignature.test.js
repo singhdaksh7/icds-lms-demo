@@ -14,7 +14,7 @@ process.env.THUMBNAIL_STORAGE_ROOT = STORAGE;
 
 const express = require('express');
 const imageStorage = require('../src/lib/imageStorage');
-const { uploadSiteImage } = require('../src/middleware/siteImageUpload.middleware');
+const { uploadSiteImages } = require('../src/middleware/siteImageUpload.middleware');
 const { uploadThumbnail } = require('../src/middleware/thumbnailUpload.middleware');
 
 // Tiny but genuine files for each allowed format.
@@ -66,15 +66,21 @@ function appWith(middleware) {
   const app = express();
   const flashes = [];
   app.use((req, res, next) => { req.flashError = (m) => flashes.push(m); next(); });
-  app.post('/upload', middleware('/back'), (req, res) => res.json({ stored: req.file ? req.file.filename : null }));
+  app.post('/upload', middleware('/back'), (req, res) => {
+    // Like the real controller, adopt (keep) the files it saved; anything not
+    // adopted is removed when the response closes.
+    const image = req.siteImages && req.siteImages['why.imagePath'];
+    if (image && req.query.adopt !== '0') req.siteImagesAdopted.add(image.path);
+    res.json({ stored: req.file ? req.file.filename : (image ? image.filename : null) });
+  });
   const server = http.createServer(app);
   return new Promise((resolve) => server.listen(0, '127.0.0.1', () => resolve({ server, flashes, port: server.address().port })));
 }
 
-async function upload(port, field, buffer, filename, type) {
+async function upload(port, field, buffer, filename, type, query = '') {
   const form = new FormData();
   form.append(field, new Blob([buffer], { type }), filename);
-  return fetch(`http://127.0.0.1:${port}/upload`, { method: 'POST', body: form, redirect: 'manual' });
+  return fetch(`http://127.0.0.1:${port}/upload${query}`, { method: 'POST', body: form, redirect: 'manual' });
 }
 
 function siteFiles() {
@@ -82,22 +88,48 @@ function siteFiles() {
   return fs.existsSync(dir) ? fs.readdirSync(dir) : [];
 }
 
-test('Why ICDS upload middleware: accepts real JPEG/PNG/WebP, rejects a text file named .png and stores nothing', async () => {
-  const { server, flashes, port } = await appWith(uploadSiteImage);
+test('Site image upload middleware: accepts real JPEG/PNG/WebP, rejects a text file named .png and stores nothing', async () => {
+  const { server, flashes, port } = await appWith(uploadSiteImages);
   try {
     for (const [buf, name, type] of [[JPEG, 'a.jpg', 'image/jpeg'], [PNG, 'a.png', 'image/png'], [WEBP, 'a.webp', 'image/webp']]) {
-      const res = await upload(port, 'whyIcdsImage', buf, name, type);
+      const res = await upload(port, 'file__why.imagePath', buf, name, type);
       assert.equal(res.status, 200, `${name} should be accepted`);
       assert.ok((await res.json()).stored);
     }
     const accepted = siteFiles().length;
     assert.equal(accepted, 3);
 
-    const spoof = await upload(port, 'whyIcdsImage', FAKE_TEXT, 'evil.png', 'image/png');
+    const spoof = await upload(port, 'file__why.imagePath', FAKE_TEXT, 'evil.png', 'image/png');
     assert.equal(spoof.status, 302);
     assert.equal(spoof.headers.get('location'), '/back');
     assert.match(flashes.at(-1), /not a valid JPG, PNG or WEBP/i);
     assert.equal(siteFiles().length, accepted, 'spoofed file must not remain on disk');
+  } finally {
+    server.close();
+  }
+});
+
+test('Site image upload middleware: a file the controller does not adopt is removed once the response closes', async () => {
+  const { server, port } = await appWith(uploadSiteImages);
+  try {
+    const before = siteFiles().length;
+    const res = await upload(port, 'file__why.imagePath', PNG, 'orphan.png', 'image/png', '?adopt=0');
+    assert.equal(res.status, 200);
+    await new Promise((r) => setTimeout(r, 150));
+    assert.equal(siteFiles().length, before, 'unadopted upload must not linger on disk');
+  } finally {
+    server.close();
+  }
+});
+
+test('Site image upload middleware: unknown file field names are rejected', async () => {
+  const { server, flashes, port } = await appWith(uploadSiteImages);
+  try {
+    const before = siteFiles().length;
+    const res = await upload(port, 'file__not.aRegisteredImage', PNG, 'x.png', 'image/png');
+    assert.equal(res.status, 302);
+    assert.ok(flashes.at(-1));
+    assert.equal(siteFiles().length, before);
   } finally {
     server.close();
   }
@@ -122,11 +154,11 @@ test('Thumbnail upload middleware: real PNG accepted, spoofed .jpg (PNG data) an
 });
 
 test('disallowed extensions and MIME mismatches are still rejected up front', async () => {
-  const { server, flashes, port } = await appWith(uploadSiteImage);
+  const { server, flashes, port } = await appWith(uploadSiteImages);
   try {
-    const txt = await upload(port, 'whyIcdsImage', FAKE_TEXT, 'a.txt', 'text/plain');
+    const txt = await upload(port, 'file__why.imagePath', FAKE_TEXT, 'a.txt', 'text/plain');
     assert.equal(txt.status, 302);
-    const mime = await upload(port, 'whyIcdsImage', PNG, 'a.png', 'text/plain');
+    const mime = await upload(port, 'file__why.imagePath', PNG, 'a.png', 'text/plain');
     assert.equal(mime.status, 302);
     assert.equal(flashes.length, 2);
   } finally {

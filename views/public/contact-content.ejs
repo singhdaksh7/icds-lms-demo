@@ -1,1 +1,76 @@
-<section class="section-space"><div class="container" style="max-width:760px"><h1 class="section-title">Contact Us</h1><p class="section-description">Send our team a message and we will respond when email delivery is configured.</p><% if(errors.length){ %><div class="alert alert-danger"><%= errors.join(' ') %></div><% } %><form method="POST" action="/contact"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><div class="mb-3"><input class="form-control" name="name" placeholder="Name" required value="<%= values.name || '' %>"></div><div class="mb-3"><input class="form-control" type="email" name="email" placeholder="Email" required value="<%= values.email || '' %>"></div><div class="mb-3"><input class="form-control" name="subject" placeholder="Subject" required value="<%= values.subject || '' %>"></div><div class="mb-3"><textarea class="form-control" name="message" rows="6" maxlength="5000" required><%= values.message || '' %></textarea></div><button class="auth-submit">Send Message</button></form></div></section>
+<% const cp = cms.contactPage; %>
+<% const hasContactInfo = Boolean(site.contactEmail || site.contactPhone || site.address); %>
+<section class="section-space">
+    <div class="container" style="max-width:<%= hasContactInfo ? '1000px' : '760px' %>">
+
+        <h1 class="section-title"><%= cp.heading %></h1>
+        <p class="section-description"><%= cp.intro %></p>
+
+        <div class="row g-4 g-lg-5 mt-1">
+
+            <div class="<%= hasContactInfo ? 'col-lg-7' : 'col-12' %>">
+
+                <% if (cp.formHeading) { %><h2 class="h5 mb-3"><%= cp.formHeading %></h2><% } %>
+
+                <% if (errors.length) { %><div class="alert alert-danger"><%= errors.join(' ') %></div><% } %>
+
+                <form method="POST" action="/contact">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold" for="contact-name"><%= cp.nameLabel %></label>
+                        <input class="form-control" id="contact-name" name="name" placeholder="<%= cp.nameLabel %>" required value="<%= values.name || '' %>">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold" for="contact-email"><%= cp.emailLabel %></label>
+                        <input class="form-control" id="contact-email" type="email" name="email" placeholder="<%= cp.emailLabel %>" required value="<%= values.email || '' %>">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold" for="contact-subject"><%= cp.subjectLabel %></label>
+                        <input class="form-control" id="contact-subject" name="subject" placeholder="<%= cp.subjectLabel %>" required value="<%= values.subject || '' %>">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold" for="contact-message"><%= cp.messageLabel %></label>
+                        <textarea class="form-control" id="contact-message" name="message" rows="6" maxlength="5000" placeholder="<%= cp.messageLabel %>" required><%= values.message || '' %></textarea>
+                    </div>
+
+                    <button class="auth-submit"><%= cp.submitLabel %></button>
+                </form>
+
+            </div>
+
+            <% if (hasContactInfo) { %>
+                <div class="col-lg-5">
+                    <div class="contact-info-card">
+                        <h2 class="h5 mb-3"><%= cp.infoHeading %></h2>
+                        <ul class="list-unstyled mb-0">
+                            <% if (site.contactEmail) { %>
+                                <li class="d-flex gap-3 mb-3">
+                                    <i class="bi bi-envelope fs-5" style="color:#565acf;"></i>
+                                    <a href="mailto:<%= site.contactEmail %>" class="text-decoration-none text-break"><%= site.contactEmail %></a>
+                                </li>
+                            <% } %>
+                            <% if (site.contactPhone) { %>
+                                <li class="d-flex gap-3 mb-3">
+                                    <i class="bi bi-telephone fs-5" style="color:#565acf;"></i>
+                                    <a href="<%= site.phoneHref %>" class="text-decoration-none"><%= site.contactPhone %></a>
+                                </li>
+                            <% } %>
+                            <% if (site.address) { %>
+                                <li class="d-flex gap-3">
+                                    <i class="bi bi-geo-alt fs-5" style="color:#565acf;"></i>
+                                    <span style="white-space:pre-line;"><%= site.address %></span>
+                                </li>
+                            <% } %>
+                        </ul>
+                    </div>
+                </div>
+            <% } %>
+
+        </div>
+
+    </div>
+</section>

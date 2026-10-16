@@ -11,7 +11,7 @@ const {
   parseLessonUpdateFields,
 } = require('../middleware/videoUpload.middleware');
 const { uploadThumbnail } = require('../middleware/thumbnailUpload.middleware');
-const { uploadSiteImage } = require('../middleware/siteImageUpload.middleware');
+const { uploadSiteImages } = require('../middleware/siteImageUpload.middleware');
 
 const dashboardController = require('../controllers/admin/dashboard.controller');
 const courseController = require('../controllers/admin/course.controller');
@@ -23,7 +23,8 @@ const orderController = require('../controllers/admin/order.controller');
 const engagementController = require('../controllers/admin/engagement.controller');
 const enrollmentRequestController = require('../controllers/admin/enrollmentRequest.controller');
 const faqController = require('../controllers/admin/faq.controller');
-const settingsController = require('../controllers/admin/settings.controller');
+const siteContentController = require('../controllers/admin/siteContent.controller');
+const reviewController = require('../controllers/admin/review.controller');
 
 // Every route in this file is admin-only — enforced once here rather than
 // repeated per-route, so it's impossible to accidentally add an
@@ -131,20 +132,30 @@ router.get('/orders/:id', orderController.getOrderDetail);
 router.get('/enrollment-requests', enrollmentRequestController.listRequests);
 router.post('/enrollment-requests/:id/approve', doubleCsrfProtection, enrollmentRequestController.approveRequest);
 router.post('/enrollment-requests/:id/status', doubleCsrfProtection, enrollmentRequestController.updateStatus);
-router.get('/settings', settingsController.editSettingsForm);
+// --- Site Content (all public-page copy, images and SEO) ----------------------
+// Each form saves independently to /site-content/:tab/:form. Multipart parsing
+// (images) runs BEFORE CSRF protection so the token in the multipart body is
+// available, mirroring the thumbnail/video upload routes.
+router.param('tab', siteContentController.resolveTab);
+router.param('form', siteContentController.resolveForm);
+router.get('/site-content', siteContentController.index);
+router.get('/site-content/:tab', siteContentController.showTab);
 router.post(
-  '/settings',
-  uploadSiteImage('/admin/settings'),
+  '/site-content/:tab/:form',
+  uploadSiteImages((req) => `/admin/site-content/${req.params.tab}`),
   doubleCsrfProtection,
-  settingsController.updateSettingsAction
+  siteContentController.saveForm
 );
-
-router.post('/settings/why-image/remove', doubleCsrfProtection, settingsController.removeWhyImage);
+router.get('/settings', siteContentController.legacyRedirect);
 
 router.get('/faqs', faqController.listFaqs);
 router.post('/faqs', doubleCsrfProtection, faqController.createFaq);
 router.post('/faqs/:id', doubleCsrfProtection, faqController.updateFaq);
 router.post('/faqs/:id/delete', doubleCsrfProtection, faqController.deleteFaq);
+
+router.get('/reviews', reviewController.listReviews);
+router.post('/reviews/:id/status', doubleCsrfProtection, reviewController.updateReviewStatus);
+router.post('/reviews/:id/delete', doubleCsrfProtection, reviewController.deleteReview);
 
 router.get('/certificates', engagementController.certificates);
 router.get('/newsletter', engagementController.newsletter);

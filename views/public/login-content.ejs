@@ -1,3 +1,4 @@
+<% const t = cms.login; %>
 <section class="section-space">
     <div class="container">
         <div class="row justify-content-center">
@@ -6,31 +7,28 @@
                     <div class="row g-0">
 
                         <div class="col-md-5 d-none d-md-block">
-                            <div class="auth-brand-panel">
-                                <h3>Welcome back.</h3>
-                                <p>
-                                    Continue your learning journey and access
-                                    all your purchased courses from one place.
-                                </p>
+                            <div class="auth-brand-panel" style="<%= t.imageUrl ? "background-image: linear-gradient(165deg, rgba(86,90,207,.92), rgba(65,69,174,.94)), url('" + t.imageUrl + "');" : '' %>">
+                                <h3><%= t.sideHeading %></h3>
+                                <p><%= t.sideBody %></p>
                                 <div class="auth-feature">
                                     <i class="bi bi-check-circle-fill"></i>
-                                    Access your purchased courses
+                                    <%= t.sideFeature1 %>
                                 </div>
                                 <div class="auth-feature">
                                     <i class="bi bi-check-circle-fill"></i>
-                                    Track your learning progress
+                                    <%= t.sideFeature2 %>
                                 </div>
                                 <div class="auth-feature">
                                     <i class="bi bi-check-circle-fill"></i>
-                                    Download eligible certificates
+                                    <%= t.sideFeature3 %>
                                 </div>
                             </div>
                         </div>
 
                         <div class="col-md-7">
                             <div class="auth-form-area">
-                                <h4>Student Login</h4>
-                                <p>Sign in to continue learning.</p>
+                                <h4><%= t.heading %></h4>
+                                <p><%= t.description %></p>
 
                                 <% if (errors && errors.length) { %>
                                     <div class="alert alert-danger mt-3">
@@ -47,7 +45,7 @@
                                     <input type="hidden" name="returnTo" value="<%= returnTo || '' %>">
 
                                     <div class="mb-3">
-                                        <label class="form-label small fw-semibold">Email Address</label>
+                                        <label class="form-label small fw-semibold"><%= t.emailLabel %></label>
                                         <input
                                             type="email"
                                             name="email"
@@ -58,7 +56,7 @@
                                     </div>
 
                                     <div class="mb-3">
-                                        <label class="form-label small fw-semibold">Password</label>
+                                        <label class="form-label small fw-semibold"><%= t.passwordLabel %></label>
                                         <input
                                             type="password"
                                             name="password"
@@ -69,16 +67,16 @@
 
                                     <div class="d-flex justify-content-end mb-4">
                                         <a href="/forgot-password" class="small text-decoration-none" style="color:#565acf;">
-                                            Forgot Password?
+                                            <%= t.forgotLabel %>
                                         </a>
                                     </div>
 
-                                    <button type="submit" class="auth-submit">Login to Account</button>
+                                    <button type="submit" class="auth-submit"><%= t.submitLabel %></button>
                                 </form>
 
                                 <p class="small mt-4 mb-0">
-                                    Don't have an account?
-                                    <a href="/signup" style="color:#565acf;">Create one</a>
+                                    <%= t.signupPrompt %>
+                                    <a href="/signup" style="color:#565acf;"><%= t.signupLabel %></a>
                                 </p>
                             </div>
                         </div>

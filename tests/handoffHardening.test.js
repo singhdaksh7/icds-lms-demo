@@ -11,6 +11,7 @@ const express = require('express');
 
 const site = require('../src/config/site');
 const settingsService = require('../src/services/settings.service');
+const { defaultContent } = require('../src/services/settings.service');
 const { validateSettings } = require('../src/validators/settings.validator');
 const { parseLegalText, formatLegalDate } = require('../src/lib/legalText');
 
@@ -66,7 +67,7 @@ test('malformed or out-of-range admin ids return 404, never a 500', async () => 
 
 const baseHeaderData = {
   pageTitle: 'T', metaDescription: 'D', site, seo: undefined, flash: {}, csrfToken: 'x', currentUser: undefined,
-  settings: { navShowAbout: true, navShowInstructors: true, navShowReviews: true, navShowFaq: true, 'brand.tagline': 'Tag' },
+  cms: defaultContent(),
 };
 
 test('header lists only the active categories from the database', async () => {
@@ -192,10 +193,14 @@ test('footer and header render the DB-managed contact details', async () => {
 
 // --- Why ICDS image removal / CSP wiring (structural) ------------------------
 
-test('image removal route is admin-only, CSRF-protected and wired to the controller', () => {
+test('site content routes are admin-only, CSRF-protected and run multipart parsing before CSRF', () => {
   const routes = fs.readFileSync(path.join(__dirname, '..', 'src/routes/admin.routes.js'), 'utf8');
   assert.match(routes, /router\.use\(requireRole\('ADMIN'\)\)/);
-  assert.match(routes, /router\.post\('\/settings\/why-image\/remove', doubleCsrfProtection, settingsController\.removeWhyImage\)/);
+  assert.match(
+    routes,
+    /'\/site-content\/:tab\/:form',\s*uploadSiteImages\([\s\S]*?\),\s*doubleCsrfProtection,\s*siteContentController\.saveForm/
+  );
+  assert.ok(routes.indexOf("router.use(requireRole('ADMIN'))") < routes.indexOf("'/site-content/:tab/:form'"));
 });
 
 test('no inline event-handler attributes remain in views (required by the CSP)', () => {

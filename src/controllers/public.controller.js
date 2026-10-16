@@ -3,12 +3,18 @@ const { getSettings } = require('../services/settings.service');
 const { parseLegalText, formatLegalDate } = require('../lib/legalText');
 const { validateContact, validateNewsletter } = require('../validators/contact.validator');
 const site = require('../config/site');
-const { buildSeo, PUBLIC_ROBOTS, DEFAULT_ROBOTS } = require('../lib/seo');
+const { buildSeo, pageSeoText, PUBLIC_ROBOTS, DEFAULT_ROBOTS } = require('../lib/seo');
 const emailService = require('../services/email.service');
 
+function contactSeo(res) {
+  return pageSeoText(res.locals.settings, 'contact', {
+    title: `Contact | ${site.name}`,
+    description: `Get in touch with ${site.name} — course enquiries and support.`,
+  });
+}
+
 async function contactPage(req, res) {
-  const title = `Contact | ${site.name}`;
-  const description = `Get in touch with ${site.name} — course enquiries and support.`;
+  const { title, description } = contactSeo(res);
   res.render('public/contact', {
     pageTitle: title,
     metaDescription: description,
@@ -21,8 +27,7 @@ async function contactPage(req, res) {
 async function postContact(req, res, next) {
   const { errors, values } = validateContact(req.body);
   if (errors.length) {
-    const title = `Contact | ${site.name}`;
-    const description = `Get in touch with ${site.name} — course enquiries and support.`;
+    const { title, description } = contactSeo(res);
     return res.status(400).render('public/contact', {
       pageTitle: title,
       metaDescription: description,
@@ -33,7 +38,7 @@ async function postContact(req, res, next) {
   }
   try {
     await prisma.contactMessage.create({ data: values });
-    req.flashSuccess('Your message has been received.');
+    req.flashSuccess(res.locals.cms.contactPage.successMessage);
     res.redirect('/contact');
     // Fire-and-forget: DB persistence above is the source of truth, so a
     // failed/unconfigured notification email must never affect the
@@ -56,7 +61,7 @@ async function subscribe(req, res, next) {
       update: {},
       create: { email: values.email },
     });
-    req.flashSuccess('You are subscribed.');
+    req.flashSuccess(res.locals.cms.newsletter.successMessage);
     res.redirect(req.get('referer') || '/');
   } catch (e) {
     next(e);
@@ -104,8 +109,11 @@ function legal(page, keyPrefix) {
     try {
       const settings = await getSettings();
       const heading = settings[`${keyPrefix}.heading`] || page;
-      const title = `${heading} | ${site.name}`;
-      const description = `${heading} for ${site.name}.`;
+      const seoKey = keyPrefix === 'legal.privacy' ? 'privacy' : 'terms';
+      const { title, description } = pageSeoText(settings, seoKey, {
+        title: `${heading} | ${site.name}`,
+        description: `${heading} for ${site.name}.`,
+      });
       res.render('public/legal', {
         pageTitle: title,
         metaDescription: description,

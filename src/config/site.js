@@ -49,16 +49,26 @@ function pick(value, fallback) {
 site.envDefaults = envDefaults;
 
 site.applyOverrides = function applyOverrides(overrides = {}) {
+  const emailOverride = pick(overrides.email, '');
   site.name = pick(overrides.name, envDefaults.name);
-  site.copyrightName = copyrightFromEnv
-    ? envDefaults.copyrightName
-    : (pick(overrides.name, '') || envDefaults.copyrightName);
-  site.contactEmail = pick(overrides.email, envDefaults.contactEmail);
-  site.supportEmail = pick(overrides.email, envDefaults.supportEmail);
+  site.shortName = pick(overrides.shortName, '');
+  site.copyrightName =
+    pick(overrides.copyrightName, '') ||
+    (copyrightFromEnv ? envDefaults.copyrightName : pick(overrides.name, '') || envDefaults.copyrightName);
+  site.contactEmail = emailOverride || envDefaults.contactEmail;
+  // Support email: its own override, else the contact-email override (kept
+  // for backwards compatibility), else the environment value.
+  site.supportEmail = pick(overrides.supportEmail, '') || emailOverride || envDefaults.supportEmail;
   site.contactPhone = pick(overrides.phone, envDefaults.contactPhone);
   site.address = pick(overrides.address, envDefaults.address);
+  site.seoTitle = pick(overrides.seoTitle, '');
+  site.seoDescription = pick(overrides.seoDescription, '');
   site.phoneHref = site.contactPhone ? `tel:${digits(site.contactPhone)}` : '';
 };
+
+site.shortName = '';
+site.seoTitle = '';
+site.seoDescription = '';
 
 site.phoneHref = site.contactPhone ? `tel:${digits(site.contactPhone)}` : '';
 site.whatsappHref = site.whatsappNumber ? `https://wa.me/${site.whatsappNumber}` : '';

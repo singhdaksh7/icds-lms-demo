@@ -1,32 +1,34 @@
+<% const pg = cms.courses; %>
 <section class="section-space course-section">
     <div class="container">
 
         <div class="section-heading reveal-element">
-            <div class="section-tag">Course Catalog</div>
-            <h2 class="section-title">All Courses</h2>
+            <div class="section-tag"><%= pg.eyebrow %></div>
+            <h1 class="section-title"><%= pg.heading %></h1>
+            <% if (pg.description) { %>
             <p class="section-description">
-                Browse every published course. Use search and filters to
-                find exactly what you're looking for.
+                <%= pg.description %>
             </p>
+            <% } %>
         </div>
 
         <form method="GET" action="/courses" class="row g-3 mb-5 align-items-end">
 
             <div class="col-md-5">
-                <label class="form-label small fw-semibold">Search</label>
+                <label class="form-label small fw-semibold"><%= pg.searchLabel %></label>
                 <input
                     type="text"
                     name="q"
                     maxlength="100"
                     class="form-control form-control-custom"
-                    placeholder="Search courses, instructors, categories..."
+                    placeholder="<%= pg.searchPlaceholder %>"
                     value="<%= filters.q %>">
             </div>
 
             <div class="col-md-3">
-                <label class="form-label small fw-semibold">Category</label>
+                <label class="form-label small fw-semibold"><%= pg.categoryLabel %></label>
                 <select name="category" class="form-select form-control-custom">
-                    <option value="">All Categories</option>
+                    <option value=""><%= pg.allCategoriesLabel %></option>
                     <% categories.forEach(function (category) { %>
                         <option value="<%= category.slug %>" <%= filters.categorySlug === category.slug ? 'selected' : '' %>>
                             <%= category.name %>
@@ -36,9 +38,9 @@
             </div>
 
             <div class="col-md-3">
-                <label class="form-label small fw-semibold">Level</label>
+                <label class="form-label small fw-semibold"><%= pg.levelLabel %></label>
                 <select name="level" class="form-select form-control-custom">
-                    <option value="">All Levels</option>
+                    <option value=""><%= pg.allLevelsLabel %></option>
                     <% levels.forEach(function (level) { %>
                         <option value="<%= level %>" <%= filters.level === level ? 'selected' : '' %>>
                             <%= level.charAt(0) + level.slice(1).toLowerCase() %>
@@ -48,7 +50,7 @@
             </div>
 
             <div class="col-md-1">
-                <button type="submit" class="auth-submit">Go</button>
+                <button type="submit" class="auth-submit"><%= pg.submitLabel %></button>
             </div>
 
         </form>
@@ -57,7 +59,7 @@
             <p class="text-muted mb-4">
                 <%= pagination.total %> result<%= pagination.total === 1 ? '' : 's' %>
                 <% if (filters.q) { %> for "<%= filters.q %>"<% } %>
-                <a href="/courses" class="ms-2" style="color:#565acf;">Clear filters</a>
+                <a href="/courses" class="ms-2" style="color:#565acf;"><%= pg.clearFiltersLabel %></a>
             </p>
         <% } %>
 
@@ -65,10 +67,10 @@
 
             <%- include('../partials/empty-state', {
                 icon: 'bi-search',
-                title: 'No courses match your search',
-                text: 'Try a different keyword, or clear your filters to see everything we offer.',
+                title: pg.emptyHeading,
+                text: pg.emptyText,
                 actionHref: '/courses',
-                actionLabel: 'Browse All Courses',
+                actionLabel: pg.emptyCta,
             }) %>
 
         <% } else { %>

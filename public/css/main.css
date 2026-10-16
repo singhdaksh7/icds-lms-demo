@@ -129,6 +129,14 @@
             box-shadow: 0 10px 25px rgba(86,90,207,.25);
         }
 
+        .brand-logo-image {
+            height: 44px;
+            width: auto;
+            max-width: 140px;
+            object-fit: contain;
+            border-radius: 8px;
+        }
+
         .brand-logo-text {
             font-size: 15px;
         }
@@ -1912,4 +1920,10 @@
             .dashboard-summary-value {
                 font-size: 21px;
             }
+        }
+
+        .contact-info-card {
+            background: var(--light-bg, #f6f7ff);
+            border-radius: 18px;
+            padding: 28px;
         }

@@ -6,7 +6,7 @@ const { parsePage } = require('../lib/pagination');
 const { getCoursePurchasePrice } = require('../lib/pricing');
 const { LEVELS } = require('../validators/course.validator');
 const site = require('../config/site');
-const { buildSeo, absoluteUrl, PUBLIC_ROBOTS } = require('../lib/seo');
+const { buildSeo, pageSeoText, absoluteUrl, PUBLIC_ROBOTS } = require('../lib/seo');
 
 async function listCourses(req, res, next) {
   try {
@@ -31,8 +31,12 @@ async function listCourses(req, res, next) {
     };
 
     const isFiltered = Boolean(q || categorySlug || level);
-    const title = q ? `Search: ${q} | ${site.name}` : `Courses | ${site.name}`;
-    const description = 'Browse professional cosmetology, aesthetics, dental sciences and beauty video courses.';
+    const pageSeo = pageSeoText(res.locals.settings, 'courses', {
+      title: `Courses | ${site.name}`,
+      description: 'Browse professional cosmetology, aesthetics, dental sciences and beauty video courses.',
+    });
+    const title = q ? `Search: ${q} | ${site.name}` : pageSeo.title;
+    const description = pageSeo.description;
 
     res.render('public/courses', {
       pageTitle: title,

@@ -1,0 +1,54 @@
+<h1 style="font-size:24px;" class="mb-2">Reviews</h1>
+<p class="text-muted small mb-4">
+    Student reviews are real records. Only approved reviews appear on the homepage. You can show, hide or delete a
+    review here; the section heading is edited under
+    <a href="/admin/site-content/home#form-reviews">Site Content &rarr; Homepage</a>.
+</p>
+
+<div class="admin-card">
+    <div class="table-responsive">
+        <table class="table admin-table align-middle">
+            <thead>
+                <tr>
+                    <th>Student / Course</th>
+                    <th>Review</th>
+                    <th style="width:80px;">Rating</th>
+                    <th style="width:110px;">Status</th>
+                    <th class="text-end" style="width:230px;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% if (reviews.length === 0) { %>
+                    <tr><td colspan="5" class="text-center text-muted py-4">No student reviews yet.</td></tr>
+                <% } %>
+                <% reviews.forEach(function (review) { %>
+                    <tr>
+                        <td>
+                            <strong><%= review.user.name %></strong>
+                            <div class="small text-muted"><%= review.course.title %></div>
+                        </td>
+                        <td class="small" style="white-space:pre-line;"><%= review.comment || '-' %></td>
+                        <td><%= review.rating %>/5</td>
+                        <td><span class="badge text-bg-<%= review.status === 'APPROVED' ? 'success' : (review.status === 'PENDING' ? 'warning' : 'secondary') %>"><%= review.status.charAt(0) + review.status.slice(1).toLowerCase() %></span></td>
+                        <td class="text-end">
+                            <form method="POST" action="/admin/reviews/<%= review.id %>/status" class="d-inline">
+                                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                <% if (review.status === 'APPROVED') { %>
+                                    <input type="hidden" name="status" value="REJECTED">
+                                    <button type="submit" class="btn btn-sm btn-outline-secondary">Hide</button>
+                                <% } else { %>
+                                    <input type="hidden" name="status" value="APPROVED">
+                                    <button type="submit" class="btn btn-sm btn-outline-success">Show</button>
+                                <% } %>
+                            </form>
+                            <form method="POST" action="/admin/reviews/<%= review.id %>/delete" class="d-inline" data-confirm="Delete this review permanently?">
+                                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                            </form>
+                        </td>
+                    </tr>
+                <% }); %>
+            </tbody>
+        </table>
+    </div>
+</div>

@@ -100,9 +100,9 @@ test('resolveSiteImagePath stays within the site/ subfolder of the storage root'
   assert.equal(resolveSiteImagePath('site/../evil.png'), null);
 });
 
-// --- multipart + CSRF ordering on the settings route ---------------------
+// --- multipart + CSRF ordering on the site content route ---------------
 
-test('admin.routes.js runs the site-image multer middleware before CSRF protection on /settings', () => {
+test('admin.routes.js runs the site-image multer middleware before CSRF protection on every site content save', () => {
   const routesSrc = fs.readFileSync(
     path.join(__dirname, '..', 'src', 'routes', 'admin.routes.js'),
     'utf8'
@@ -111,12 +111,12 @@ test('admin.routes.js runs the site-image multer middleware before CSRF protecti
   assert.notEqual(guardIndex, -1);
 
   const match = routesSrc.match(
-    /'\/settings',\s*uploadSiteImage\([^)]*\),\s*doubleCsrfProtection,\s*settingsController\.updateSettingsAction/
+    /'\/site-content\/:tab\/:form',\s*uploadSiteImages\([\s\S]*?\),\s*doubleCsrfProtection,\s*siteContentController\.saveForm/
   );
   assert.ok(
     match,
-    'POST /settings must run uploadSiteImage (multer) before doubleCsrfProtection, ' +
+    'POST /site-content/:tab/:form must run uploadSiteImages (multer) before doubleCsrfProtection, ' +
       'mirroring the already-correct thumbnail/video upload route ordering'
   );
-  assert.ok(routesSrc.indexOf(match[0]) > guardIndex, '/settings route must be registered after the ADMIN guard');
+  assert.ok(routesSrc.indexOf(match[0]) > guardIndex, 'site content routes must be registered after the ADMIN guard');
 });

@@ -47,8 +47,8 @@ function buildSeo(req, options = {}) {
   const canonical = !noCanonical && isIndexable ? absoluteUrl(req, pathname) : null;
 
   return {
-    title: title || site.name,
-    description: description || `${site.name} — professional online courses.`,
+    title: title || site.seoTitle || site.name,
+    description: description || site.seoDescription || `${site.name} — professional online courses.`,
     robots,
     canonical,
     ogType,
@@ -58,7 +58,23 @@ function buildSeo(req, options = {}) {
   };
 }
 
+// Admin-managed per-page SEO text (Site Content > <page> SEO). `page` is the
+// settings namespace ("home", "courses", ...). The page-specific value wins;
+// the homepage additionally honours the global default title/description;
+// otherwise the page's automatic text is used. `settings` is the flat map on
+// res.locals (null when the DB was unreachable).
+function pageSeoText(settings, page, fallback) {
+  const s = settings || {};
+  const own = (field) => (typeof s[`seo.${page}.${field}`] === 'string' ? s[`seo.${page}.${field}`].trim() : '');
+  const global = (field) => (page === 'home' && typeof s[`seo.default${field}`] === 'string' ? s[`seo.default${field}`].trim() : '');
+  return {
+    title: own('title') || global('Title') || fallback.title,
+    description: own('description') || global('Description') || fallback.description,
+  };
+}
+
 module.exports = {
+  pageSeoText,
   DEFAULT_ROBOTS,
   PUBLIC_ROBOTS,
   getOrigin,

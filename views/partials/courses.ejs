@@ -1,3 +1,5 @@
+<% const sec = cms.featured; %>
+<% if (sec.enabled) { %>
 <!-- FEATURED COURSES -->
 <section class="section-space course-section" id="courses">
 
@@ -6,17 +8,18 @@
         <div class="section-heading reveal-element">
 
             <div class="section-tag">
-                Popular Courses
+                <%= sec.eyebrow %>
             </div>
 
             <h2 class="section-title">
-                Learn from courses students love
+                <%= sec.heading %>
             </h2>
 
+            <% if (sec.description) { %>
             <p class="section-description">
-                Practical, structured and professionally designed video courses
-                created to help you develop real-world skills.
+                <%= sec.description %>
             </p>
+            <% } %>
 
         </div>
 
@@ -24,7 +27,7 @@
         <% if (featuredCourses.length === 0) { %>
 
             <p class="text-center text-muted">
-                No featured courses are published yet. Check back soon.
+                <%= sec.emptyText %>
             </p>
 
         <% } else { %>
@@ -47,7 +50,7 @@
         <div class="text-center mt-5">
 
             <a href="/courses" class="hero-primary-btn d-inline-block">
-                View All Courses
+                <%= sec.ctaLabel %>
                 <i class="bi bi-arrow-right ms-2"></i>
             </a>
 
@@ -56,3 +59,4 @@
     </div>
 
 </section>
+<% } %>

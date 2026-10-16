@@ -1,5 +1,6 @@
 <% var faqList = typeof faqs !== 'undefined' && Array.isArray(faqs) ? faqs : []; %>
-<% if (faqList.length > 0) { %>
+<% const sec = cms.faq; %>
+<% if (sec.enabled && faqList.length > 0) { %>
 <!-- FAQ -->
 <section class="section-space faq-section" id="faq">
 
@@ -8,12 +9,18 @@
         <div class="section-heading reveal-element">
 
             <div class="section-tag">
-                Frequently Asked Questions
+                <%= sec.eyebrow %>
             </div>
 
             <h2 class="section-title">
-                Everything you need to know
+                <%= sec.heading %>
             </h2>
+
+            <% if (sec.description) { %>
+            <p class="section-description">
+                <%= sec.description %>
+            </p>
+            <% } %>
 
         </div>
 

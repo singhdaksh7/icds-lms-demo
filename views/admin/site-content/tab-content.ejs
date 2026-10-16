@@ -1,0 +1,54 @@
+<h1 style="font-size:24px;" class="mb-2">Site Content</h1>
+<p class="text-muted small mb-3">
+    Change the text, images and links visitors see on the public website. Each section below saves on its own and the
+    change appears on the site right away - no redeploy needed. Only plain text is accepted.
+</p>
+
+<nav class="sc-tabs mb-4" aria-label="Site content sections">
+    <% tabs.forEach(function (t) { %>
+        <a href="/admin/site-content/<%= t.id %>" class="<%= t.id === tab.id ? 'active' : '' %>"><i class="bi <%= t.icon %> me-1"></i><%= t.title %></a>
+    <% }); %>
+</nav>
+
+<h2 class="h5 mb-3"><%= tab.title %></h2>
+
+<% if (tab.note) { %>
+    <div class="admin-card mb-4">
+        <p class="mb-0"><i class="bi bi-info-circle me-1"></i><%= tab.note %></p>
+    </div>
+<% } %>
+
+<% tab.forms.forEach(function (form) { %>
+    <% const hasImage = form.fields.some(function (f) { return f.type === 'image'; }); %>
+    <form
+        id="form-<%= form.id %>"
+        class="admin-card mb-4"
+        method="POST"
+        action="/admin/site-content/<%= tab.id %>/<%= form.id %>"
+        <%- hasImage ? 'enctype="multipart/form-data"' : '' %>>
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-2">
+            <h3 class="h6 mb-0"><%= form.title %></h3>
+        </div>
+        <% if (form.description) { %><p class="small text-muted"><%= form.description %></p><% } %>
+
+        <% if (errors && errors.length && errorFormId === form.id) { %>
+            <div class="alert alert-danger">
+                <ul class="mb-0 ps-3">
+                    <% errors.forEach(function (error) { %><li><%= error %></li><% }) %>
+                </ul>
+            </div>
+        <% } %>
+
+        <div class="row g-3">
+            <% form.fields.forEach(function (field) { %>
+                <%- include('./field', { field, settings, linkTargets, imageUrls, env, legalProvisional }) %>
+            <% }); %>
+        </div>
+
+        <div class="mt-3 pt-3 border-top">
+            <button type="submit" class="auth-submit" style="width:auto; padding:0 28px;">Save <%= form.title %></button>
+        </div>
+    </form>
+<% }); %>

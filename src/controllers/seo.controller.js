@@ -81,7 +81,7 @@ function shortName(name) {
 function webManifest(req, res) {
   res.type('application/manifest+json').json({
     name: site.name,
-    short_name: shortName(site.name),
+    short_name: site.shortName || shortName(site.name),
     theme_color: '#565acf',
     background_color: '#ffffff',
     display: 'standalone',

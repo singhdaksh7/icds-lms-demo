@@ -1,3 +1,4 @@
+<% const ls = cms.lesson; %>
 <section class="section-space">
     <div class="container">
 
@@ -7,7 +8,7 @@
 
                 <div class="mb-3">
                     <a href="/learn/<%= course.slug %>" class="small text-decoration-none" style="color:#565acf;">
-                        <i class="bi bi-arrow-left me-1"></i> Back to <%= course.title %>
+                        <i class="bi bi-arrow-left me-1"></i> <%= fill(ls.backLabel, { course: course.title }) %>
                     </a>
                 </div>
 
@@ -52,7 +53,7 @@
                     <div class="ratio ratio-16x9 mb-4 rounded-4 d-flex align-items-center justify-content-center bg-dark text-white">
                         <div class="text-center">
                             <i class="bi bi-camera-video-off fs-1 d-block mb-2"></i>
-                            Video unavailable or unsupported.
+                            <%= ls.unavailableText %>
                         </div>
                     </div>
                 <% } %>
@@ -69,9 +70,9 @@
                         <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                         <button type="submit" class="auth-submit" style="width:auto; padding:0 28px;" <%= isDone ? 'disabled' : '' %>>
                             <% if (isDone) { %>
-                                <i class="bi bi-check-circle-fill me-1"></i> Completed
+                                <i class="bi bi-check-circle-fill me-1"></i> <%= ls.completedLabel %>
                             <% } else { %>
-                                Mark Complete
+                                <%= ls.markCompleteLabel %>
                             <% } %>
                         </button>
                     </form>
@@ -79,9 +80,9 @@
                     <% const doneLocal = progressMap[lesson.id] && progressMap[lesson.id].completed; %>
                     <p class="mt-3 mb-0 text-muted">
                         <% if (doneLocal) { %>
-                            <i class="bi bi-check-circle-fill me-1"></i> Completed
+                            <i class="bi bi-check-circle-fill me-1"></i> <%= ls.completedLabel %>
                         <% } else { %>
-                            This lesson is marked complete automatically once you have watched it.
+                            <%= ls.autoCompleteHelp %>
                         <% } %>
                     </p>
                 <% } %>
@@ -89,7 +90,7 @@
                 <div class="d-flex justify-content-between mt-5 pt-4 border-top">
                     <% if (previousLesson) { %>
                         <a href="/learn/<%= course.slug %>/<%= previousLesson.slug %>" class="hero-secondary-btn">
-                            <i class="bi bi-arrow-left me-1"></i> Previous
+                            <i class="bi bi-arrow-left me-1"></i> <%= ls.previousLabel %>
                         </a>
                     <% } else { %>
                         <span></span>
@@ -97,7 +98,7 @@
 
                     <% if (nextLesson) { %>
                         <a href="/learn/<%= course.slug %>/<%= nextLesson.slug %>" class="hero-primary-btn">
-                            Next <i class="bi bi-arrow-right ms-1"></i>
+                            <%= ls.nextLabel %> <i class="bi bi-arrow-right ms-1"></i>
                         </a>
                     <% } %>
                 </div>
@@ -111,7 +112,7 @@
                     <% if (!isAdmin) { %>
                         <div class="mb-3">
                             <div class="d-flex justify-content-between small mb-1">
-                                <span>Progress</span>
+                                <span><%= ls.progressLabel %></span>
                                 <span><%= progress.percent %>%</span>
                             </div>
                             <div class="progress" style="height:6px; border-radius:6px;">
@@ -120,7 +121,7 @@
                         </div>
                     <% } %>
 
-                    <h6 class="mb-3">Curriculum</h6>
+                    <h6 class="mb-3"><%= ls.curriculumHeading %></h6>
 
                     <div class="list-group list-group-flush">
                         <% lessons.forEach(function (item, index) { %>

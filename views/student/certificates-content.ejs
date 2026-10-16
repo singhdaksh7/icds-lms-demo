@@ -1,14 +1,15 @@
 <section class="section-space">
     <div class="container">
 
-        <h1 class="section-title" style="text-align:left;">My Certificates</h1>
+        <h1 class="section-title" style="text-align:left;"><%= cms.cert.heading %></h1>
+        <% if (cms.cert.supportText) { %><p class="section-description" style="text-align:left;"><%= cms.cert.supportText %></p><% } %>
 
         <% if (!certificates.length) { %>
 
             <%- include('../partials/empty-state', {
                 icon: 'bi-award',
-                title: 'No certificates yet',
-                text: 'Certificates are issued once you complete every published lesson in an active course.',
+                title: cms.cert.emptyTitle,
+                text: cms.cert.emptyText,
                 actionHref: '/student/dashboard',
                 actionLabel: 'Go to My Courses',
             }) %>

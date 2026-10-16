@@ -1,4 +1,5 @@
-<% if (typeof settings === 'undefined' || !settings || settings.processEnabled) { %>
+<% const proc = cms.process; %>
+<% if (proc.enabled) { %>
 <!-- PROCESS -->
 <section class="section-space process-section" id="process">
 
@@ -7,15 +8,15 @@
         <div class="section-heading reveal-element">
 
             <div class="section-tag text-white-50">
-                <%= (typeof settings !== 'undefined' && settings) ? settings['process.eyebrow'] : 'Simple Learning Process' %>
+                <%= proc.eyebrow %>
             </div>
 
             <h2 class="section-title">
-                <%= (typeof settings !== 'undefined' && settings) ? settings['process.heading'] : 'Start learning in four simple steps' %>
+                <%= proc.heading %>
             </h2>
 
             <p class="section-description">
-                <%= (typeof settings !== 'undefined' && settings) ? settings['process.description'] : 'From selecting your course to completing your lessons, everything is designed to be simple and convenient.' %>
+                <%= proc.description %>
             </p>
 
         </div>
@@ -29,13 +30,13 @@
                     <div class="process-step">
 
                         <div class="process-number">
-                            <%= String(n).padStart(2, '0') %>
+                            <%= proc['step' + n + 'Number'] %>
                         </div>
 
-                        <h4><%= (typeof settings !== 'undefined' && settings) ? settings['process.step' + n + 'Title'] : '' %></h4>
+                        <h4><%= proc['step' + n + 'Title'] %></h4>
 
                         <p>
-                            <%= (typeof settings !== 'undefined' && settings) ? settings['process.step' + n + 'Desc'] : '' %>
+                            <%= proc['step' + n + 'Desc'] %>
                         </p>
 
                     </div>

@@ -17,6 +17,8 @@ const categoryImages = {
 };
 %>
 
+<% const sec = cms.categories; %>
+<% if (sec.enabled) { %>
 <!-- CATEGORIES -->
 <section class="section-space" id="categories">
 
@@ -25,17 +27,18 @@ const categoryImages = {
         <div class="section-heading reveal-element">
 
             <div class="section-tag">
-                Learn by Category
+                <%= sec.eyebrow %>
             </div>
 
             <h2 class="section-title">
-                Choose your area of expertise
+                <%= sec.heading %>
             </h2>
 
+            <% if (sec.description) { %>
             <p class="section-description">
-                Explore structured courses across beauty, aesthetics,
-                cosmetology and dental sciences.
+                <%= sec.description %>
             </p>
+            <% } %>
 
         </div>
 
@@ -43,7 +46,7 @@ const categoryImages = {
         <% if (categories.length === 0) { %>
 
             <p class="text-center text-muted">
-                Categories will appear here once they are added.
+                <%= sec.emptyText %>
             </p>
 
         <% } else { %>
@@ -95,3 +98,4 @@ const categoryImages = {
     </div>
 
 </section>
+<% } %>

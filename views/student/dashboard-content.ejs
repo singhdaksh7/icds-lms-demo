@@ -1,11 +1,12 @@
+<% const d = cms.dash; %>
 <section class="section-space dashboard-section">
     <div class="container">
 
         <div class="dashboard-welcome reveal-element">
             <div class="dashboard-welcome-avatar" aria-hidden="true"><%= currentUser.name.trim().charAt(0).toUpperCase() %></div>
             <div class="dashboard-welcome-text">
-                <h1 class="dashboard-welcome-title">Welcome back, <%= currentUser.name %></h1>
-                <p class="dashboard-welcome-sub">Continue learning and track your course progress.</p>
+                <h1 class="dashboard-welcome-title"><%= d.welcomePrefix %> <%= currentUser.name %></h1>
+                <p class="dashboard-welcome-sub"><%= d.subtitle %></p>
             </div>
         </div>
 
@@ -13,8 +14,9 @@
 
             <div class="dashboard-empty-state">
                 <i class="bi bi-mortarboard fs-1 d-block mb-3" style="color:var(--primary-color);"></i>
-                <p class="section-description mb-3">You have not enrolled in any courses yet.</p>
-                <a href="/courses" class="hero-primary-btn d-inline-block">Browse Courses</a>
+                <% if (d.emptyHeading) { %><h2 class="h5 mb-2"><%= d.emptyHeading %></h2><% } %>
+                <p class="section-description mb-3"><%= d.emptyBody %></p>
+                <a href="/courses" class="hero-primary-btn d-inline-block"><%= d.browseLabel %></a>
             </div>
 
         <% } else { %>
@@ -24,7 +26,7 @@
                     ['Enrolled Courses', dashboardCounts.enrolledCourses, 'bi-collection-play'],
                     ['Courses In Progress', dashboardCounts.inProgressCourses, 'bi-hourglass-split'],
                     ['Completed Courses', dashboardCounts.completedCourses, 'bi-patch-check'],
-                    ['Certificates Earned', dashboardCounts.certificates, 'bi-award'],
+                    [d.certificatesHeading, dashboardCounts.certificates, 'bi-award'],
                 ].forEach(function (item) { %>
                     <div class="col-6 col-lg-3">
                         <div class="dashboard-summary-card">
@@ -48,7 +50,7 @@
                             data-fallback-src="/assets/images/course-placeholder.svg">
                     </div>
                     <div class="dashboard-continue-body">
-                        <div class="dashboard-continue-eyebrow">Continue Learning</div>
+                        <div class="dashboard-continue-eyebrow"><%= d.continueHeading %></div>
                         <h2 class="dashboard-continue-title"><%= clCourse.title %></h2>
                         <div class="mb-3">
                             <div class="d-flex justify-content-between small mb-1">
@@ -60,14 +62,14 @@
                             </div>
                         </div>
                         <a href="/learn/<%= clCourse.slug %>" class="auth-submit d-inline-block dashboard-continue-btn text-decoration-none">
-                            <%= clStarted ? 'Continue Learning' : 'Start Course' %>
+                            <%= clStarted ? d.continueHeading : d.startLabel %>
                         </a>
                     </div>
                 </div>
             <% } %>
 
             <div class="d-flex justify-content-between align-items-end flex-wrap gap-2 mt-5 mb-3">
-                <h2 class="dashboard-section-title mb-0">My Courses</h2>
+                <h2 class="dashboard-section-title mb-0"><%= d.myCoursesHeading %></h2>
             </div>
 
             <div class="row g-4 g-lg-4">
@@ -99,7 +101,7 @@
 
                                 <div class="mb-3">
                                     <div class="d-flex justify-content-between small mb-1">
-                                        <span>Progress</span>
+                                        <span><%= d.progressLabel %></span>
                                         <span><%= enrollment.progressPercent %>%</span>
                                     </div>
                                     <div class="progress dashboard-progress">
@@ -130,18 +132,18 @@
                                 <div class="small mt-1">Latest: <%= latestCertificate.course.title %></div>
                             <% } %>
                         </div>
-                        <a href="/student/certificates" class="hero-secondary-btn">View Certificates</a>
+                        <a href="/student/certificates" class="hero-secondary-btn"><%= d.viewCertificatesLabel %></a>
                     </div>
                 </div>
 
                 <div class="dashboard-quicklinks-card">
-                    <div class="dashboard-quicklinks-title">Quick Links</div>
+                    <div class="dashboard-quicklinks-title"><%= d.quickLinksHeading %></div>
                     <div class="dashboard-quicklinks-list">
-                        <a href="/student/dashboard"><i class="bi bi-collection-play"></i> My Courses</a>
-                        <a href="/student/profile"><i class="bi bi-person"></i> Profile</a>
-                        <a href="/student/security"><i class="bi bi-shield-lock"></i> Change Password</a>
-                        <a href="/student/certificates"><i class="bi bi-award"></i> Certificates</a>
-                        <a href="/contact"><i class="bi bi-life-preserver"></i> Contact / Help</a>
+                        <a href="/student/dashboard"><i class="bi bi-collection-play"></i> <%= d.quickCoursesLabel %></a>
+                        <a href="/student/profile"><i class="bi bi-person"></i> <%= d.quickProfileLabel %></a>
+                        <a href="/student/security"><i class="bi bi-shield-lock"></i> <%= d.quickPasswordLabel %></a>
+                        <a href="/student/certificates"><i class="bi bi-award"></i> <%= d.quickCertificatesLabel %></a>
+                        <a href="/contact"><i class="bi bi-life-preserver"></i> <%= d.quickHelpLabel %></a>
                     </div>
                 </div>
 

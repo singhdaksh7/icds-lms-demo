@@ -1,3 +1,5 @@
+<% const hero = cms.hero; %>
+<% if (hero.enabled) { %>
 <!-- HERO -->
 <section class="hero-section" id="home">
 
@@ -11,18 +13,16 @@
 
                     <div class="hero-label">
                         <i class="bi bi-patch-check-fill"></i>
-                        Professional Online Learning
+                        <%= hero.eyebrow %>
                     </div>
 
                     <h1 class="hero-title brand-heading">
-                        Master the skills that
-                        <span>shape confidence.</span>
+                        <%= hero.heading %>
+                        <% if (hero.highlight) { %><span><%= hero.highlight %></span><% } %>
                     </h1>
 
                     <p class="hero-description">
-                        Learn professional cosmetology, aesthetics, dental sciences
-                        and beauty skills through expert-led video courses designed
-                        for students, professionals and aspiring practitioners.
+                        <%= hero.description %>
                     </p>
 
                     <form class="hero-search" method="GET" action="/courses">
@@ -35,23 +35,23 @@
                             type="text"
                             name="q"
                             maxlength="100"
-                            placeholder="What do you want to learn today?">
+                            placeholder="<%= hero.searchPlaceholder %>">
 
                         <button type="submit">
-                            Search
+                            <%= hero.searchButton %>
                         </button>
 
                     </form>
 
                     <div class="hero-buttons">
 
-                        <a href="#courses" class="hero-primary-btn">
-                            Explore Courses
+                        <a href="<%= hero.primaryTarget %>" class="hero-primary-btn">
+                            <%= hero.primaryLabel %>
                             <i class="bi bi-arrow-right ms-2"></i>
                         </a>
 
-                        <a href="#process" class="hero-secondary-btn">
-                            How It Works
+                        <a href="<%= hero.secondaryTarget %>" class="hero-secondary-btn">
+                            <%= hero.secondaryLabel %>
                         </a>
 
                     </div>
@@ -69,10 +69,11 @@
 
                         <img
                             class="hero-image"
-                            src="/images/demo/hero.jpg"
-                            alt="Professional cosmetology and beauty training at ICDS"
+                            src="<%= hero.imageUrl || '/images/demo/hero.jpg' %>"
+                            alt="<%= hero.imageAlt %>"
                             data-fallback-src="/assets/images/hero-placeholder.svg">
 
+                        <% if (hero.showBadges) { %>
                         <div class="hero-floating-card first">
 
                             <div class="floating-icon">
@@ -80,8 +81,8 @@
                             </div>
 
                             <div class="floating-text">
-                                <strong>Video Lessons</strong>
-                                <small>Learn at your own pace</small>
+                                <strong><%= hero.badge1Title %></strong>
+                                <small><%= hero.badge1Text %></small>
                             </div>
 
                         </div>
@@ -93,11 +94,12 @@
                             </div>
 
                             <div class="floating-text">
-                                <strong>Course Certificate</strong>
-                                <small>Complete & earn</small>
+                                <strong><%= hero.badge2Title %></strong>
+                                <small><%= hero.badge2Text %></small>
                             </div>
 
                         </div>
+                        <% } %>
 
                     </div>
 
@@ -110,11 +112,12 @@
     </div>
 
 </section>
+<% } %>
 
 <%
   // Real, DB-derived stats only — no fabricated numbers. Hide the whole
   // strip until there's at least one meaningful figure to show.
-  var hasStats = typeof stats !== 'undefined' && stats &&
+  var hasStats = hero.showStats && typeof stats !== 'undefined' && stats &&
     (stats.courseCount > 0 || stats.instructorCount > 0 || stats.studentCount > 0 || stats.averageRating);
 %>
 <% if (hasStats) { %>
@@ -131,7 +134,7 @@
                 <div class="col-6 col-lg-3">
                     <div class="stat-item">
                         <div class="stat-number"><%= stats.courseCount %>+</div>
-                        <div class="stat-label">Professional Courses</div>
+                        <div class="stat-label"><%= hero.statCoursesLabel %></div>
                     </div>
                 </div>
                 <% } %>
@@ -140,7 +143,7 @@
                 <div class="col-6 col-lg-3">
                     <div class="stat-item">
                         <div class="stat-number"><%= stats.studentCount %></div>
-                        <div class="stat-label">Students Learning</div>
+                        <div class="stat-label"><%= hero.statStudentsLabel %></div>
                     </div>
                 </div>
                 <% } %>
@@ -149,7 +152,7 @@
                 <div class="col-6 col-lg-3">
                     <div class="stat-item">
                         <div class="stat-number"><%= stats.instructorCount %></div>
-                        <div class="stat-label">Expert Instructors</div>
+                        <div class="stat-label"><%= hero.statInstructorsLabel %></div>
                     </div>
                 </div>
                 <% } %>
@@ -158,7 +161,7 @@
                 <div class="col-6 col-lg-3">
                     <div class="stat-item">
                         <div class="stat-number"><%= stats.averageRating %>/5</div>
-                        <div class="stat-label">Student Rating (<%= stats.ratingCount %> reviews)</div>
+                        <div class="stat-label"><%= hero.statRatingLabel %> (<%= stats.ratingCount %> reviews)</div>
                     </div>
                 </div>
                 <% } %>

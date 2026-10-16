@@ -1,4 +1,5 @@
-<% if (typeof settings === 'undefined' || !settings || settings.instructorsEnabled) { %>
+<% const sec = cms.instructors; %>
+<% if (sec.enabled) { %>
 <!-- INSTRUCTORS -->
 <section class="section-space" id="instructors">
 
@@ -7,15 +8,15 @@
         <div class="section-heading reveal-element">
 
             <div class="section-tag">
-                <%= (typeof settings !== 'undefined' && settings) ? settings['instructors.eyebrow'] : 'Meet Your Mentors' %>
+                <%= sec.eyebrow %>
             </div>
 
             <h2 class="section-title">
-                <%= (typeof settings !== 'undefined' && settings) ? settings['instructors.heading'] : 'Learn from experienced professionals' %>
+                <%= sec.heading %>
             </h2>
 
             <p class="section-description">
-                <%= (typeof settings !== 'undefined' && settings) ? settings['instructors.description'] : 'Our instructors bring practical knowledge and professional experience into every lesson.' %>
+                <%= sec.description %>
             </p>
 
         </div>
@@ -24,7 +25,7 @@
         <% if (instructors.length === 0) { %>
 
             <p class="text-center text-muted">
-                <%= (typeof settings !== 'undefined' && settings) ? settings['instructors.emptyStateText'] : 'Instructor profiles are being updated.' %>
+                <%= sec.emptyStateText %>
             </p>
 
         <% } else { %>

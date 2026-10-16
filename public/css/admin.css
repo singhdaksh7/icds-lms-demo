@@ -165,3 +165,11 @@ a.admin-stat-card-link:hover .admin-stat-card {
         padding: 20px;
     }
 }
+
+/* Site Content tabs + fields */
+.sc-tabs { display: flex; flex-wrap: wrap; gap: 6px; }
+.sc-tabs a { padding: 7px 14px; border-radius: 999px; font-size: 13px; font-weight: 600; text-decoration: none; color: #4b4f72; background: #eeefff; border: 1px solid transparent; }
+.sc-tabs a:hover { border-color: #565acf; }
+.sc-tabs a.active { background: #565acf; color: #fff; }
+.sc-subheading { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: #565acf; margin: 8px 0 0; padding-top: 12px; border-top: 1px solid #e6e7f5; }
+.sc-preview { width: 120px; height: 80px; object-fit: contain; background: #f4f5fb; border: 1px solid #dee2e6; border-radius: 6px; }

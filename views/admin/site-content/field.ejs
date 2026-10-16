@@ -1,0 +1,67 @@
+<%# One Site Content field. The setting key is only used as the form field name,
+    never shown as a label. Everything is HTML-escaped. #%>
+<% if (field.heading) { %>
+    <div class="col-12"><h4 class="sc-subheading"><%= field.heading %></h4></div>
+<% } else if (field.type === 'bool') { %>
+    <div class="col-12 col-md-6">
+        <div class="form-check form-switch">
+            <input type="checkbox" class="form-check-input" id="f-<%= field.key %>" name="<%= field.key %>" value="true" <%= settings[field.key] === 'true' ? 'checked' : '' %>>
+            <label class="form-check-label small fw-semibold" for="f-<%= field.key %>"><%= field.label %></label>
+        </div>
+    </div>
+<% } else if (field.type === 'image') { %>
+    <div class="col-12">
+        <label class="form-label small fw-semibold" for="f-<%= field.key %>"><%= field.label %></label>
+        <div class="d-flex align-items-center gap-3 mb-2 flex-wrap">
+            <% if (imageUrls[field.key]) { %>
+                <img src="<%= imageUrls[field.key] %>" alt="Current <%= field.label %>" class="sc-preview">
+                <div class="form-check">
+                    <input type="checkbox" class="form-check-input" id="rm-<%= field.key %>" name="remove__<%= field.key %>" value="1">
+                    <label class="form-check-label small" for="rm-<%= field.key %>">Remove current image (use the default)</label>
+                </div>
+            <% } else { %>
+                <span class="text-muted small">No custom image - the default is shown.</span>
+            <% } %>
+        </div>
+        <input type="file" class="form-control form-control-custom" id="f-<%= field.key %>" name="file__<%= field.key %>" accept="image/jpeg,image/png,image/webp">
+        <p class="small text-muted mt-1 mb-0">JPG, PNG or WebP, up to 5MB. <%= field.help || '' %> Choosing a new file replaces the current one.</p>
+    </div>
+<% } else if (field.type === 'target') { %>
+    <div class="col-12 col-md-6">
+        <label class="form-label small fw-semibold" for="f-<%= field.key %>"><%= field.label %></label>
+        <select class="form-select form-control-custom" id="f-<%= field.key %>" name="<%= field.key %>">
+            <% linkTargets.forEach(function (t) { %>
+                <option value="<%= t.value %>" <%= settings[field.key] === t.value ? 'selected' : '' %>><%= t.label %></option>
+            <% }); %>
+        </select>
+    </div>
+<% } else if (field.type === 'textarea' || field.type === 'longtext') { %>
+    <div class="col-12">
+        <label class="form-label small fw-semibold" for="f-<%= field.key %>"><%= field.label %></label>
+        <% if (field.provisionalKey && legalProvisional[field.provisionalKey]) { %>
+            <div class="alert alert-warning py-2 small">
+                This page is still showing the built-in provisional wording. Replace it with the client-approved
+                text before launch. (This notice is shown only here in Admin, never on the public site.)
+            </div>
+        <% } %>
+        <textarea class="form-control form-control-custom" id="f-<%= field.key %>" name="<%= field.key %>" rows="<%= field.rows || 3 %>" maxlength="<%= field.max %>"
+            <% if (env && field.envKey && env[field.envKey]) { %>placeholder="<%= env[field.envKey] %>"<% } %>><%= settings[field.key] %></textarea>
+        <% if (field.legalHelp) { %>
+            <p class="small text-muted mt-1 mb-0">Plain text only. Separate paragraphs with a blank line, start a line with <code>## </code> for a heading and with <code>- </code> for a list item. HTML is not interpreted.</p>
+        <% } %>
+        <% if (field.help) { %><p class="small text-muted mt-1 mb-0"><%= field.help %></p><% } %>
+    </div>
+<% } else { %>
+    <div class="col-12 col-md-6">
+        <label class="form-label small fw-semibold" for="f-<%= field.key %>"><%= field.label %></label>
+        <input
+            type="<%= field.type === 'email' ? 'email' : (field.type === 'date' ? 'date' : 'text') %>"
+            class="form-control form-control-custom"
+            id="f-<%= field.key %>"
+            name="<%= field.key %>"
+            value="<%= settings[field.key] %>"
+            maxlength="<%= field.max || (field.type === 'email' ? 254 : (field.type === 'phone' ? 30 : 150)) %>"
+            <% if (env && field.envKey && env[field.envKey]) { %>placeholder="<%= env[field.envKey] %>"<% } %>>
+        <% if (field.help) { %><p class="small text-muted mt-1 mb-0"><%= field.help %></p><% } %>
+    </div>
+<% } %>

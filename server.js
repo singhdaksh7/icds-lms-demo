@@ -44,6 +44,8 @@ app.set('views', path.join(__dirname, 'views'));
 // error raised by middleware that runs before siteMiddleware (e.g. the
 // session store) — siteMiddleware still overrides this per-request below.
 app.locals.site = site;
+app.locals.cms = require('./src/services/settings.service').defaultContent();
+app.locals.fill = require('./src/services/settings.service').fill;
 
 // Per-request nonce for the few remaining inline scripts (exposed to views
 // as `cspNonce`). Registered before Helmet so the CSP directive below can

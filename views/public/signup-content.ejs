@@ -1,3 +1,4 @@
+<% const t = cms.signup; %>
 <section class="section-space">
     <div class="container">
         <div class="row justify-content-center">
@@ -6,32 +7,28 @@
                     <div class="row g-0">
 
                         <div class="col-md-5 d-none d-md-block">
-                            <div class="auth-brand-panel">
-                                <h3>Start learning today.</h3>
-                                <p>
-                                    Create your student account and start
-                                    building professional skills through
-                                    expert-led courses.
-                                </p>
+                            <div class="auth-brand-panel" style="<%= t.imageUrl ? "background-image: linear-gradient(165deg, rgba(86,90,207,.92), rgba(65,69,174,.94)), url('" + t.imageUrl + "');" : '' %>">
+                                <h3><%= t.sideHeading %></h3>
+                                <p><%= t.sideBody %></p>
                                 <div class="auth-feature">
                                     <i class="bi bi-check-circle-fill"></i>
-                                    One account for all courses
+                                    <%= t.sideFeature1 %>
                                 </div>
                                 <div class="auth-feature">
                                     <i class="bi bi-check-circle-fill"></i>
-                                    Personal learning dashboard
+                                    <%= t.sideFeature2 %>
                                 </div>
                                 <div class="auth-feature">
                                     <i class="bi bi-check-circle-fill"></i>
-                                    Track progress and certificates
+                                    <%= t.sideFeature3 %>
                                 </div>
                             </div>
                         </div>
 
                         <div class="col-md-7">
                             <div class="auth-form-area">
-                                <h4>Create Account</h4>
-                                <p>Join thousands of learners.</p>
+                                <h4><%= t.heading %></h4>
+                                <p><%= t.description %></p>
 
                                 <% if (errors && errors.length) { %>
                                     <div class="alert alert-danger mt-3">
@@ -48,7 +45,7 @@
 
                                     <div class="row g-3">
                                         <div class="col-12">
-                                            <label class="form-label small fw-semibold">Full Name</label>
+                                            <label class="form-label small fw-semibold"><%= t.nameLabel %></label>
                                             <input
                                                 type="text"
                                                 name="name"
@@ -59,7 +56,7 @@
                                         </div>
 
                                         <div class="col-12">
-                                            <label class="form-label small fw-semibold">Email Address</label>
+                                            <label class="form-label small fw-semibold"><%= t.emailLabel %></label>
                                             <input
                                                 type="email"
                                                 name="email"
@@ -70,7 +67,7 @@
                                         </div>
 
                                         <div class="col-12">
-                                            <label class="form-label small fw-semibold">Password</label>
+                                            <label class="form-label small fw-semibold"><%= t.passwordLabel %></label>
                                             <input
                                                 type="password"
                                                 name="password"
@@ -81,7 +78,7 @@
                                         </div>
 
                                         <div class="col-12">
-                                            <label class="form-label small fw-semibold">Confirm Password</label>
+                                            <label class="form-label small fw-semibold"><%= t.confirmLabel %></label>
                                             <input
                                                 type="password"
                                                 name="confirmPassword"
@@ -92,12 +89,12 @@
                                         </div>
                                     </div>
 
-                                    <button type="submit" class="auth-submit mt-4">Create Student Account</button>
+                                    <button type="submit" class="auth-submit mt-4"><%= t.submitLabel %></button>
                                 </form>
 
                                 <p class="small mt-4 mb-0">
-                                    Already have an account?
-                                    <a href="/login" style="color:#565acf;">Log in</a>
+                                    <%= t.loginPrompt %>
+                                    <a href="/login" style="color:#565acf;"><%= t.loginLabel %></a>
                                 </p>
                             </div>
                         </div>

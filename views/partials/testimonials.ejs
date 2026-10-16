@@ -1,4 +1,5 @@
-<% if (typeof reviews !== 'undefined' && reviews.length > 0) { %>
+<% const sec = cms.reviews; %>
+<% if (sec.enabled && typeof reviews !== 'undefined' && reviews.length > 0) { %>
 <!-- TESTIMONIALS -->
 <section class="section-space" id="testimonials">
 
@@ -7,16 +8,18 @@
         <div class="section-heading reveal-element">
 
             <div class="section-tag">
-                Student Stories
+                <%= sec.eyebrow %>
             </div>
 
             <h2 class="section-title">
-                What our learners say
+                <%= sec.heading %>
             </h2>
 
+            <% if (sec.description) { %>
             <p class="section-description">
-                Real reviews from enrolled students.
+                <%= sec.description %>
             </p>
+            <% } %>
 
         </div>
 

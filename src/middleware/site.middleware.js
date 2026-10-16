@@ -1,6 +1,6 @@
 const site = require('../config/site');
 const { getActiveCategories } = require('../services/home.service');
-const { getSettings } = require('../services/settings.service');
+const { getSettings, defaultContent, fill } = require('../services/settings.service');
 
 // Attaches global site config plus a small, cached list of active categories
 // for the footer's "Categories" column, so it links to real category slugs
@@ -20,15 +20,21 @@ async function getFooterCategories() {
   }
 }
 
+// `cms` is the nested, typed site-content object (cms.hero.heading, ...);
+// `settings` is the same data as a flat key->string map. Both come from ONE
+// cached read per request - views never query settings themselves.
 module.exports = async (req, res, next) => {
   res.locals.site = site;
+  res.locals.fill = fill;
   try {
     const [categories, settings] = await Promise.all([getFooterCategories(), getSettings()]);
     res.locals.footerCategories = categories;
     res.locals.settings = settings;
+    res.locals.cms = settings.cms;
   } catch (err) {
     res.locals.footerCategories = [];
     res.locals.settings = null;
+    res.locals.cms = defaultContent();
   }
   next();
 };
