@@ -1,68 +1,69 @@
-// Low-level SMTP transport. Provider-agnostic (Hostinger email, Google
-// Workspace, Zoho, Brevo, SendGrid SMTP, Amazon SES SMTP, ...) — everything
-// provider-specific lives in env vars, never hardcoded here.
+// Low-level SMTP transport. Provider-agnostic (Gmail/Google Workspace with an
+// App Password, Workspace SMTP relay, Hostinger email, Zoho, Brevo, SendGrid
+// SMTP, Amazon SES SMTP, ...). Configuration comes from the admin-saved SMTP
+// settings, falling back to SMTP_* environment variables — see
+// src/services/smtpSettings.service.js.
 //
 // Callers should go through src/services/email.service.js rather than this
-// module directly — it owns templates, escaping, and the "SMTP not
-// configured" fallback behavior. This file only knows how to hand a
-// message to a transport.
+// module directly — it owns templates, escaping, and header sanitising.
+//
+// TLS: certificate verification is always on (never rejectUnauthorized:false).
+// Port 465 / "secure" uses implicit TLS; otherwise STARTTLS is REQUIRED
+// (requireTLS) so credentials are never sent over a downgraded plaintext
+// connection.
 const nodemailer = require('nodemailer');
-const {
-  IS_PRODUCTION,
-  SMTP_HOST,
-  SMTP_PORT,
-  SMTP_SECURE,
-  SMTP_USER,
-  SMTP_PASSWORD,
-  SMTP_FROM_EMAIL,
-  SMTP_FROM_NAME,
-  SMTP_CONFIGURED,
-} = require('../config/env');
+const { IS_PRODUCTION } = require('../config/env');
+const smtpSettings = require('../services/smtpSettings.service');
 
-let cachedTransport = null;
+let cached = null; // { fingerprint, transport }
 
-// In development/test without real SMTP credentials, use Nodemailer's
-// built-in jsonTransport: it never opens a network connection or sends
-// anything anywhere — it just returns the fully-composed message so callers
-// (and tests) can inspect subject/html/text/to. This is what lets the whole
-// email path be exercised locally without real credentials — see README
-// "SMTP Local Testing".
-function buildTransport() {
-  if (SMTP_CONFIGURED) {
-    return nodemailer.createTransport({
-      host: SMTP_HOST,
-      port: SMTP_PORT,
-      secure: SMTP_SECURE,
-      auth: SMTP_USER && SMTP_PASSWORD ? { user: SMTP_USER, pass: SMTP_PASSWORD } : undefined,
-    });
+function buildTransport(cfg) {
+  if (cfg.source === 'none') {
+    // jsonTransport never opens a network connection; it just composes the
+    // message so callers/tests can inspect it.
+    return nodemailer.createTransport({ jsonTransport: true });
   }
-  return nodemailer.createTransport({ jsonTransport: true });
+  return nodemailer.createTransport({
+    host: cfg.host,
+    port: cfg.port,
+    secure: cfg.secure,
+    requireTLS: !cfg.secure,
+    auth: cfg.user && cfg.password ? { user: cfg.user, pass: cfg.password } : undefined,
+    connectionTimeout: 15000,
+    greetingTimeout: 15000,
+    socketTimeout: 30000,
+  });
 }
 
-function getTransport() {
-  if (!cachedTransport) {
-    cachedTransport = buildTransport();
-  }
-  return cachedTransport;
+function fingerprint(cfg) {
+  return JSON.stringify([cfg.source, cfg.host, cfg.port, cfg.secure, cfg.user, cfg.password, cfg.fromEmail, cfg.fromName]);
 }
 
-const fromAddress = SMTP_FROM_EMAIL
-  ? SMTP_FROM_NAME
-    ? `"${SMTP_FROM_NAME.replace(/["\r\n]/g, '')}" <${SMTP_FROM_EMAIL}>`
-    : SMTP_FROM_EMAIL
-  : 'no-reply@localhost';
+async function resolve() {
+  const cfg = await smtpSettings.getEffectiveConfig();
+  const fp = fingerprint(cfg);
+  if (!cached || cached.fingerprint !== fp) {
+    cached = { fingerprint: fp, transport: buildTransport(cfg) };
+  }
+  return { cfg, transport: cached.transport };
+}
 
-// Sends one message. Never throws to a caller that isn't prepared for it —
-// email is always a notification, never something that should roll back a
-// DB write — but DOES return the result (or a clear error) so callers that
-// want to log/inspect it can. Never logs SMTP credentials; in production,
-// never logs message bodies (which may contain reset tokens or student PII).
+function fromAddress(cfg) {
+  if (!cfg.fromEmail) return 'no-reply@localhost';
+  return cfg.fromName ? `"${cfg.fromName.replace(/["\r\n]/g, '')}" <${cfg.fromEmail}>` : cfg.fromEmail;
+}
+
+// Sends one message. Never throws — email is always a notification, never
+// something that should roll back a DB write — but DOES return the result
+// (or a clear error) so callers can log/inspect it. Never logs credentials;
+// never logs message bodies (reset tokens, student PII).
 async function sendMail({ to, subject, html, text, replyTo }) {
-  const transport = getTransport();
+  const { cfg, transport } = await resolve();
+  const configured = cfg.source !== 'none';
 
   try {
     const info = await transport.sendMail({
-      from: fromAddress,
+      from: fromAddress(cfg),
       to,
       subject,
       html,
@@ -70,23 +71,27 @@ async function sendMail({ to, subject, html, text, replyTo }) {
       ...(replyTo ? { replyTo } : {}),
     });
 
-    if (!SMTP_CONFIGURED) {
-      // jsonTransport — nothing was actually sent. Useful in local dev to
-      // see that the flow ran; safe to log because no real SMTP secrets or
-      // production user data path is involved here (dev-only branch).
+    if (!configured) {
       if (!IS_PRODUCTION) {
         console.log(`[email:dev] would send "${subject}" to ${to} (SMTP not configured — no email actually sent)`);
       }
       return { sent: false, configured: false, info };
     }
-
     return { sent: true, configured: true, info };
   } catch (err) {
-    // Sanitized: message only, never the raw error object (which can embed
-    // connection strings/auth details depending on the SMTP library).
-    console.error(`[email] send failed (to=${to.replace(/(?<=.).(?=[^@]*@)/g, '*')}): ${err.message}`);
-    return { sent: false, configured: SMTP_CONFIGURED, error: err.message };
+    // Message only — never the raw error object, which can embed auth details.
+    console.error(`[email] send failed (to=${String(to).replace(/(?<=.).(?=[^@]*@)/g, '*')}): ${err.message}`);
+    return { sent: false, configured, error: err.message };
   }
 }
 
-module.exports = { sendMail, isConfigured: () => SMTP_CONFIGURED };
+async function isConfigured() {
+  return (await smtpSettings.getEffectiveConfig()).source !== 'none';
+}
+
+// Drops the cached transport (used when settings change and by tests).
+function resetTransport() {
+  cached = null;
+}
+
+module.exports = { sendMail, isConfigured, resetTransport };

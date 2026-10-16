@@ -121,6 +121,10 @@
                                 <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                                 <button type="submit" class="auth-submit d-block w-100 text-center"><%= cd.freeCta %></button>
                             </form>
+                        <% } else if (typeof paymentsEnabled !== 'undefined' && paymentsEnabled) { %>
+                            <a href="/checkout/<%= course.slug %>" class="auth-submit d-block text-center text-decoration-none">
+                                Buy Course – <%= priceLabel %>
+                            </a>
                         <% } else if (hasPendingRequest) { %>
                             <button class="auth-submit d-block w-100 text-center" disabled><%= cd.requestedLabel %></button>
                             <p class="small text-muted mt-2 mb-0"><%= cd.requestedHelp %></p>
@@ -137,7 +141,7 @@
                         </a>
                     <% } else { %>
                         <a href="/login?returnTo=<%= encodeURIComponent('/courses/' + course.slug) %>" class="auth-submit d-block text-center text-decoration-none">
-                            <%= isFree ? cd.loginFreeCta : cd.loginRequestCta %>
+                            <%= isFree ? cd.loginFreeCta : ((typeof paymentsEnabled !== 'undefined' && paymentsEnabled) ? 'Log in to Buy – ' + priceLabel : cd.loginRequestCta) %>
                         </a>
                     <% } %>
 

@@ -27,6 +27,8 @@ const faqController = require('../controllers/admin/faq.controller');
 const siteContentController = require('../controllers/admin/siteContent.controller');
 const reviewController = require('../controllers/admin/review.controller');
 const certificateController = require('../controllers/admin/certificate.controller');
+const emailSettingsController = require('../controllers/admin/emailSettings.controller');
+const paymentLimiter = require('../middleware/paymentRateLimit');
 
 // Every route in this file is admin-only — enforced once here rather than
 // repeated per-route, so it's impossible to accidentally add an
@@ -158,6 +160,14 @@ router.post(
   siteContentController.saveForm
 );
 router.get('/settings', siteContentController.legacyRedirect);
+
+// --- Email (SMTP) settings -------------------------------------------------
+// Admin-managed SMTP. The password is write-only (stored encrypted, never
+// rendered). Razorpay credentials are NOT editable here - server-managed.
+router.get('/email-settings', emailSettingsController.showPage);
+router.post('/email-settings', doubleCsrfProtection, emailSettingsController.save);
+router.post('/email-settings/reset', doubleCsrfProtection, emailSettingsController.reset);
+router.post('/email-settings/test', paymentLimiter, doubleCsrfProtection, emailSettingsController.sendTest);
 
 router.get('/faqs', faqController.listFaqs);
 router.post('/faqs', doubleCsrfProtection, faqController.createFaq);

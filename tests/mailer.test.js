@@ -7,8 +7,8 @@ const mailer = require('../src/lib/mailer');
 // network call is made, and sendMail must resolve (never throw/hang) with
 // a result that clearly says nothing was actually sent.
 
-test('isConfigured() is false without SMTP env vars', () => {
-  assert.equal(mailer.isConfigured(), false);
+test('isConfigured() is false without SMTP env vars', async () => {
+  assert.equal(await mailer.isConfigured(), false);
 });
 
 test('sendMail resolves without throwing when SMTP is not configured', async () => {

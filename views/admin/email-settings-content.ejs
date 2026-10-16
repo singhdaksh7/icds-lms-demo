@@ -1,0 +1,84 @@
+<h1 style="font-size:24px;" class="mb-2">Email Settings</h1>
+<p class="text-muted mb-4">
+    Configure the SMTP account used for password-reset, payment-confirmation, enrollment and certificate emails.
+    The password is stored encrypted and is never shown again after saving.
+</p>
+
+<% if (errors && errors.length) { %>
+    <div class="alert alert-danger"><ul class="mb-0"><% errors.forEach(function (e) { %><li><%= e %></li><% }); %></ul></div>
+<% } %>
+
+<div class="admin-card mb-4">
+    <p class="mb-0 small">
+        <strong>Currently active:</strong>
+        <% if (current.activeSource === 'admin') { %>
+            <span class="badge bg-success">Settings saved here</span>
+        <% } else if (current.activeSource === 'env') { %>
+            <span class="badge bg-secondary">Server default (environment)</span>
+        <% } else { %>
+            <span class="badge bg-danger">Not configured — emails are not being sent</span>
+        <% } %>
+    </p>
+</div>
+
+<div class="admin-card mb-4">
+    <form method="POST" action="/admin/email-settings" autocomplete="off">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <div class="row g-3">
+            <div class="col-md-8">
+                <label class="form-label">SMTP host</label>
+                <input type="text" name="host" class="form-control form-control-custom" required maxlength="255" placeholder="smtp.gmail.com" value="<%= values.host %>">
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Port</label>
+                <input type="number" name="port" class="form-control form-control-custom" required min="1" max="65535" value="<%= values.port %>">
+                <div class="form-text">587 (STARTTLS) or 465 (SSL).</div>
+            </div>
+            <div class="col-12">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="secure" id="secure" value="1" <%= values.secure ? 'checked' : '' %>>
+                    <label class="form-check-label" for="secure">Use SSL/TLS from the start (tick for port 465; leave unticked for port 587)</label>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Username</label>
+                <input type="text" name="username" class="form-control form-control-custom" maxlength="255" autocomplete="off" value="<%= values.username %>">
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Password / App Password</label>
+                <input type="password" name="password" class="form-control form-control-custom" maxlength="512" autocomplete="new-password"
+                       placeholder="<%= current.hasPassword ? '•••••••• (saved — leave blank to keep)' : '' %>">
+                <div class="form-text">For Gmail / Google Workspace use a 16-character App Password (2-Step Verification must be on), not your normal password.</div>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">From email</label>
+                <input type="email" name="fromEmail" class="form-control form-control-custom" required maxlength="255" value="<%= values.fromEmail %>">
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">From name</label>
+                <input type="text" name="fromName" class="form-control form-control-custom" maxlength="100" value="<%= values.fromName %>">
+            </div>
+        </div>
+        <button type="submit" class="auth-submit mt-4" style="width:auto;padding:0 28px;">Save settings</button>
+    </form>
+</div>
+
+<div class="admin-card mb-4">
+    <h6 class="mb-2">Send a test email</h6>
+    <p class="small text-muted">Sends to your own admin address (<%= currentUser.email %>) using the settings currently active.</p>
+    <form method="POST" action="/admin/email-settings/test" class="m-0">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <button type="submit" class="hero-secondary-btn" style="padding:10px 22px;">Send test email</button>
+    </form>
+</div>
+
+<% if (current.savedByAdmin) { %>
+<div class="admin-card">
+    <h6 class="mb-2">Remove saved settings</h6>
+    <p class="small text-muted">Deletes the settings above (including the stored password) and goes back to the server default email configuration.</p>
+    <form method="POST" action="/admin/email-settings/reset" class="m-0" data-confirm="Remove the saved email settings?">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <button type="submit" class="btn btn-outline-danger btn-sm">Remove saved settings</button>
+    </form>
+</div>
+<% } %>

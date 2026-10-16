@@ -32,13 +32,35 @@ async function sendCertificateIssuedEmail(req, { toEmail, studentName, courseTit
   return mailer.sendMail({ to: sanitizeHeaderValue(toEmail), subject: sanitizeHeaderValue(subject), html, text });
 }
 
+// Sent only after a payment is genuinely confirmed. Contains no card/bank
+// details — just the receipt facts and a dashboard link built from
+// APP_BASE_URL.
+async function sendPaymentConfirmationEmail(req, { toEmail, studentName, courseTitle, amount, currency, paymentReference, orderId }) {
+  const dashboardUrl = absoluteUrl(req, '/student/dashboard');
+  const { subject, html, text } = templates.paymentConfirmation({
+    studentName,
+    courseTitle,
+    amount,
+    currency,
+    paymentReference,
+    orderId,
+    dashboardUrl,
+  });
+  return mailer.sendMail({ to: sanitizeHeaderValue(toEmail), subject: sanitizeHeaderValue(subject), html, text });
+}
+
+async function sendTestEmail(toEmail) {
+  const { subject, html, text } = templates.smtpTest();
+  return mailer.sendMail({ to: sanitizeHeaderValue(toEmail), subject: sanitizeHeaderValue(subject), html, text });
+}
+
 // `values` is already server-validated (contact.validator.js): trimmed,
 // length-capped, email shape-checked. Still sanitized again here — this
 // function is the last line of defense before the value reaches an SMTP
 // header.
 async function sendContactNotification(values) {
   const site = require('../config/site');
-  if (!site.contactEmail) return { sent: false, configured: mailer.isConfigured() };
+  if (!site.contactEmail) return { sent: false, configured: await mailer.isConfigured() };
 
   const { subject, html, text } = templates.contactNotification(values);
   return mailer.sendMail({
@@ -54,6 +76,8 @@ module.exports = {
   sendPasswordResetEmail,
   sendEnrollmentApprovedEmail,
   sendCertificateIssuedEmail,
+  sendPaymentConfirmationEmail,
+  sendTestEmail,
   sendContactNotification,
   isConfigured: mailer.isConfigured,
 };

@@ -810,3 +810,17 @@ Production ready NO — still intentionally disabled; nothing in this phase
 touched checkout/payment code. Production deployment (Hostinger hosting,
 DNS, TiDB connectivity) remains pending — this phase was explicitly
 SEO/email/local-integration work only, no hosting changes.
+
+## Payments (Razorpay) & Email — operations summary
+
+**Flow.** Paid course → `Buy Course – ₹X` → `/checkout/:slug` → `POST /checkout/:slug/create-order` (server loads the course, computes paise from the DB price, creates a local PENDING order + Razorpay order; a recent PENDING order is reused) → Razorpay Checkout → `POST /payments/razorpay/verify` (HMAC `order_id|payment_id`, constant-time; ownership, provider-order, amount and currency checks; payment fetched from Razorpay and must be `captured`) → `finalizePaidOrder` → order PAID + enrollment ACTIVE + confirmation email. The webhook uses the same `finalizePaidOrder`, so verify + webhook never double-enroll.
+
+**Order states.** `PENDING → PAID`; `PENDING → FAILED`; `FAILED → PAID` (retry inside Checkout, genuinely captured); `PAID → REFUNDED` (full refund webhook). A refund does **not** revoke access automatically — cancel the enrollment in Admin if wanted. Refunds are issued from the Razorpay Dashboard (no in-app refund button). `Order.providerPaymentId` is unique so one payment can settle only one order.
+
+**Webhook.** `POST /webhooks/razorpay`, raw body, `X-Razorpay-Signature` checked with `RAZORPAY_WEBHOOK_SECRET`. Events: `payment.captured`, `order.paid`, `payment.failed`, `refund.processed`.
+
+**Env (server only, never in Git):** `RAZORPAY_ENABLED`, `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, `RAZORPAY_WEBHOOK_SECRET`, `APP_BASE_URL`, and `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM_EMAIL`, `SMTP_FROM_NAME` (optional `SETTINGS_ENCRYPTION_KEY`). Razorpay is configured only by the operators through the environment.
+
+**Email.** Admins can set SMTP themselves in *Admin → Email Settings* (password encrypted at rest, write-only, "Send test email" button). Saved settings override the env defaults. TLS certificate verification is always on; STARTTLS is required on non-SSL ports. Email failure never affects payments.
+
+**Text formatting.** In Admin text fields use the toolbar (or type `[b]..[/b]`, `[i]`, `[u]`, `[s]`, `[size=24]..[/size]`, `[color=#c0392b]..[/color]`). Rendered safely on the public site by `src/lib/richText.js`.

@@ -3,7 +3,7 @@
 // of controllers entirely.
 const crypto = require('crypto');
 const Razorpay = require('razorpay');
-const { RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET, RAZORPAY_WEBHOOK_SECRET } = require('../config/env');
+const { RAZORPAY_ENABLED, RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET, RAZORPAY_WEBHOOK_SECRET } = require('../config/env');
 
 class PaymentConfigError extends Error {
   constructor(message) {
@@ -16,7 +16,7 @@ class PaymentConfigError extends Error {
 let client = null;
 
 function getClient() {
-  if (!RAZORPAY_KEY_ID || !RAZORPAY_KEY_SECRET) {
+  if (!RAZORPAY_ENABLED || !RAZORPAY_KEY_ID || !RAZORPAY_KEY_SECRET) {
     throw new PaymentConfigError('Payments are not configured on this server yet.');
   }
   if (!client) {
@@ -32,7 +32,7 @@ function getPublicKeyId() {
 }
 
 function isConfigured() {
-  return Boolean(RAZORPAY_KEY_ID && RAZORPAY_KEY_SECRET);
+  return Boolean(RAZORPAY_ENABLED && RAZORPAY_KEY_ID && RAZORPAY_KEY_SECRET);
 }
 
 function isWebhookConfigured() {

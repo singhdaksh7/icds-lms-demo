@@ -85,6 +85,48 @@ function certificateIssued({ studentName, courseTitle, certificatesUrl }) {
   return { subject: `Certificate ready: ${courseTitle}`, html, text };
 }
 
+function formatAmount(amount, currency) {
+  const n = Number(amount);
+  const formatted = Number.isFinite(n) ? n.toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 2 }) : String(amount);
+  return `${currency === 'INR' || !currency ? '₹' : `${currency} `}${formatted}`;
+}
+
+function paymentConfirmation({ studentName, courseTitle, amount, currency, paymentReference, orderId, dashboardUrl }) {
+  const amountText = formatAmount(amount, currency);
+  const row = (label, value) =>
+    `<tr><td style="padding:6px 0;color:#8c8da0;font-size:13px;">${escapeHtml(label)}</td><td style="padding:6px 0;font-size:14px;text-align:right;">${escapeHtml(value)}</td></tr>`;
+  const html = shell(`
+    <h1 style="font-size:20px;margin:0 0 12px;">Payment received</h1>
+    <p style="font-size:14px;line-height:1.6;color:#57596c;">
+      Hi ${escapeHtml(studentName)}, thank you for your payment to ${escapeHtml(site.name)}.
+      <strong>${escapeHtml(courseTitle)}</strong> is now available in your account.
+    </p>
+    <table style="width:100%;border-collapse:collapse;border-top:1px solid #e8e8f2;margin-top:12px;">
+      ${row('Course', courseTitle)}
+      ${row('Amount paid', amountText)}
+      ${row('Order', `ICDS-${orderId}`)}
+      ${paymentReference ? row('Payment reference', paymentReference) : ''}
+    </table>
+    ${button('Start Learning', dashboardUrl)}
+  `);
+  const text = `Hi ${studentName}, we received your payment of ${amountText} to ${site.name} for ${courseTitle}.
+Order: ICDS-${orderId}${paymentReference ? `
+Payment reference: ${paymentReference}` : ''}
+
+Your course is now available: ${dashboardUrl}`;
+  return { subject: `Payment confirmed: ${courseTitle}`, html, text };
+}
+
+function smtpTest() {
+  const html = shell(`
+    <h1 style="font-size:20px;margin:0 0 12px;">Email is working</h1>
+    <p style="font-size:14px;line-height:1.6;color:#57596c;">
+      This is a test message from ${escapeHtml(site.name)}. Your SMTP settings are configured correctly.
+    </p>
+  `);
+  return { subject: `${site.name}: test email`, html, text: `This is a test message from ${site.name}. Your SMTP settings work.` };
+}
+
 function contactNotification({ name, email, subject, message }) {
   const html = shell(`
     <h1 style="font-size:20px;margin:0 0 12px;">New contact message</h1>
@@ -96,4 +138,4 @@ function contactNotification({ name, email, subject, message }) {
   return { subject: `New contact message: ${subject}`, html, text };
 }
 
-module.exports = { escapeHtml, passwordReset, enrollmentApproved, certificateIssued, contactNotification };
+module.exports = { escapeHtml, passwordReset, enrollmentApproved, certificateIssued, paymentConfirmation, smtpTest, contactNotification };

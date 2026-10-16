@@ -1,3 +1,4 @@
+const razorpayService = require('../services/razorpay.service');
 const courseService = require('../services/course.service');
 const homeService = require('../services/home.service');
 const { isUserEnrolled } = require('../services/enrollment.service');
@@ -87,7 +88,10 @@ async function getCourseDetail(req, res, next) {
       }
     }
 
-    const isFree = Number(getCoursePurchasePrice(course)) === 0;
+    const purchasePrice = getCoursePurchasePrice(course);
+    const isFree = Number(purchasePrice) === 0;
+    const paymentsEnabled = !isFree && razorpayService.isConfigured();
+    const priceLabel = `${course.currency === 'INR' ? '₹' : `${course.currency} `}${Number(purchasePrice).toLocaleString('en-IN')}`;
 
     const title = `${course.title} | ${site.name}`;
     const description = course.shortDescription || course.title;
@@ -129,6 +133,8 @@ async function getCourseDetail(req, res, next) {
       isEnrolled,
       hasPendingRequest,
       isFree,
+      paymentsEnabled,
+      priceLabel,
     });
   } catch (err) {
     next(err);

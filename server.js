@@ -169,6 +169,8 @@ app.use(flashMiddleware);
 app.use(exposeCsrfToken);
 app.use(currentUser);
 app.use(siteMiddleware);
+// Converts the admin text-formatting tags ([b], [u], [size=..] ...) in rendered pages.
+app.use(require('./src/lib/richText').middleware);
 
 app.use('/api/health', healthRoutes);
 app.use('/', authRoutes);

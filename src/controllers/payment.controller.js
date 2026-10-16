@@ -21,7 +21,7 @@ async function verifyPayment(req, res, next) {
       return res.status(403).json({ success: false, error: 'Forbidden.' });
     }
 
-    if (order.status === 'PAID') {
+    if (order.status === 'PAID' || order.status === 'REFUNDED') {
       // Idempotent: the popup's success callback can fire more than once
       // (retry, double-tap) — already-finalized is still a success reply.
       return res.json({ success: true, orderId: order.id, alreadyProcessed: true });
@@ -77,7 +77,10 @@ async function verifyPayment(req, res, next) {
       return res.status(400).json({ success: false, error: 'Payment verification failed.' });
     }
 
-    if (!['captured', 'authorized'].includes(payment.status)) {
+    // Orders are created with payment_capture: 1 (auto-capture), so a genuinely
+    // paid payment is 'captured'. 'authorized' means funds are NOT yet taken —
+    // never enroll on it (the webhook reconciles later if it captures).
+    if (payment.status !== 'captured') {
       return res
         .status(400)
         .json({ success: false, error: `Payment has not completed yet (status: ${payment.status}).` });

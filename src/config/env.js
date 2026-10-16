@@ -58,11 +58,14 @@ if (IS_PRODUCTION) {
 // invoked if these are missing — see src/services/razorpay.service.js.
 // RAZORPAY_KEY_SECRET and RAZORPAY_WEBHOOK_SECRET must never reach an EJS
 // view or any client-side script; only RAZORPAY_KEY_ID is safe to expose.
+// Explicit switch: payments are only live when RAZORPAY_ENABLED is true AND
+// both keys are present — a key alone never turns checkout on.
+const RAZORPAY_ENABLED = ['1', 'true'].includes(String(process.env.RAZORPAY_ENABLED || '').toLowerCase());
 const RAZORPAY_KEY_ID = process.env.RAZORPAY_KEY_ID || '';
 const RAZORPAY_KEY_SECRET = process.env.RAZORPAY_KEY_SECRET || '';
 const RAZORPAY_WEBHOOK_SECRET = process.env.RAZORPAY_WEBHOOK_SECRET || '';
 
-if (IS_PRODUCTION && (!RAZORPAY_KEY_ID || !RAZORPAY_KEY_SECRET || !RAZORPAY_WEBHOOK_SECRET)) {
+if (IS_PRODUCTION && RAZORPAY_ENABLED && (!RAZORPAY_KEY_ID || !RAZORPAY_KEY_SECRET || !RAZORPAY_WEBHOOK_SECRET)) {
   // Not a hard failure — the rest of the site (auth, courses, admin) must
   // keep working even if payments aren't configured yet. Loud warning only.
   console.warn(
@@ -144,9 +147,11 @@ module.exports = {
   DEV_ADMIN_EMAIL: process.env.DEV_ADMIN_EMAIL,
   DEV_ADMIN_PASSWORD: process.env.DEV_ADMIN_PASSWORD,
   APP_BASE_URL: process.env.APP_BASE_URL || '',
+  RAZORPAY_ENABLED,
   RAZORPAY_KEY_ID,
   RAZORPAY_KEY_SECRET,
   RAZORPAY_WEBHOOK_SECRET,
+  SETTINGS_ENCRYPTION_KEY: process.env.SETTINGS_ENCRYPTION_KEY || '',
   SMTP_HOST,
   SMTP_PORT,
   SMTP_SECURE,

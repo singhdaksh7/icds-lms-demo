@@ -1413,6 +1413,38 @@
             font-weight: 700;
         }
 
+        /* Buttons rendered as <a> or <button> must centre their label both
+           ways: .auth-submit has a fixed height, and without flex centring
+           an <a> (or a Bootstrap d-block/d-inline-block override) leaves
+           the text pinned to the top-left. */
+        .auth-submit,
+        .hero-primary-btn,
+        .hero-secondary-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            line-height: 1.25;
+            cursor: pointer;
+        }
+
+        .auth-submit.d-block,
+        .hero-primary-btn.d-block,
+        .hero-secondary-btn.d-block {
+            display: flex !important;
+        }
+
+        .auth-submit.d-inline-block,
+        .hero-primary-btn.d-inline-block,
+        .hero-secondary-btn.d-inline-block {
+            display: inline-flex !important;
+        }
+
+        .auth-submit:disabled {
+            opacity: .6;
+            cursor: not-allowed;
+        }
+
         .floating-help {
             position: fixed;
             right: 22px;

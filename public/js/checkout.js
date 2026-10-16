@@ -23,7 +23,7 @@
 
   function setLoading(isLoading) {
     payButton.disabled = isLoading;
-    payButton.textContent = isLoading ? 'Please wait…' : 'Pay Securely';
+    payButton.textContent = isLoading ? 'Please wait…' : (payButton.getAttribute('data-label') || 'Pay Securely');
   }
 
   payButton.addEventListener('click', function () {
@@ -54,7 +54,7 @@
           key: order.keyId,
           amount: order.amount,
           currency: order.currency,
-          name: 'Institute of Cosmetology & Dental Sciences',
+          name: order.siteName || 'Institute of Cosmetology & Dental Sciences',
           description: order.courseName,
           order_id: order.providerOrderId,
           prefill: {
@@ -105,8 +105,11 @@
         };
 
         const razorpayCheckout = new Razorpay(options);
+        // A failed attempt stays inside the popup so the student can retry
+        // another method on the same order; closing it (ondismiss) leads to
+        // the failed/pending page. Nothing is ever granted from this event.
         razorpayCheckout.on('payment.failed', function () {
-          window.location.href = `/payment/failed/${order.orderId}`;
+          showError('That payment attempt failed. You can try again with another method.');
         });
         razorpayCheckout.open();
         setLoading(false);

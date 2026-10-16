@@ -78,26 +78,36 @@ async function createOrder(req, res, next) {
       return res.status(503).json({ success: false, error: 'Payments are not available right now.' });
     }
 
-    const order = await orderService.createPendingOrder(req.currentUser.id, course);
+    // Reuse a recent still-PENDING order (double-click / reopened popup)
+    // rather than creating another local + Razorpay order.
+    const reusable = await orderService.findReusablePendingOrder(req.currentUser.id, course);
 
+    let order = reusable;
     let providerOrder;
-    try {
-      providerOrder = await razorpayService.createProviderOrder({
-        amountPaise: toPaise(amount),
-        currency: course.currency,
-        receipt: `rcpt_${order.id}`,
-      });
-    } catch (err) {
-      const reason = razorpayService.describeError(err);
-      await orderService.markOrderFailed(order.id, `Razorpay order creation failed: ${reason}`);
-      console.error(`[payment] Razorpay order creation failed for local order ${order.id}: ${reason}`);
-      return res.status(502).json({ success: false, error: 'Could not start payment. Please try again.' });
+
+    if (reusable) {
+      providerOrder = { id: reusable.providerOrderId, amount: toPaise(amount), currency: reusable.currency };
+    } else {
+      order = await orderService.createPendingOrder(req.currentUser.id, course);
+
+      try {
+        providerOrder = await razorpayService.createProviderOrder({
+          amountPaise: toPaise(amount),
+          currency: course.currency,
+          receipt: `rcpt_${order.id}`,
+        });
+      } catch (err) {
+        const reason = razorpayService.describeError(err);
+        await orderService.markOrderFailed(order.id, `Razorpay order creation failed: ${reason}`);
+        console.error(`[payment] Razorpay order creation failed for local order ${order.id}: ${reason}`);
+        return res.status(502).json({ success: false, error: 'Could not start payment. Please try again.' });
+      }
+
+      await orderService.attachProviderOrder(order.id, providerOrder.id);
     }
 
-    await orderService.attachProviderOrder(order.id, providerOrder.id);
-
     console.log(
-      `[payment] order created localOrderId=${order.id} providerOrderId=${providerOrder.id} amountPaise=${providerOrder.amount}`
+      `[payment] order ${reusable ? 'reused' : 'created'} localOrderId=${order.id} providerOrderId=${providerOrder.id} amountPaise=${providerOrder.amount}`
     );
 
     res.json({
@@ -110,6 +120,7 @@ async function createOrder(req, res, next) {
       courseName: course.title,
       studentName: req.currentUser.name,
       studentEmail: req.currentUser.email,
+      siteName: require('../config/site').name,
     });
   } catch (err) {
     if (err instanceof razorpayService.PaymentConfigError) {

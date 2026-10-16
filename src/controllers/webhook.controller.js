@@ -43,6 +43,8 @@ async function handleRazorpayWebhook(req, res) {
   try {
     if (eventType === 'payment.captured' || eventType === 'order.paid') {
       await handlePaymentSuccessEvent(event, eventType);
+    } else if (eventType === 'refund.processed') {
+      await handleRefundProcessedEvent(event);
     } else if (eventType === 'payment.failed') {
       await handlePaymentFailedEvent(event);
     } else {
@@ -109,6 +111,28 @@ async function handlePaymentFailedEvent(event) {
   // never downgrade an order that was already finalized PAID by an earlier
   // (possibly out-of-order-delivered) payment.captured event.
   await orderService.markOrderFailed(order.id, 'payment.failed webhook');
+}
+
+// Refunds are initiated from the Razorpay Dashboard. A FULL refund flips the
+// order to REFUNDED for bookkeeping; course access is deliberately left
+// untouched (admins cancel the enrollment manually if wanted).
+async function handleRefundProcessedEvent(event) {
+  const refund = event.payload && event.payload.refund && event.payload.refund.entity;
+  const payment = event.payload && event.payload.payment && event.payload.payment.entity;
+  const paymentId = (refund && refund.payment_id) || (payment && payment.id);
+  if (!paymentId) {
+    console.log('[webhook] refund.processed missing payment id — acknowledging.');
+    return;
+  }
+  const fullyRefunded = payment
+    ? Number(payment.amount_refunded) >= Number(payment.amount)
+    : false;
+  if (!fullyRefunded) {
+    console.log(`[webhook] partial/unknown refund for payment ${paymentId} — order status unchanged.`);
+    return;
+  }
+  const changed = await orderService.markOrderRefunded(paymentId);
+  console.log(`[webhook] refund.processed paymentId=${paymentId} ${changed ? 'order marked REFUNDED' : 'no PAID order changed'}`);
 }
 
 module.exports = { handleRazorpayWebhook };

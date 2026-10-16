@@ -186,3 +186,14 @@ a.admin-stat-card-link:hover .admin-stat-card {
 .sc-preview[hidden], .sc-preview-empty[hidden] { display: none; }
 .img-thumb { width: 96px; height: 64px; object-fit: cover; border-radius: 6px; border: 1px solid #dee2e6; background: #f4f5fb; }
 .img-thumb-round { width: 72px; height: 72px; object-fit: cover; border-radius: 50%; border: 1px solid #dee2e6; background: #f4f5fb; }
+
+/* Text-formatting toolbar (public/js/admin-format.js) */
+.fmt-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin-bottom: 4px; }
+.fmt-btn { min-width: 30px; height: 28px; padding: 0 8px; border: 1px solid #d9dbe8; border-radius: 6px; background: #fff; color: #15162b; font-size: 13px; line-height: 1; cursor: pointer; }
+.fmt-btn:hover { border-color: #565acf; color: #565acf; }
+.fmt-b { font-weight: 700; }
+.fmt-i { font-style: italic; }
+.fmt-u { text-decoration: underline; }
+.fmt-s { text-decoration: line-through; }
+.fmt-select { height: 28px; border: 1px solid #d9dbe8; border-radius: 6px; background: #fff; font-size: 12px; padding: 0 6px; }
+.fmt-color { width: 30px; height: 28px; padding: 1px; border: 1px solid #d9dbe8; border-radius: 6px; background: #fff; cursor: pointer; }

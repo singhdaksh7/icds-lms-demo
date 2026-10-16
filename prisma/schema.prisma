@@ -262,7 +262,9 @@ model Order {
   // back to exactly one local Order (findUnique) — required for safe,
   // idempotent payment finalization independent of any in-memory state.
   providerOrderId   String?     @unique
-  providerPaymentId String?
+  // Unique: one Razorpay payment can settle at most one local order, so a
+  // replayed/reused payment id can never be attached to a second order.
+  providerPaymentId String?     @unique
   createdAt         DateTime    @default(now())
   updatedAt         DateTime    @updatedAt
 
@@ -511,4 +513,23 @@ model PasswordResetToken {
 
   @@index([userId])
   @@map("password_reset_tokens")
+}
+
+// Admin-managed SMTP configuration (single row, id = 1). The password is
+// stored encrypted (AES-256-GCM, see src/lib/secretBox.js) and is never
+// rendered back to any page. Environment SMTP_* values remain the fallback
+// when no row exists. Razorpay credentials are deliberately NOT here —
+// they stay server-managed in the environment.
+model SmtpSetting {
+  id          Int      @id
+  host        String   @db.VarChar(255)
+  port        Int      @default(587)
+  secure      Boolean  @default(false)
+  username    String?  @db.VarChar(255)
+  passwordEnc String?  @db.Text
+  fromEmail   String   @db.VarChar(255)
+  fromName    String?  @db.VarChar(255)
+  updatedAt   DateTime @updatedAt
+
+  @@map("smtp_settings")
 }

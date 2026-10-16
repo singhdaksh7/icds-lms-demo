@@ -66,8 +66,9 @@
                             class="auth-submit"
                             data-course-slug="<%= course.slug %>"
                             data-csrf="<%= csrfToken %>"
-                            data-course-name="<%= course.title %>">
-                            Pay Securely
+                            data-course-name="<%= course.title %>"
+                            data-label="Pay <%= course.currency === 'INR' ? '₹' : course.currency + ' ' %><%= Number(amount).toLocaleString('en-IN') %> Securely">
+                            Pay <%= course.currency === 'INR' ? '₹' : course.currency + ' ' %><%= Number(amount).toLocaleString('en-IN') %> Securely
                         </button>
                         <div id="pay-error" class="alert alert-danger mt-3" style="display:none;"></div>
 
