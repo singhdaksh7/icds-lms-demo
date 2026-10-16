@@ -27,6 +27,8 @@ const faqController = require('../controllers/admin/faq.controller');
 const siteContentController = require('../controllers/admin/siteContent.controller');
 const reviewController = require('../controllers/admin/review.controller');
 const certificateController = require('../controllers/admin/certificate.controller');
+const invoiceController = require('../controllers/invoice.controller');
+const taxSettingsController = require('../controllers/admin/taxSettings.controller');
 const paymentSettingsController = require('../controllers/admin/paymentSettings.controller');
 const emailSettingsController = require('../controllers/admin/emailSettings.controller');
 const paymentLimiter = require('../middleware/paymentRateLimit');
@@ -143,6 +145,7 @@ router.post('/students/:id/unenroll', doubleCsrfProtection, studentController.un
 // Razorpay events, never a manual admin override) ---------------------------
 router.get('/orders', orderController.listOrders);
 router.get('/orders/:id', orderController.getOrderDetail);
+router.get('/orders/:id/invoice.pdf', invoiceController.adminInvoice);
 router.get('/enrollment-requests', enrollmentRequestController.listRequests);
 router.post('/enrollment-requests/:id/approve', doubleCsrfProtection, enrollmentRequestController.approveRequest);
 router.post('/enrollment-requests/:id/status', doubleCsrfProtection, enrollmentRequestController.updateStatus);
@@ -161,6 +164,11 @@ router.post(
   siteContentController.saveForm
 );
 router.get('/settings', siteContentController.legacyRedirect);
+
+// --- Tax (GST) & invoice design --------------------------------------------
+router.get('/tax-settings', taxSettingsController.showPage);
+router.post('/tax-settings', doubleCsrfProtection, taxSettingsController.save);
+router.get('/tax-settings/preview.pdf', invoiceController.adminPreview);
 
 // --- Payment (Razorpay) settings -------------------------------------------
 // Secrets are write-only (stored encrypted, never rendered). Live keys need

@@ -1,40 +1,39 @@
+<%
+    const sym = order.currency === 'INR' ? '₹' : order.currency + ' ';
+    const money = (n) => sym + Number(n).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const tax = Number(order.taxAmount) || 0;
+    const course = order.items[0].course;
+    const when = order.paidAt || order.updatedAt || order.createdAt;
+%>
 <section class="section-space">
     <div class="container">
-        <div class="row justify-content-center">
-            <div class="col-lg-6">
+        <div class="pay-result">
+            <div class="pay-card">
 
-                <div class="modal-content p-5 text-center">
+                <span class="pay-icon ok"><i class="bi bi-check-lg"></i></span>
+                <h1>Payment successful</h1>
+                <p class="pay-sub">Thank you! <strong><%= course.title %></strong> is now unlocked in your account.</p>
 
-                    <i class="bi bi-check-circle-fill mb-3" style="font-size:56px; color:var(--success-color);"></i>
+                <div class="pay-receipt">
+                    <div class="pay-row"><span>Course</span><span><%= course.title %></span></div>
+                    <% if (tax > 0) { %>
+                        <div class="pay-row"><span>Subtotal</span><span><%= money(order.subtotalAmount != null ? order.subtotalAmount : Number(order.amount) - tax) %></span></div>
+                        <div class="pay-row"><span>GST (<%= Number(order.taxRate) %>%<%= order.taxInclusive ? ', included' : '' %>)</span><span><%= money(tax) %></span></div>
+                    <% } %>
+                    <div class="pay-row pay-total"><span>Amount paid</span><span><%= money(order.amount) %></span></div>
+                    <div class="pay-row"><span>Order</span><span>ICDS-<%= order.id %></span></div>
+                    <div class="pay-row"><span>Date</span><span><%= new Date(when).toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) %></span></div>
+                    <% if (order.providerPaymentId) { %>
+                        <div class="pay-row"><span>Payment ID</span><span class="small"><%= order.providerPaymentId %></span></div>
+                    <% } %>
+                </div>
 
-                    <h2 class="mb-2">Payment Successful</h2>
-                    <p class="text-muted mb-4">You're all set — enrollment is confirmed.</p>
-
-                    <div class="text-start mb-4">
-                        <div class="d-flex justify-content-between border-top pt-3">
-                            <span class="text-muted">Course</span>
-                            <span><%= order.items[0].course.title %></span>
-                        </div>
-                        <div class="d-flex justify-content-between border-top pt-3 mt-3">
-                            <span class="text-muted">Amount Paid</span>
-                            <span><%= order.currency %> <%= Number(order.amount).toLocaleString('en-IN') %></span>
-                        </div>
-                        <div class="d-flex justify-content-between border-top pt-3 mt-3">
-                            <span class="text-muted">Order ID</span>
-                            <span>ICDS-<%= order.id %></span>
-                        </div>
-                        <% if (order.providerPaymentId) { %>
-                            <div class="d-flex justify-content-between border-top pt-3 mt-3">
-                                <span class="text-muted">Payment ID</span>
-                                <span class="small"><%= order.providerPaymentId %></span>
-                            </div>
-                        <% } %>
+                <div class="pay-actions">
+                    <a href="/learn/<%= course.slug %>" class="auth-submit text-decoration-none">Start Learning</a>
+                    <div class="pay-actions-split pay-actions">
+                        <a href="/student/orders/<%= order.id %>/invoice.pdf" class="hero-secondary-btn"><i class="bi bi-download me-2"></i>Download invoice</a>
+                        <a href="/student/dashboard" class="hero-secondary-btn">My Courses</a>
                     </div>
-
-                    <a href="/learn/<%= order.items[0].course.slug %>" class="auth-submit d-block text-center text-decoration-none">
-                        Continue Learning
-                    </a>
-
                 </div>
 
             </div>

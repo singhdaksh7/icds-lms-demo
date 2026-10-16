@@ -1,42 +1,38 @@
+<%
+    const course = order.items[0].course;
+    const pending = order.status === 'PENDING';
+%>
 <section class="section-space">
     <div class="container">
-        <div class="row justify-content-center">
-            <div class="col-lg-6">
+        <div class="pay-result">
+            <div class="pay-card">
 
-                <div class="modal-content p-5 text-center">
+                <% if (pending) { %>
+                    <span class="pay-icon wait"><i class="bi bi-hourglass-split"></i></span>
+                    <h1>Payment not completed</h1>
+                    <p class="pay-sub">
+                        We couldn't confirm your payment yet. If money was deducted, it may still be processing —
+                        your course unlocks automatically once the bank confirms it. Check
+                        <a href="/student/orders">My Orders</a> in a few minutes.
+                    </p>
+                <% } else { %>
+                    <span class="pay-icon bad"><i class="bi bi-x-lg"></i></span>
+                    <h1>Payment failed</h1>
+                    <p class="pay-sub">Your payment could not be completed and you have not been charged for this order. You can try again.</p>
+                <% } %>
 
-                    <i class="bi bi-x-circle-fill mb-3" style="font-size:56px; color:#e05a5a;"></i>
+                <div class="pay-receipt">
+                    <div class="pay-row"><span>Course</span><span><%= course.title %></span></div>
+                    <div class="pay-row"><span>Order</span><span>ICDS-<%= order.id %></span></div>
+                    <div class="pay-row"><span>Status</span><span><span class="status-pill <%= pending ? 'pending' : 'failed' %>"><%= pending ? 'Pending' : order.status.charAt(0) + order.status.slice(1).toLowerCase() %></span></span></div>
+                </div>
 
-                    <% if (order.status === 'PENDING') { %>
-                        <h2 class="mb-2">Payment Not Completed</h2>
-                        <p class="text-muted mb-4">
-                            We could not confirm your payment. If you completed the payment, it may still
-                            be processing — check <a href="/student/orders">My Orders</a> shortly. Otherwise, you can try again.
-                        </p>
-                    <% } else { %>
-                        <h2 class="mb-2">Payment Failed</h2>
-                        <p class="text-muted mb-4">Your payment could not be completed.</p>
-                    <% } %>
-
-                    <div class="text-start mb-4">
-                        <div class="d-flex justify-content-between border-top pt-3">
-                            <span class="text-muted">Course</span>
-                            <span><%= order.items[0].course.title %></span>
-                        </div>
-                        <div class="d-flex justify-content-between border-top pt-3 mt-3">
-                            <span class="text-muted">Order ID</span>
-                            <span>ICDS-<%= order.id %></span>
-                        </div>
-                        <div class="d-flex justify-content-between border-top pt-3 mt-3">
-                            <span class="text-muted">Status</span>
-                            <span><%= order.status %></span>
-                        </div>
+                <div class="pay-actions">
+                    <a href="/checkout/<%= course.slug %>" class="auth-submit text-decoration-none">Try Again</a>
+                    <div class="pay-actions-split pay-actions">
+                        <a href="/courses/<%= course.slug %>" class="hero-secondary-btn">Back to course</a>
+                        <a href="/contact" class="hero-secondary-btn">Contact support</a>
                     </div>
-
-                    <a href="/checkout/<%= order.items[0].course.slug %>" class="auth-submit d-block text-center text-decoration-none">
-                        Try Again
-                    </a>
-
                 </div>
 
             </div>

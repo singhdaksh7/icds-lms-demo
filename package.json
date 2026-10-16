@@ -23,6 +23,7 @@
     "@tidbcloud/prisma-adapter": "5.20.0",
     "@tidbcloud/serverless": "^0.3.0",
     "bcryptjs": "^3.0.3",
+    "compression": "^1.8.2",
     "cookie-parser": "^1.4.7",
     "csrf-csrf": "^4.0.3",
     "dotenv": "^16.4.5",

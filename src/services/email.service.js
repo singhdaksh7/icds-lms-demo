@@ -35,13 +35,15 @@ async function sendCertificateIssuedEmail(req, { toEmail, studentName, courseTit
 // Sent only after a payment is genuinely confirmed. Contains no card/bank
 // details — just the receipt facts and a dashboard link built from
 // APP_BASE_URL.
-async function sendPaymentConfirmationEmail(req, { toEmail, studentName, courseTitle, amount, currency, paymentReference, orderId }) {
+async function sendPaymentConfirmationEmail(req, { toEmail, studentName, courseTitle, amount, currency, taxAmount, taxRate, paymentReference, orderId }) {
   const dashboardUrl = absoluteUrl(req, '/student/dashboard');
   const { subject, html, text } = templates.paymentConfirmation({
     studentName,
     courseTitle,
     amount,
     currency,
+    taxAmount,
+    taxRate,
     paymentReference,
     orderId,
     dashboardUrl,

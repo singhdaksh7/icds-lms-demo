@@ -83,7 +83,7 @@
   }
 
   function eligible(field) {
-    if (field.dataset.noFormat !== undefined || field.readOnly || field.disabled) return false;
+    if (field.dataset.noFormat !== undefined || field.closest('[data-no-format]') || field.readOnly || field.disabled) return false;
     if (field.tagName === 'INPUT' && field.type !== 'text') return false;
     var name = field.name || field.id || '';
     if (!name || name.charAt(0) === '_' || SKIP_NAME.test(name.replace(/^f-/, ''))) return false;

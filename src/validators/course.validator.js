@@ -51,6 +51,14 @@ function validateCourse(body) {
     }
   }
 
+  // GST: blank = use the site default; 0 = exempt; otherwise 0-100.
+  let gstRate = null;
+  const gstRaw = typeof body.gstRate === 'string' ? body.gstRate.trim() : '';
+  if (gstRaw) {
+    gstRate = /^\d{1,3}(\.\d{1,2})?$/.test(gstRaw) && Number(gstRaw) <= 100 ? gstRaw : null;
+    if (gstRate === null) errors.push('GST rate must be a number between 0 and 100 (or blank for the site default).');
+  }
+
   const level = LEVELS.includes(body.level) ? body.level : null;
   if (!level) {
     errors.push('Please choose a valid course level.');
@@ -77,6 +85,7 @@ function validateCourse(body) {
       instructorId,
       price,
       salePrice,
+      gstRate,
       currency: 'INR', // fixed for now — never accepted from the client
       level,
       status,

@@ -3,6 +3,7 @@ const enrollmentService = require('../services/enrollment.service');
 const enrollmentRequestService = require('../services/enrollmentRequest.service');
 const orderService = require('../services/order.service');
 const razorpayService = require('../services/razorpay.service');
+const taxSettings = require('../services/taxSettings.service');
 const { getCoursePurchasePrice } = require('../lib/pricing');
 const { toPaise } = require('../lib/money');
 const { safeRedirectPath } = require('../lib/safeRedirect');
@@ -30,14 +31,17 @@ async function getCheckoutPage(req, res, next) {
       return res.redirect(`/learn/${course.slug}`);
     }
 
-    const amount = getCoursePurchasePrice(course);
-    const isFree = Number(amount) === 0;
+    const listPrice = getCoursePurchasePrice(course);
+    const isFree = Number(listPrice) === 0;
+    const pricing = await taxSettings.getPricing(course, listPrice);
+    const amount = pricing.total;
 
     res.render('public/checkout', {
       pageTitle: `Checkout: ${course.title} | ICDS`,
       metaDescription: `Complete your purchase of ${course.title}.`,
       course,
       amount,
+      pricing,
       isFree,
       razorpayConfigured: await razorpayService.isConfigured(),
       razorpayKeyId: await razorpayService.getPublicKeyId(),
@@ -67,8 +71,8 @@ async function createOrder(req, res, next) {
     }
 
     // Server calculates the amount — the client never gets a say.
-    const amount = getCoursePurchasePrice(course);
-    if (Number(amount) === 0) {
+    const listPrice = getCoursePurchasePrice(course);
+    if (Number(listPrice) === 0) {
       return res
         .status(400)
         .json({ success: false, error: 'This course is free — use the free enrollment option instead.' });
@@ -80,7 +84,12 @@ async function createOrder(req, res, next) {
 
     // Reuse a recent still-PENDING order (double-click / reopened popup)
     // rather than creating another local + Razorpay order.
-    const reusable = await orderService.findReusablePendingOrder(req.currentUser.id, course);
+    // GST breakdown is computed here from the DB price + admin tax settings;
+    // the client never supplies any amount.
+    const pricing = await taxSettings.getPricing(course, listPrice);
+    const amount = pricing.total;
+
+    const reusable = await orderService.findReusablePendingOrder(req.currentUser.id, course, pricing);
 
     let order = reusable;
     let providerOrder;
@@ -88,7 +97,7 @@ async function createOrder(req, res, next) {
     if (reusable) {
       providerOrder = { id: reusable.providerOrderId, amount: toPaise(amount), currency: reusable.currency };
     } else {
-      order = await orderService.createPendingOrder(req.currentUser.id, course);
+      order = await orderService.createPendingOrder(req.currentUser.id, course, pricing);
 
       try {
         providerOrder = await razorpayService.createProviderOrder({

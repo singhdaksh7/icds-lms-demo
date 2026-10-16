@@ -46,9 +46,7 @@
                         <td><%= order.items.map(function (i) { return i.course.title; }).join(', ') %></td>
                         <td><%= order.currency %> <%= Number(order.amount).toLocaleString('en-IN') %></td>
                         <td>
-                            <span class="badge bg-<%= order.status === 'PAID' ? 'success' : (order.status === 'PENDING' ? 'secondary' : 'danger') %>">
-                                <%= order.status %>
-                            </span>
+                            <span class="status-pill <%= order.status.toLowerCase() %>"><%= order.status %></span>
                         </td>
                         <td><%= order.paymentProvider || '—' %></td>
                         <td><%= order.createdAt.toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' }) %></td>

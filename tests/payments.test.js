@@ -101,6 +101,8 @@ function installFakeDb() {
     update: async ({ where, data }) => Object.assign(db.enrollments.find((e) => e.id === where.id), data),
   };
   prisma.$transaction = async (fn) => fn(prisma);
+  prisma.siteSetting = { findMany: async () => [] };
+  require('../src/services/taxSettings.service').invalidate();
   return db;
 }
 
@@ -628,4 +630,38 @@ test('admin SMTP view never exposes the password; blank password keeps the saved
 
   await svc.clear();
   assert.equal((await svc.getEffectiveConfig()).source, 'none');
+});
+
+test('create-order with GST on (added on top): Razorpay is asked for the GST-inclusive total, order stores the breakdown', async () => {
+  const db = installFakeDb();
+  stubCourses(db);
+  prisma.siteSetting = {
+    findMany: async () => [
+      { key: 'tax.enabled', value: 'true' },
+      { key: 'tax.rate', value: '18' },
+      { key: 'tax.inclusive', value: 'false' },
+    ],
+  };
+  require('../src/services/taxSettings.service').invalidate();
+  let asked;
+  razorpayService.createProviderOrder = async (args) => {
+    asked = args;
+    return { id: 'order_GST', amount: args.amountPaise, currency: args.currency };
+  };
+  const out = await callController(checkoutController.createOrder, { params: { courseSlug: 'paid-course' }, body: { amount: '1' }, user: student });
+  assert.equal(out.body.success, true);
+  assert.equal(asked.amountPaise, 589882);
+  assert.equal(out.body.amount, 589882);
+  assert.equal(db.orders[0].amount.toFixed(2), '5898.82');
+  assert.equal(db.orders[0].taxAmount, '899.82');
+  assert.equal(db.orders[0].subtotalAmount, '4999.00');
+  // verify path uses the stored TOTAL, so a payment for the pre-tax amount is rejected
+  razorpayService.fetchPayment = async () => capturedPayment({ order_id: 'order_GST', amount: 499900 });
+  const cap = captureConsole();
+  const bad = await callController(paymentController.verifyPayment, { body: verifyBody('order_GST'), user: student });
+  cap.restore();
+  assert.equal(bad.status, 400);
+  assert.equal(db.enrollments.length, 0);
+  prisma.siteSetting = { findMany: async () => [] };
+  require('../src/services/taxSettings.service').invalidate();
 });

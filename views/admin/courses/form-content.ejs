@@ -78,6 +78,12 @@
             </div>
 
             <div class="col-md-3">
+                <label class="form-label small fw-semibold">GST rate % (optional)</label>
+                <input type="text" inputmode="decimal" name="gstRate" class="form-control form-control-custom" value="<%= values.gstRate || '' %>" placeholder="Site default">
+                <div class="form-text">Blank = site-wide rate (Admin → Tax &amp; GST). 0 = GST-exempt.</div>
+            </div>
+
+            <div class="col-md-3">
                 <label class="form-label small fw-semibold">Level</label>
                 <select name="level" class="form-select form-control-custom">
                     <% levels.forEach(function (level) { %>

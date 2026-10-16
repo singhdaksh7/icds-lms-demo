@@ -29,6 +29,13 @@ async function getOrderForUser(orderId, userId) {
   });
 }
 
+async function getOrderForUserWithUser(orderId, userId) {
+  return prisma.order.findFirst({
+    where: { id: orderId, userId },
+    include: { items: { include: { course: true } }, user: true },
+  });
+}
+
 async function getOrderByIdAdmin(orderId) {
   return prisma.order.findUnique({
     where: { id: orderId },
@@ -89,8 +96,10 @@ async function listOrdersAdmin({ status, q, page = 1 } = {}) {
 // Creates a local PENDING order + a price-snapshot OrderItem. Called before
 // the Razorpay provider order exists — providerOrderId is attached
 // separately once Razorpay confirms it (attachProviderOrder).
-async function createPendingOrder(userId, course) {
-  const amount = getCoursePurchasePrice(course);
+async function createPendingOrder(userId, course, pricing) {
+  // `pricing` is the server-computed GST breakdown (taxSettings.getPricing).
+  // order.amount is the TOTAL charged; the item keeps the pre-tax price.
+  const amount = pricing.total;
 
   return prisma.$transaction(async (tx) => {
     const order = await tx.order.create({
@@ -100,11 +109,15 @@ async function createPendingOrder(userId, course) {
         currency: course.currency,
         status: 'PENDING',
         paymentProvider: 'razorpay',
+        subtotalAmount: pricing.subtotal,
+        taxAmount: pricing.tax,
+        taxRate: pricing.rate,
+        taxInclusive: pricing.inclusive,
       },
     });
 
     await tx.orderItem.create({
-      data: { orderId: order.id, courseId: course.id, price: amount },
+      data: { orderId: order.id, courseId: course.id, price: pricing.subtotal },
     });
 
     return order;
@@ -114,8 +127,8 @@ async function createPendingOrder(userId, course) {
 // Returns the user's recent PENDING order for this course (same price, a
 // Razorpay order already attached) or null. Prevents duplicate active orders
 // when a student double-clicks Buy / retries after closing the popup.
-async function findReusablePendingOrder(userId, course) {
-  const amount = getCoursePurchasePrice(course);
+async function findReusablePendingOrder(userId, course, pricing) {
+  const amount = pricing.total;
   const order = await prisma.order.findFirst({
     where: {
       userId,
@@ -188,6 +201,7 @@ async function finalizePaidOrder({ orderId, providerPaymentId, providerOrderId }
         where: { id: orderId, status: { in: PAYABLE_STATUSES } },
         data: {
           status: 'PAID',
+          paidAt: new Date(),
           providerPaymentId,
           providerOrderId: providerOrderId || order.providerOrderId,
         },
@@ -248,6 +262,8 @@ async function sendPaymentConfirmation(orderId) {
     courseTitle: order.items.map((i) => i.course.title).join(', '),
     amount: order.amount,
     currency: order.currency,
+    taxAmount: order.taxAmount,
+    taxRate: order.taxRate,
     paymentReference: order.providerPaymentId,
     orderId: order.id,
   });
@@ -298,6 +314,7 @@ async function getPaymentStats() {
 module.exports = {
   OrderError,
   getOrderForUser,
+  getOrderForUserWithUser,
   getOrderByIdAdmin,
   getOrderByProviderOrderId,
   listOrdersForUser,

@@ -103,6 +103,7 @@ async function editCourseForm(req, res, next) {
         instructorId: course.instructorId || '',
         price: course.price.toString(),
         salePrice: course.salePrice ? course.salePrice.toString() : '',
+        gstRate: course.gstRate !== null && course.gstRate !== undefined ? course.gstRate.toString() : '',
       },
     });
   } catch (err) {

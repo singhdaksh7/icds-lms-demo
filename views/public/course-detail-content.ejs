@@ -110,6 +110,9 @@
                             <del><%= course.currency === 'INR' ? '₹' : course.currency + ' ' %><%= Number(course.price).toLocaleString('en-IN') %></del>
                         <% } %>
                     </div>
+                    <% if (typeof gstNote !== 'undefined' && gstNote) { %>
+                        <p class="small text-muted" style="margin:-12px 0 16px;"><%= gstNote %></p>
+                    <% } %>
 
                     <% if (typeof currentUser !== 'undefined' && currentUser && currentUser.role === 'STUDENT') { %>
                         <% if (isEnrolled) { %>

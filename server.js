@@ -126,6 +126,7 @@ app.use(
 // is sensitive: local lesson videos live in storage/videos/ (outside this
 // directory entirely) and are reachable only through the authorized
 // /media/lessons/:lessonId/video route, which IS behind the limiter below.
+app.use(require('compression')());
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Course/instructor thumbnails: served via a dedicated static route (rather

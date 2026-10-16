@@ -19,6 +19,7 @@ router.get('/certificates/:id/download', studentController.downloadCertificate);
 
 router.get('/orders', studentController.listMyOrders);
 router.get('/orders/:id', studentController.getMyOrderDetail);
+router.get('/orders/:id/invoice.pdf', require('../controllers/invoice.controller').studentInvoice);
 
 router.post('/lessons/:lessonId/complete', doubleCsrfProtection, studentController.completeLesson);
 router.post('/lessons/:lessonId/progress', doubleCsrfProtection, studentController.saveProgress);

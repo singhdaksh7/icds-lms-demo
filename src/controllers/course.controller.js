@@ -91,6 +91,8 @@ async function getCourseDetail(req, res, next) {
     const purchasePrice = getCoursePurchasePrice(course);
     const isFree = Number(purchasePrice) === 0;
     const paymentsEnabled = !isFree && (await razorpayService.isConfigured());
+    const taxCfg = await require('../services/taxSettings.service').get();
+    const gstNote = !isFree && taxCfg.enabled && require('../services/taxSettings.service').rateFor(course, taxCfg) > 0 ? (taxCfg.inclusive ? 'Inclusive of GST' : '+ GST extra') : '';
     const priceLabel = `${course.currency === 'INR' ? '₹' : `${course.currency} `}${Number(purchasePrice).toLocaleString('en-IN')}`;
 
     const title = `${course.title} | ${site.name}`;
@@ -135,6 +137,7 @@ async function getCourseDetail(req, res, next) {
       isFree,
       paymentsEnabled,
       priceLabel,
+      gstNote,
     });
   } catch (err) {
     next(err);

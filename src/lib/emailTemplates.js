@@ -91,7 +91,7 @@ function formatAmount(amount, currency) {
   return `${currency === 'INR' || !currency ? '₹' : `${currency} `}${formatted}`;
 }
 
-function paymentConfirmation({ studentName, courseTitle, amount, currency, paymentReference, orderId, dashboardUrl }) {
+function paymentConfirmation({ studentName, courseTitle, amount, currency, taxAmount, taxRate, paymentReference, orderId, dashboardUrl }) {
   const amountText = formatAmount(amount, currency);
   const row = (label, value) =>
     `<tr><td style="padding:6px 0;color:#8c8da0;font-size:13px;">${escapeHtml(label)}</td><td style="padding:6px 0;font-size:14px;text-align:right;">${escapeHtml(value)}</td></tr>`;
@@ -104,6 +104,7 @@ function paymentConfirmation({ studentName, courseTitle, amount, currency, payme
     <table style="width:100%;border-collapse:collapse;border-top:1px solid #e8e8f2;margin-top:12px;">
       ${row('Course', courseTitle)}
       ${row('Amount paid', amountText)}
+      ${Number(taxAmount) > 0 ? row(`Includes GST (${Number(taxRate)}%)`, formatAmount(taxAmount, currency)) : ''}
       ${row('Order', `ICDS-${orderId}`)}
       ${paymentReference ? row('Payment reference', paymentReference) : ''}
     </table>
