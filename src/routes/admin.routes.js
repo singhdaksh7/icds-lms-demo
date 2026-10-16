@@ -59,6 +59,7 @@ router.post(
   doubleCsrfProtection,
   courseController.uploadCourseThumbnail
 );
+router.post('/courses/:id/thumbnail/remove', doubleCsrfProtection, courseController.removeCourseThumbnail);
 router.post('/courses/:id/delete', doubleCsrfProtection, courseController.deleteCourse);
 router.post('/courses/:id/publish', doubleCsrfProtection, courseController.publishCourse);
 router.post('/courses/:id/unpublish', doubleCsrfProtection, courseController.unpublishCourse);
@@ -105,6 +106,13 @@ router.post(
 router.get('/categories', categoryController.listCategories);
 router.post('/categories', doubleCsrfProtection, categoryController.createCategory);
 router.post('/categories/:id', doubleCsrfProtection, categoryController.updateCategory);
+router.post(
+  '/categories/:id/image/upload',
+  uploadThumbnail('/admin/categories'),
+  doubleCsrfProtection,
+  categoryController.uploadCategoryImage
+);
+router.post('/categories/:id/image/remove', doubleCsrfProtection, categoryController.removeCategoryImage);
 router.post('/categories/:id/delete', doubleCsrfProtection, categoryController.deleteCategory);
 
 // --- Instructors -------------------------------------------------------------
@@ -119,6 +127,7 @@ router.post(
   doubleCsrfProtection,
   instructorController.uploadInstructorPhoto
 );
+router.post('/instructors/:id/photo/remove', doubleCsrfProtection, instructorController.removeInstructorPhoto);
 router.post('/instructors/:id/delete', doubleCsrfProtection, instructorController.deleteInstructor);
 
 // --- Students / manual enrollment --------------------------------------------

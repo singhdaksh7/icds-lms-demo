@@ -51,6 +51,7 @@
                 <table class="table admin-table align-middle">
                     <thead>
                         <tr>
+                            <th>Image</th>
                             <th>Name</th>
                             <th>Status</th>
                             <th>Courses</th>
@@ -59,10 +60,33 @@
                     </thead>
                     <tbody>
                         <% if (categories.length === 0) { %>
-                            <tr><td colspan="4" class="text-center text-muted py-4">No categories yet.</td></tr>
+                            <tr><td colspan="5" class="text-center text-muted py-4">No categories yet.</td></tr>
                         <% } %>
                         <% categories.forEach(function (category) { %>
                             <tr>
+                                <td style="min-width:210px;">
+                                    <div class="d-flex align-items-start gap-2">
+                                        <div>
+                                            <img id="pv-cat-<%= category.id %>" class="img-thumb" src="<%= category.imageUrl || '' %>" alt="<%= category.name %> image" <%- category.imageUrl ? '' : 'hidden' %> data-fallback-src="/assets/images/hero-placeholder.svg">
+                                            <div id="pe-cat-<%= category.id %>" class="img-thumb d-flex align-items-center justify-content-center small text-muted" <%- category.imageUrl ? 'hidden' : '' %>>No image</div>
+                                            <span id="pb-cat-<%= category.id %>" class="badge mt-1 text-bg-<%= category.imageUrl ? 'success' : 'secondary' %>"><%= category.imageUrl ? 'Custom image' : 'Not set' %></span>
+                                        </div>
+                                        <div>
+                                            <form method="POST" action="/admin/categories/<%= category.id %>/image/upload" enctype="multipart/form-data" class="m-0">
+                                                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                                <input type="file" name="thumbnail" accept="image/jpeg,image/png,image/webp" class="form-control form-control-sm mb-1" style="max-width:190px;" required data-preview-img="pv-cat-<%= category.id %>" data-preview-empty="pe-cat-<%= category.id %>" data-preview-badge="pb-cat-<%= category.id %>" aria-label="Category image">
+                                                <button type="submit" class="btn btn-sm btn-outline-primary"><%= category.imageUrl ? 'Replace image' : 'Upload image' %></button>
+                                            </form>
+                                            <% if (category.imageUrl) { %>
+                                                <form method="POST" action="/admin/categories/<%= category.id %>/image/remove" class="m-0 mt-1" data-confirm="Remove this category image?">
+                                                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger">Remove image</button>
+                                                </form>
+                                            <% } %>
+                                            <div class="small text-muted mt-1">JPG, PNG or WebP, max 5MB</div>
+                                        </div>
+                                    </div>
+                                </td>
                                 <td>
                                     <form method="POST" action="/admin/categories/<%= category.id %>" class="d-flex gap-2 align-items-center m-0">
                                         <input type="hidden" name="_csrf" value="<%= csrfToken %>">

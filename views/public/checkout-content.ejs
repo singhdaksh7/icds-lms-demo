@@ -9,7 +9,7 @@
 
                     <div class="d-flex gap-3 align-items-center mb-4">
                         <img
-                            src="<%= course.thumbnailUrl || '/assets/images/course-placeholder.svg' %>"
+                            src="<%= course.thumbnailUrl || cms.brand.defaultCourseImageUrl || '/assets/images/course-placeholder.svg' %>"
                             alt="<%= course.title %>"
                             style="width:90px;height:90px;border-radius:12px;object-fit:cover;"
                             data-fallback-src="/assets/images/course-placeholder.svg">

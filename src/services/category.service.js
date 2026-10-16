@@ -77,4 +77,15 @@ async function deleteCategory(id) {
   return existing._count.courses;
 }
 
-module.exports = { CategoryError, listCategoriesAdmin, createCategory, updateCategory, deleteCategory };
+// Sets (or clears, with null) a category's image and returns the previous URL
+// so the caller can remove the old managed file AFTER this DB update succeeds.
+async function setCategoryImage(id, imageUrl) {
+  const existing = await prisma.category.findUnique({ where: { id } });
+  if (!existing) {
+    throw new CategoryError('Category not found.');
+  }
+  await prisma.category.update({ where: { id }, data: { imageUrl } });
+  return existing.imageUrl;
+}
+
+module.exports = { CategoryError, listCategoriesAdmin, createCategory, updateCategory, deleteCategory, setCategoryImage };

@@ -10,21 +10,26 @@
         </div>
     </div>
 <% } else if (field.type === 'image') { %>
-    <div class="col-12">
+    <% const customUrl = imageUrls[field.key]; const shownUrl = customUrl || field.defaultPreview || ''; %>
+    <div class="col-12 sc-image-field">
         <label class="form-label small fw-semibold" for="f-<%= field.key %>"><%= field.label %></label>
-        <div class="d-flex align-items-center gap-3 mb-2 flex-wrap">
-            <% if (imageUrls[field.key]) { %>
-                <img src="<%= imageUrls[field.key] %>" alt="Current <%= field.label %>" class="sc-preview">
-                <div class="form-check">
-                    <input type="checkbox" class="form-check-input" id="rm-<%= field.key %>" name="remove__<%= field.key %>" value="1">
-                    <label class="form-check-label small" for="rm-<%= field.key %>">Remove current image (use the default)</label>
+        <div class="d-flex align-items-start gap-3 flex-wrap">
+            <div class="sc-preview-box">
+                <img id="pv-<%= field.key %>" class="sc-preview" src="<%= shownUrl %>" alt="Current <%= field.label %>" <%- shownUrl ? '' : 'hidden' %>>
+                <div class="sc-preview sc-preview-empty" id="pe-<%= field.key %>" <%- shownUrl ? 'hidden' : '' %>>No image</div>
+                <span id="pb-<%= field.key %>" class="badge mt-1 text-bg-<%= customUrl ? 'success' : 'secondary' %>"><%= customUrl ? 'Custom image' : (field.defaultPreview ? 'Default image' : 'Not set') %></span>
+            </div>
+            <div class="flex-grow-1" style="min-width:220px;">
+                <input type="file" class="form-control form-control-custom" id="f-<%= field.key %>" name="file__<%= field.key %>" accept="image/jpeg,image/png,image/webp" data-preview-img="pv-<%= field.key %>" data-preview-empty="pe-<%= field.key %>" data-preview-badge="pb-<%= field.key %>">
+                <p class="small text-muted mt-1 mb-2">JPG, PNG or WebP, max 5MB. <%= field.help || '' %></p>
+                <div class="d-flex gap-2 flex-wrap">
+                    <button type="submit" class="btn btn-sm btn-outline-primary"><%= customUrl ? 'Replace image' : 'Upload image' %></button>
+                    <% if (customUrl) { %>
+                        <button type="submit" name="remove__<%= field.key %>" value="1" form="form-<%= formId %>" formnovalidate class="btn btn-sm btn-outline-danger" data-confirm="Remove this image and go back to the default?"><%= field.defaultPreview ? 'Reset to default' : 'Remove image' %></button>
+                    <% } %>
                 </div>
-            <% } else { %>
-                <span class="text-muted small">No custom image - the default is shown.</span>
-            <% } %>
+            </div>
         </div>
-        <input type="file" class="form-control form-control-custom" id="f-<%= field.key %>" name="file__<%= field.key %>" accept="image/jpeg,image/png,image/webp">
-        <p class="small text-muted mt-1 mb-0">JPG, PNG or WebP, up to 5MB. <%= field.help || '' %> Choosing a new file replaces the current one.</p>
     </div>
 <% } else if (field.type === 'target') { %>
     <div class="col-12 col-md-6">

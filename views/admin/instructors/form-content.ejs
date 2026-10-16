@@ -77,17 +77,27 @@
 
 <% if (instructor) { %>
     <div class="admin-card mt-4">
-        <h5 class="mb-3">Upload Photo</h5>
-
-        <% if (values.photoUrl) { %>
-            <img src="<%= values.photoUrl %>" alt="Current photo" style="width:120px; height:120px; object-fit:cover; border-radius:50%; margin-bottom:16px; display:block;">
-        <% } %>
-
-        <form method="POST" action="/admin/instructors/<%= instructor.id %>/photo/upload" enctype="multipart/form-data" class="d-flex gap-2 align-items-center flex-wrap">
-            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-            <input type="file" name="thumbnail" accept=".jpg,.jpeg,.png,.webp" class="form-control form-control-custom" style="max-width:320px;" required>
-            <button type="submit" class="btn btn-sm btn-outline-secondary">Upload</button>
-        </form>
-        <div class="form-text mt-2">JPG, PNG or WEBP, max 5MB.</div>
+        <h5 class="mb-3">Instructor photo</h5>
+        <% const instructorDefault = cms.brand.defaultInstructorImageUrl || '/assets/images/instructor-placeholder.svg'; %>
+        <div class="d-flex align-items-start gap-3 flex-wrap">
+            <div>
+                <img id="pv-instructor" src="<%= values.photoUrl || instructorDefault %>" alt="Current photo" style="width:120px; height:120px; object-fit:cover; border-radius:50%; border:1px solid #dee2e6; display:block;" data-fallback-src="/assets/images/instructor-placeholder.svg">
+                <span id="pb-instructor" class="badge mt-1 text-bg-<%= values.photoUrl ? 'success' : 'secondary' %>"><%= values.photoUrl ? 'Custom photo' : 'Default placeholder' %></span>
+            </div>
+            <div style="min-width:240px;">
+                <form method="POST" action="/admin/instructors/<%= instructor.id %>/photo/upload" enctype="multipart/form-data" class="d-flex gap-2 align-items-center flex-wrap">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                    <input type="file" name="thumbnail" accept="image/jpeg,image/png,image/webp" class="form-control form-control-custom" style="max-width:320px;" required data-preview-img="pv-instructor" data-preview-badge="pb-instructor">
+                    <button type="submit" class="btn btn-sm btn-outline-primary"><%= values.photoUrl ? 'Replace photo' : 'Upload photo' %></button>
+                </form>
+                <div class="form-text mt-2">JPG, PNG or WebP, max 5MB. Use only a real photo of this instructor.</div>
+                <% if (values.photoUrl) { %>
+                    <form method="POST" action="/admin/instructors/<%= instructor.id %>/photo/remove" class="mt-2" data-confirm="Remove this photo and use the default placeholder?">
+                        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                        <button type="submit" class="btn btn-sm btn-outline-danger">Remove photo</button>
+                    </form>
+                <% } %>
+            </div>
+        </div>
     </div>
 <% } %>

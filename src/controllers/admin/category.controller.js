@@ -1,5 +1,6 @@
 const categoryService = require('../../services/category.service');
 const { validateCategory, STATUSES } = require('../../validators/category.validator');
+const imageStorage = require('../../lib/imageStorage');
 
 async function listCategories(req, res, next) {
   try {
@@ -82,4 +83,51 @@ async function deleteCategory(req, res, next) {
   res.redirect('/admin/categories');
 }
 
-module.exports = { listCategories, createCategory, updateCategory, deleteCategory };
+// Image upload/replace. Order: the new file is already validated and written
+// (middleware) -> DB updated -> only then the previous managed file removed.
+// If the DB update fails the freshly written file is cleaned up.
+async function uploadCategoryImage(req, res, next) {
+  const id = parseInt(req.params.id, 10);
+  try {
+    if (!req.file) {
+      req.flashError('No image file was uploaded.');
+      return res.redirect('/admin/categories');
+    }
+    const newUrl = imageStorage.publicUrlFor(req.file.filename);
+    let oldUrl;
+    try {
+      oldUrl = await categoryService.setCategoryImage(id, newUrl);
+    } catch (err) {
+      imageStorage.deleteIfOwned(newUrl);
+      throw err;
+    }
+    req.thumbnailAdopted = true;
+    imageStorage.deleteIfOwned(oldUrl);
+    req.flashSuccess('Category image updated.');
+    res.redirect('/admin/categories');
+  } catch (err) {
+    if (err instanceof categoryService.CategoryError) {
+      req.flashError(err.message);
+      return res.redirect('/admin/categories');
+    }
+    next(err);
+  }
+}
+
+async function removeCategoryImage(req, res, next) {
+  try {
+    const id = parseInt(req.params.id, 10);
+    const oldUrl = await categoryService.setCategoryImage(id, null);
+    imageStorage.deleteIfOwned(oldUrl);
+    req.flashSuccess('Category image removed.');
+    res.redirect('/admin/categories');
+  } catch (err) {
+    if (err instanceof categoryService.CategoryError) {
+      req.flashError(err.message);
+      return res.redirect('/admin/categories');
+    }
+    next(err);
+  }
+}
+
+module.exports = { listCategories, createCategory, updateCategory, deleteCategory, uploadCategoryImage, removeCategoryImage };

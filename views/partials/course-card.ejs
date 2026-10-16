@@ -3,7 +3,7 @@
     <div class="course-thumbnail">
 
         <img
-            src="<%= course.thumbnailUrl || '/assets/images/course-placeholder.svg' %>"
+            src="<%= course.thumbnailUrl || cms.brand.defaultCourseImageUrl || '/assets/images/course-placeholder.svg' %>"
             alt="<%= course.title %>"
             loading="lazy"
             data-fallback-src="/assets/images/course-placeholder.svg">

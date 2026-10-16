@@ -108,9 +108,32 @@ async function uploadInstructorPhoto(req, res, next) {
       return res.redirect(`/admin/instructors/${id}/edit`);
     }
     const newUrl = imageStorage.publicUrlFor(req.file.filename);
-    const oldUrl = await instructorService.setInstructorPhoto(id, newUrl);
+    let oldUrl;
+    try {
+      oldUrl = await instructorService.setInstructorPhoto(id, newUrl);
+    } catch (err) {
+      imageStorage.deleteIfOwned(newUrl); // never leave an unreferenced upload behind
+      throw err;
+    }
+    req.thumbnailAdopted = true;
     imageStorage.deleteIfOwned(oldUrl);
     req.flashSuccess('Photo updated.');
+    res.redirect(`/admin/instructors/${id}/edit`);
+  } catch (err) {
+    if (err instanceof instructorService.InstructorError) {
+      req.flashError(err.message);
+      return res.redirect('/admin/instructors');
+    }
+    next(err);
+  }
+}
+
+async function removeInstructorPhoto(req, res, next) {
+  const id = parseInt(req.params.id, 10);
+  try {
+    const oldUrl = await instructorService.setInstructorPhoto(id, null);
+    imageStorage.deleteIfOwned(oldUrl);
+    req.flashSuccess('Photo removed. The default placeholder is now shown.');
     res.redirect(`/admin/instructors/${id}/edit`);
   } catch (err) {
     if (err instanceof instructorService.InstructorError) {
@@ -147,5 +170,6 @@ module.exports = {
   editInstructorForm,
   updateInstructor,
   uploadInstructorPhoto,
+  removeInstructorPhoto,
   deleteInstructor,
 };

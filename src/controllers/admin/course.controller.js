@@ -166,9 +166,32 @@ async function uploadCourseThumbnail(req, res, next) {
       return res.redirect(`/admin/courses/${id}/edit`);
     }
     const newUrl = imageStorage.publicUrlFor(req.file.filename);
-    const oldUrl = await courseService.setCourseThumbnail(id, newUrl);
+    let oldUrl;
+    try {
+      oldUrl = await courseService.setCourseThumbnail(id, newUrl);
+    } catch (err) {
+      imageStorage.deleteIfOwned(newUrl); // never leave an unreferenced upload behind
+      throw err;
+    }
+    req.thumbnailAdopted = true;
     imageStorage.deleteIfOwned(oldUrl);
     req.flashSuccess('Thumbnail updated.');
+    res.redirect(`/admin/courses/${id}/edit`);
+  } catch (err) {
+    if (err instanceof courseService.CourseError) {
+      req.flashError(err.message);
+      return res.redirect('/admin/courses');
+    }
+    next(err);
+  }
+}
+
+async function removeCourseThumbnail(req, res, next) {
+  const id = parseInt(req.params.id, 10);
+  try {
+    const oldUrl = await courseService.setCourseThumbnail(id, null);
+    imageStorage.deleteIfOwned(oldUrl);
+    req.flashSuccess('Thumbnail removed. The default course image is now shown.');
     res.redirect(`/admin/courses/${id}/edit`);
   } catch (err) {
     if (err instanceof courseService.CourseError) {
@@ -216,6 +239,7 @@ module.exports = {
   editCourseForm,
   updateCourse,
   uploadCourseThumbnail,
+  removeCourseThumbnail,
   deleteCourse,
   publishCourse,
   unpublishCourse,

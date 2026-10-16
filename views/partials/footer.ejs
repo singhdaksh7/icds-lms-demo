@@ -9,7 +9,11 @@
             <div class="col-lg-4">
 
                 <a href="/" class="footer-brand">
-                    <%= site.name %>
+                    <% if (cms.brand.footerLogoUrl) { %>
+                        <img class="footer-logo-image" src="<%= cms.brand.footerLogoUrl %>" alt="<%= site.name %>" data-fallback-src="/assets/icons/favicon.svg">
+                    <% } else { %>
+                        <%= site.name %>
+                    <% } %>
                 </a>
 
                 <p class="footer-description">

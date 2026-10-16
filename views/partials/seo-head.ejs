@@ -23,8 +23,9 @@
 <meta property="og:title" content="<%= seo.title || site.name %>">
 <meta property="og:description" content="<%= seo.description || metaDescription || '' %>">
 <% if (seo.ogUrl) { %><meta property="og:url" content="<%= seo.ogUrl %>"><% } %>
-<% if (seo.ogImage) { %>
-    <meta property="og:image" content="<%= seo.ogImage %>">
+<% const shareImage = seo.ogImage || ((typeof cms !== 'undefined' && cms && cms.brand && cms.brand.shareImageUrl) ? ((site.baseUrl || '') + cms.brand.shareImageUrl) : null); %>
+<% if (shareImage) { %>
+    <meta property="og:image" content="<%= shareImage %>">
     <meta name="twitter:card" content="summary_large_image">
 <% } else { %>
     <meta name="twitter:card" content="summary">

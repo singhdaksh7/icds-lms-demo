@@ -44,7 +44,7 @@
                 <div class="dashboard-continue-card reveal-element">
                     <div class="dashboard-continue-thumb">
                         <img
-                            src="<%= clCourse.thumbnailUrl || '/assets/images/course-placeholder.svg' %>"
+                            src="<%= clCourse.thumbnailUrl || cms.brand.defaultCourseImageUrl || '/assets/images/course-placeholder.svg' %>"
                             alt="<%= clCourse.title %>"
                             loading="lazy"
                             data-fallback-src="/assets/images/course-placeholder.svg">
@@ -80,7 +80,7 @@
 
                             <div class="course-thumbnail">
                                 <img
-                                    src="<%= course.thumbnailUrl || '/assets/images/course-placeholder.svg' %>"
+                                    src="<%= course.thumbnailUrl || cms.brand.defaultCourseImageUrl || '/assets/images/course-placeholder.svg' %>"
                                     alt="<%= course.title %>"
                                     loading="lazy"
                                     data-fallback-src="/assets/images/course-placeholder.svg">

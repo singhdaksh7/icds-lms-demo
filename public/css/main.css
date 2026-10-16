@@ -1256,6 +1256,14 @@
             padding: 75px 0 25px;
         }
 
+        .footer-logo-image {
+            display: block;
+            max-height: 48px;
+            max-width: 220px;
+            width: auto;
+            object-fit: contain;
+        }
+
         .footer-brand {
             color: #fff;
             font-size: 17px;

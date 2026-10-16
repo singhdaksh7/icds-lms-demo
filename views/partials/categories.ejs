@@ -8,13 +8,6 @@ const categoryIcons = {
     'skin-hair': 'bi-person-hearts',
 };
 
-/* Presentation-only demo imagery lookup (image isn't stored in the DB). */
-const categoryImages = {
-    cosmetology: '/images/demo/category-cosmetology.jpg',
-    aesthetics: '/images/demo/category-aesthetics.jpg',
-    'dental-sciences': '/images/demo/category-dental.jpg',
-    'skin-hair': '/images/demo/category-skin-hair.jpg',
-};
 %>
 
 <% const sec = cms.categories; %>
@@ -61,13 +54,14 @@ const categoryImages = {
 
                             <div class="category-card">
 
-                                <% if (categoryImages[category.slug]) { %>
+                                <% if (category.imageUrl) { %>
                                     <div class="category-image-wrap">
                                         <img
                                             class="category-image"
-                                            src="<%= categoryImages[category.slug] %>"
+                                            src="<%= category.imageUrl %>"
                                             alt="<%= category.name %>"
-                                            loading="lazy">
+                                            loading="lazy"
+                                            data-fallback-src="/assets/images/hero-placeholder.svg">
                                     </div>
                                 <% } %>
 

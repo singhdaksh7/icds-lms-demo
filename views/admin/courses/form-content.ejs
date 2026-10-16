@@ -117,17 +117,27 @@
 
 <% if (course) { %>
     <div class="admin-card mt-4">
-        <h5 class="mb-3">Upload Thumbnail Image</h5>
-
-        <% if (values.thumbnailUrl) { %>
-            <img src="<%= values.thumbnailUrl %>" alt="Current thumbnail" style="max-width:220px; border-radius:8px; margin-bottom:16px; display:block;">
-        <% } %>
-
-        <form method="POST" action="/admin/courses/<%= course.id %>/thumbnail/upload" enctype="multipart/form-data" class="d-flex gap-2 align-items-center flex-wrap">
-            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-            <input type="file" name="thumbnail" accept=".jpg,.jpeg,.png,.webp" class="form-control form-control-custom" style="max-width:320px;" required>
-            <button type="submit" class="btn btn-sm btn-outline-secondary">Upload</button>
-        </form>
-        <div class="form-text mt-2">JPG, PNG or WEBP, max 5MB.</div>
+        <h5 class="mb-3">Course image</h5>
+        <% const courseDefault = cms.brand.defaultCourseImageUrl || '/assets/images/course-placeholder.svg'; %>
+        <div class="d-flex align-items-start gap-3 flex-wrap">
+            <div>
+                <img id="pv-course" src="<%= values.thumbnailUrl || courseDefault %>" alt="Current course image" style="width:220px; height:147px; object-fit:cover; border-radius:8px; border:1px solid #dee2e6; display:block;" data-fallback-src="/assets/images/course-placeholder.svg">
+                <span id="pb-course" class="badge mt-1 text-bg-<%= values.thumbnailUrl ? 'success' : 'secondary' %>"><%= values.thumbnailUrl ? 'Custom image' : 'Default image' %></span>
+            </div>
+            <div style="min-width:240px;">
+                <form method="POST" action="/admin/courses/<%= course.id %>/thumbnail/upload" enctype="multipart/form-data" class="d-flex gap-2 align-items-center flex-wrap">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                    <input type="file" name="thumbnail" accept="image/jpeg,image/png,image/webp" class="form-control form-control-custom" style="max-width:320px;" required data-preview-img="pv-course" data-preview-badge="pb-course">
+                    <button type="submit" class="btn btn-sm btn-outline-primary"><%= values.thumbnailUrl ? 'Replace image' : 'Upload image' %></button>
+                </form>
+                <div class="form-text mt-2">JPG, PNG or WebP, max 5MB. Shown on the homepage, courses list, course page and student dashboard.</div>
+                <% if (values.thumbnailUrl) { %>
+                    <form method="POST" action="/admin/courses/<%= course.id %>/thumbnail/remove" class="mt-2" data-confirm="Remove this course image and use the default?">
+                        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                        <button type="submit" class="btn btn-sm btn-outline-danger">Remove image</button>
+                    </form>
+                <% } %>
+            </div>
+        </div>
     </div>
 <% } %>

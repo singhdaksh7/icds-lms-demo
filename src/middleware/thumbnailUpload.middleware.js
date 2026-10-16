@@ -40,7 +40,11 @@ const multerUpload = multer({
   storage,
   limits: { fileSize: MAX_UPLOAD_BYTES, files: 1 },
   fileFilter(req, file, cb) {
-    cb(null, isAllowedFile(file.originalname, file.mimetype));
+    // A rejected type must surface a visible error, not silently look like "no file".
+    if (!isAllowedFile(file.originalname, file.mimetype)) {
+      return cb(new Error('Unsupported image type. Only JPG, PNG and WEBP are allowed.'));
+    }
+    cb(null, true);
   },
 }).single('thumbnail');
 
@@ -51,6 +55,16 @@ function uploadThumbnail(redirectTo) {
   return function (req, res, next) {
     multerUpload(req, res, (err) => {
       if (!err) {
+        // A stored upload the controller never adopts (CSRF failure, missing
+        // record, DB error...) is removed when the response closes, so
+        // rejected uploads cannot pile up as orphans.
+        if (req.file) {
+          const storedFilename = req.file.filename;
+          req.thumbnailAdopted = false;
+          res.on('close', () => {
+            if (!req.thumbnailAdopted) imageStorage.deleteIfOwned(imageStorage.publicUrlFor(storedFilename));
+          });
+        }
         // Extension + declared MIME already passed; now verify the real file
         // signature so a renamed text/other file cannot be stored as an image.
         return imageStorage
