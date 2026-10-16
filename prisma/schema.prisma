@@ -106,14 +106,15 @@ model User {
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
 
-  enrollments        Enrollment[]
-  orders             Order[]
-  wishlistItems      WishlistItem[]
-  reviews            Review[]
-  lessonProgress     LessonProgress[]
-  certificates       Certificate[]
+  enrollments         Enrollment[]
+  orders              Order[]
+  wishlistItems       WishlistItem[]
+  reviews             Review[]
+  lessonProgress      LessonProgress[]
+  certificates        Certificate[]        @relation("CertificateOwner")
+  issuedCertificates  Certificate[]        @relation("CertificateIssuer")
   passwordResetTokens PasswordResetToken[]
-  enrollmentRequests EnrollmentRequest[]
+  enrollmentRequests  EnrollmentRequest[]
 
   @@map("users")
 }
@@ -178,12 +179,12 @@ model Course {
   category   Category?   @relation(fields: [categoryId], references: [id], onDelete: SetNull)
   instructor Instructor? @relation(fields: [instructorId], references: [id], onDelete: SetNull)
 
-  lessons        Lesson[]
-  enrollments    Enrollment[]
-  orderItems     OrderItem[]
-  wishlistItems  WishlistItem[]
-  reviews        Review[]
-  certificates   Certificate[]
+  lessons            Lesson[]
+  enrollments        Enrollment[]
+  orderItems         OrderItem[]
+  wishlistItems      WishlistItem[]
+  reviews            Review[]
+  certificates       Certificate[]
   enrollmentRequests EnrollmentRequest[]
 
   @@index([categoryId])
@@ -193,27 +194,27 @@ model Course {
 }
 
 model Lesson {
-  id               Int          @id @default(autoincrement())
-  courseId         Int
-  title            String
-  slug             String
-  description      String?      @db.Text
-  videoType        VideoType    @default(EXTERNAL)
-  videoUrl         String?      @db.VarChar(500)
-  externalVideoId  String?
+  id              Int          @id @default(autoincrement())
+  courseId        Int
+  title           String
+  slug            String
+  description     String?      @db.Text
+  videoType       VideoType    @default(EXTERNAL)
+  videoUrl        String?      @db.VarChar(500)
+  externalVideoId String?
   // Server-side-only relative path under storage/videos/ for LOCAL videos
   // (e.g. "course-slug/<uuid>.mp4"). Never rendered to the client directly —
   // only used server-side to stream via the protected /media route. Not an
   // absolute filesystem path, so it carries no meaningful info if leaked.
-  videoPath        String?      @db.VarChar(500)
-  duration         String?
-  sortOrder        Int          @default(0)
-  preview          Boolean      @default(false)
-  status           LessonStatus @default(DRAFT)
-  createdAt        DateTime     @default(now())
-  updatedAt        DateTime     @updatedAt
+  videoPath       String?      @db.VarChar(500)
+  duration        String?
+  sortOrder       Int          @default(0)
+  preview         Boolean      @default(false)
+  status          LessonStatus @default(DRAFT)
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
 
-  course         Course            @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  course         Course           @relation(fields: [courseId], references: [id], onDelete: Cascade)
   lessonProgress LessonProgress[]
 
   @@unique([courseId, slug])
@@ -237,7 +238,7 @@ model Enrollment {
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
 
-  user  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
   order  Order? @relation(fields: [orderId], references: [id], onDelete: SetNull)
 
@@ -327,31 +328,31 @@ model Review {
 // percentage (Enrollment.progressPercent) is a derived/cached value updated
 // whenever a LessonProgress row changes.
 model LessonProgress {
-  id            Int       @id @default(autoincrement())
-  userId        Int
-  lessonId      Int
-  completed     Boolean   @default(false)
+  id                  Int       @id @default(autoincrement())
+  userId              Int
+  lessonId            Int
+  completed           Boolean   @default(false)
   // Legitimate ACCUMULATED watched time, in seconds — never set directly
   // from currentTime/position. Only incremented server-side by small,
   // playback-verified deltas the client reports while the video is
   // genuinely playing (not seeking, not paused, not an implausible jump).
   // This is the value completion and progress-percent are computed from.
-  watchedSeconds Int      @default(0)
+  watchedSeconds      Int       @default(0)
   // Last playback position, in seconds — resume-only. Set directly from
   // currentTime on every save, completely independent of watchedSeconds,
   // so seeking to the end of a video does NOT by itself mark it watched.
-  lastPositionSeconds Int @default(0)
+  lastPositionSeconds Int       @default(0)
   // Video duration, in seconds, as reported by the client at save time.
   // Needed (alongside watchedSeconds) to compute an in-progress percentage
   // before completion — Lesson.duration is a display string, not seconds.
-  durationSeconds Int     @default(0)
+  durationSeconds     Int       @default(0)
   // Server-side credit clock for watched-time validation: watchedSeconds can
   // only grow by as much real server time as has elapsed past this timestamp
   // (see computeCreditedDelta in progress.service.js). Never client-supplied.
-  lastCreditAt  DateTime?
-  completedAt   DateTime?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  lastCreditAt        DateTime?
+  completedAt         DateTime?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
 
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   lesson Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
@@ -361,21 +362,43 @@ model LessonProgress {
   @@map("lesson_progress")
 }
 
-// Model prepared now; PDF generation is a later phase.
-model Certificate {
-  id         Int      @id @default(autoincrement())
-  userId     Int
-  courseId   Int
-  certificateNumber String @unique @db.VarChar(100)
-  issuedAt   DateTime @default(now())
-  fileUrl    String?  @db.VarChar(500)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+// A certificate is either earned through course completion (COMPLETION) or
+// issued by an administrator as an explicit override (ADMIN_ISSUED). Admin
+// issuance records who issued it and why (adminNote - internal only, never
+// shown to students or on the public verification page). `fileUrl` holds the
+// generated-name of an admin-uploaded PDF inside the persistent certificate
+// storage root (never a path or URL); when null the PDF is generated on demand.
+enum CertificateSource {
+  COMPLETION
+  ADMIN_ISSUED
+}
 
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+enum CertificateStatus {
+  ACTIVE
+  REVOKED
+}
+
+model Certificate {
+  id                Int               @id @default(autoincrement())
+  userId            Int
+  courseId          Int
+  certificateNumber String            @unique @db.VarChar(100)
+  issuedAt          DateTime          @default(now())
+  fileUrl           String?           @db.VarChar(500)
+  source            CertificateSource @default(COMPLETION)
+  status            CertificateStatus @default(ACTIVE)
+  issuedByUserId    Int?
+  adminNote         String?           @db.Text
+  revokedAt         DateTime?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  user     User   @relation("CertificateOwner", fields: [userId], references: [id], onDelete: Cascade)
+  course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  issuedBy User?  @relation("CertificateIssuer", fields: [issuedByUserId], references: [id], onDelete: SetNull)
 
   @@unique([userId, courseId])
+  @@index([issuedByUserId])
   @@map("certificates")
 }
 
@@ -421,13 +444,13 @@ model NewsletterSubscriber {
 }
 
 model ContactMessage {
-  id        Int      @id @default(autoincrement())
+  id        Int                  @id @default(autoincrement())
   name      String
   email     String
   subject   String
-  message   String   @db.Text
+  message   String               @db.Text
   status    ContactMessageStatus @default(NEW)
-  createdAt DateTime @default(now())
+  createdAt DateTime             @default(now())
 
   @@map("contact_messages")
 }
@@ -476,12 +499,12 @@ model Session {
 }
 
 model PasswordResetToken {
-  id        Int      @id @default(autoincrement())
+  id        Int       @id @default(autoincrement())
   userId    Int
-  token     String   @unique
+  token     String    @unique
   expiresAt DateTime
   usedAt    DateTime?
-  createdAt DateTime @default(now())
+  createdAt DateTime  @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 

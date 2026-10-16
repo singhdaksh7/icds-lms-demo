@@ -29,3 +29,6 @@ prisma/*.db
 
 # Claude Code local worktree/session state — never shared
 .claude/
+
+# Admin-uploaded certificate PDFs - never committed, never web-served directly.
+storage/certificates/*

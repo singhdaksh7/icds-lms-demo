@@ -72,7 +72,7 @@ async function verifyCertificate(req, res, next) {
   try {
     const certificate = await prisma.certificate.findUnique({
       where: { certificateNumber: req.params.certificateNumber },
-      include: { user: { select: { name: true } }, course: { select: { title: true } } },
+      select: { certificateNumber: true, issuedAt: true, status: true, user: { select: { name: true } }, course: { select: { title: true } } },
     });
 
     const title = certificate

@@ -29,7 +29,7 @@
                     <tbody>
                         <% certificates.forEach(function (c) { %>
                             <tr>
-                                <td><%= c.course.title %></td>
+                                <td><%= c.course.title %><% if (c.source === "ADMIN_ISSUED") { %><small class="text-muted d-block">Issued by Institute</small><% } %></td>
                                 <td><code><%= c.certificateNumber %></code></td>
                                 <td class="text-muted small"><%= c.issuedAt.toLocaleDateString('en-IN') %></td>
                                 <td class="text-end">

@@ -18,9 +18,9 @@ async function getDashboard(req, res, next) {
     const enrollments = allEnrollments.filter((enrollment) => enrollment.status === 'ACTIVE');
 
     const [certificatesCount, completionChecks, certificateRows] = await Promise.all([
-      prisma.certificate.count({ where: { userId: req.currentUser.id } }),
+      prisma.certificate.count({ where: { userId: req.currentUser.id, status: 'ACTIVE' } }),
       Promise.all(enrollments.map((enrollment) => certificateService.isCertificateEligible(req.currentUser.id, enrollment.courseId))),
-      prisma.certificate.findMany({ where: { userId: req.currentUser.id }, select: { courseId: true, id: true } }),
+      prisma.certificate.findMany({ where: { userId: req.currentUser.id, status: 'ACTIVE' }, select: { courseId: true, id: true } }),
     ]);
     const certificateByCourse = Object.fromEntries(certificateRows.map((row) => [row.courseId, row]));
 
@@ -49,7 +49,7 @@ async function getDashboard(req, res, next) {
     const continueLearning = pickContinueLearningEnrollment(enrollments, lastActivityByEnrollmentId);
     const dashboardCounts = computeDashboardSummary(enrollments, certificatesCount);
     const latestCertificate = certificateRows.length
-      ? await prisma.certificate.findFirst({ where: { userId: req.currentUser.id }, orderBy: { issuedAt: 'desc' }, include: { course: { select: { title: true } } } })
+      ? await prisma.certificate.findFirst({ where: { userId: req.currentUser.id, status: 'ACTIVE' }, orderBy: { issuedAt: 'desc' }, include: { course: { select: { title: true } } } })
       : null;
 
     res.render('student/dashboard', {
@@ -69,9 +69,9 @@ function profilePage(req, res) { res.render('student/profile', { pageTitle: 'My 
 async function updateProfile(req, res, next) { const { errors, values } = validateProfile(req.body); if (errors.length) return res.status(400).render('student/profile', { pageTitle: 'My Profile | ICDS', metaDescription: 'Manage your account.', errors, values }); try { const conflict = await prisma.user.findUnique({ where: { email: values.email } }); if (conflict && conflict.id !== req.currentUser.id) return res.status(409).render('student/profile', { pageTitle: 'My Profile | ICDS', metaDescription: 'Manage your account.', errors: ['That email is already in use.'], values }); await prisma.user.update({ where: { id: req.currentUser.id }, data: values }); req.flashSuccess('Profile updated.'); res.redirect('/student/profile'); } catch (e) { next(e); } }
 function securityPage(req, res) { res.render('student/security', { pageTitle: 'Security | ICDS', metaDescription: 'Change your password.', errors: [] }); }
 async function changePassword(req, res, next) { const { errors } = validatePasswordChange(req.body); if (errors.length) return res.status(400).render('student/security', { pageTitle: 'Security | ICDS', metaDescription: 'Change your password.', errors }); try { const user = await prisma.user.findUnique({ where: { id: req.currentUser.id } }); if (!user || !(await verifyPassword(req.body.currentPassword, user.passwordHash))) return res.status(400).render('student/security', { pageTitle: 'Security | ICDS', metaDescription: 'Change your password.', errors: ['Current password is incorrect.'] }); await prisma.user.update({ where: { id: user.id }, data: { passwordHash: await hashPassword(req.body.newPassword) } }); req.flashSuccess('Password changed successfully.'); res.redirect('/student/security'); } catch (e) { next(e); } }
-async function listCertificates(req, res, next) { try { const certificates = await prisma.certificate.findMany({ where: { userId: req.currentUser.id }, include: { course: true }, orderBy: { issuedAt: 'desc' } }); res.render('student/certificates', { pageTitle: 'My Certificates | ICDS', metaDescription: 'Your issued certificates.', certificates }); } catch (e) { next(e); } }
+async function listCertificates(req, res, next) { try { const certificates = await prisma.certificate.findMany({ where: { userId: req.currentUser.id, status: 'ACTIVE' }, select: { id: true, certificateNumber: true, issuedAt: true, source: true, course: { select: { title: true } } }, orderBy: { issuedAt: 'desc' } }); res.render('student/certificates', { pageTitle: 'My Certificates | ICDS', metaDescription: 'Your issued certificates.', certificates }); } catch (e) { next(e); } }
 async function issueCertificate(req, res, next) { const courseId = Number(req.params.courseId); if (!Number.isInteger(courseId)) return res.status(404).render('public/404', { pageTitle: 'Not Found' }); try { const certificate = await certificateService.issueCertificate(req.currentUser.id, courseId); req.flashSuccess(`Certificate ${certificate.certificateNumber} is ready.`); res.redirect('/student/certificates'); } catch (e) { if (e.code === 'INELIGIBLE') { req.flashError(e.message); return res.redirect('/student/dashboard'); } next(e); } }
-async function downloadCertificate(req, res, next) { const id = Number(req.params.id); if (!Number.isInteger(id)) return res.status(404).render('public/404', { pageTitle: 'Not Found' }); try { const certificate = await prisma.certificate.findFirst({ where: { id, userId: req.currentUser.id }, include: { user: { select: { name: true } }, course: { include: { instructor: true } } } }); if (!certificate) return res.status(404).render('public/404', { pageTitle: 'Not Found' }); const pdf = await certificateService.certificatePdf(certificate); const filename = `${certificate.course.slug}-certificate.pdf`.replace(/[^a-z0-9.-]/gi, '-'); res.type('application/pdf').set('Content-Disposition', `attachment; filename="${filename}"`).send(Buffer.from(pdf)); } catch (e) { next(e); } }
+async function downloadCertificate(req, res, next) { const id = Number(req.params.id); if (!Number.isInteger(id)) return res.status(404).render('public/404', { pageTitle: 'Not Found' }); try { const certificate = await prisma.certificate.findFirst({ where: { id, userId: req.currentUser.id, status: 'ACTIVE' }, include: { user: { select: { name: true } }, course: { include: { instructor: true } } } }); if (!certificate) return res.status(404).render('public/404', { pageTitle: 'Not Found' }); const pdf = await certificateService.certificateFile(certificate); const filename = `${certificate.course.slug}-certificate.pdf`.replace(/[^a-z0-9.-]/gi, '-'); res.type('application/pdf').set('Content-Disposition', `attachment; filename="${filename}"`).send(pdf); } catch (e) { next(e); } }
 
 async function completeLesson(req, res, next) {
   try {

@@ -12,6 +12,7 @@ const {
 } = require('../middleware/videoUpload.middleware');
 const { uploadThumbnail } = require('../middleware/thumbnailUpload.middleware');
 const { uploadSiteImages } = require('../middleware/siteImageUpload.middleware');
+const { uploadCertificatePdf } = require('../middleware/certificateUpload.middleware');
 
 const dashboardController = require('../controllers/admin/dashboard.controller');
 const courseController = require('../controllers/admin/course.controller');
@@ -25,6 +26,7 @@ const enrollmentRequestController = require('../controllers/admin/enrollmentRequ
 const faqController = require('../controllers/admin/faq.controller');
 const siteContentController = require('../controllers/admin/siteContent.controller');
 const reviewController = require('../controllers/admin/review.controller');
+const certificateController = require('../controllers/admin/certificate.controller');
 
 // Every route in this file is admin-only — enforced once here rather than
 // repeated per-route, so it's impossible to accidentally add an
@@ -157,7 +159,19 @@ router.get('/reviews', reviewController.listReviews);
 router.post('/reviews/:id/status', doubleCsrfProtection, reviewController.updateReviewStatus);
 router.post('/reviews/:id/delete', doubleCsrfProtection, reviewController.deleteReview);
 
-router.get('/certificates', engagementController.certificates);
+// --- Certificates (list, admin-issued override, revoke/restore, download) -----
+// Multipart parsing (optional PDF) runs BEFORE CSRF so the token in the
+// multipart body is available.
+router.get('/certificates', certificateController.listCertificates);
+router.post(
+  '/certificates',
+  uploadCertificatePdf('/admin/certificates'),
+  doubleCsrfProtection,
+  certificateController.issueCertificate
+);
+router.get('/certificates/:id/download', certificateController.downloadCertificate);
+router.post('/certificates/:id/revoke', doubleCsrfProtection, certificateController.revokeCertificate);
+router.post('/certificates/:id/restore', doubleCsrfProtection, certificateController.restoreCertificate);
 router.get('/newsletter', engagementController.newsletter);
 router.get('/messages', engagementController.messages);
 router.get('/messages/:id', engagementController.messageDetail);
