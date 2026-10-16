@@ -19,7 +19,8 @@ let failNextUpdate = false;
 
 function entityDelegate(map) {
   return {
-    async findUnique({ where }) { const row = map.get(where.id); return row ? { ...row } : null; }, // a copy, like Prisma
+    async findUnique({ where }) { const row = map.get(where.id); return row ? { ...row, _count: { courses: 0 } } : null; }, // a copy, like Prisma
+    async delete({ where }) { map.delete(where.id); },
     async update({ where, data }) {
       if (failNextUpdate) { failNextUpdate = false; throw new Error('db write failed'); }
       Object.assign(map.get(where.id), data);
@@ -33,6 +34,8 @@ const fakePrisma = {
     async upsert({ where, update, create }) { rows.set(where.key, rows.has(where.key) ? update.value : create.value); },
     async deleteMany({ where }) { rows.delete(where.key); },
   },
+  enrollment: { async count() { return 0; } },
+  orderItem: { async count() { return 0; } },
   category: entityDelegate(store.category),
   course: entityDelegate(store.course),
   instructor: entityDelegate(store.instructor),
@@ -422,6 +425,32 @@ for (const [entity, column, uploadUrl, removeUrl] of entityCases) {
       assert.equal(res.status, 302);
       await settle();
       assert.deepEqual(allFiles(), []);
+    } finally { server.close(); }
+  });
+}
+
+for (const [entity, column, deleteUrl] of [
+  ['category', 'imageUrl', '/admin/categories/1/delete'],
+  ['course', 'thumbnailUrl', '/admin/courses/1/delete'],
+  ['instructor', 'photoUrl', '/admin/instructors/1/delete'],
+]) {
+  test(`deleting a ${entity} also removes its managed image file (no orphans), but never a bundled image`, async () => {
+    reset();
+    const { server, base } = await appFor();
+    try {
+      const s = await session(base);
+      const uploadUrl = { category: '/admin/categories/1/image/upload', course: '/admin/courses/1/thumbnail/upload', instructor: '/admin/instructors/1/photo/upload' }[entity];
+      await upload(base, uploadUrl, s, { field: 'thumbnail', file: { buf: PNG, name: 'x.png' } });
+      assert.equal(allFiles().length, 1);
+      assert.equal((await postUrl(base, deleteUrl, s)).status, 302);
+      assert.equal(store[entity].has(1), false);
+      await settle();
+      assert.deepEqual(allFiles(), [], 'the image file is removed with the record');
+
+      reset();
+      store[entity].get(1)[column] = '/images/demo/hero.jpg';
+      await postUrl(base, deleteUrl, s);
+      assert.ok(fs.existsSync(path.join(__dirname, '..', 'public', 'images', 'demo', 'hero.jpg')));
     } finally { server.close(); }
   });
 }

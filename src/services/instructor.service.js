@@ -1,5 +1,6 @@
 const { prisma } = require('../config/db');
 const { generateUniqueSlug } = require('../lib/slug');
+const imageStorage = require('../lib/imageStorage');
 
 class InstructorError extends Error {
   constructor(message) {
@@ -96,6 +97,7 @@ async function deleteInstructor(id) {
   }
 
   await prisma.instructor.delete({ where: { id } });
+  imageStorage.deleteIfOwned(existing.photoUrl);
   return existing._count.courses;
 }
 

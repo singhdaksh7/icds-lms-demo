@@ -1,5 +1,6 @@
 const { prisma } = require('../config/db');
 const { generateUniqueSlug } = require('../lib/slug');
+const imageStorage = require('../lib/imageStorage');
 const { buildPagination } = require('../lib/pagination');
 
 const LEVELS = ['BEGINNER', 'INTERMEDIATE', 'ADVANCED'];
@@ -256,7 +257,10 @@ async function deleteCourseIfSafe(id) {
     );
   }
 
+  const existing = await prisma.course.findUnique({ where: { id }, select: { thumbnailUrl: true } });
   await prisma.course.delete({ where: { id } });
+  // The record is gone; remove its managed image file too (bundled/external URLs are never touched).
+  if (existing) imageStorage.deleteIfOwned(existing.thumbnailUrl);
 }
 
 module.exports = {

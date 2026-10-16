@@ -1,5 +1,6 @@
 const { prisma } = require('../config/db');
 const { generateUniqueSlug } = require('../lib/slug');
+const imageStorage = require('../lib/imageStorage');
 
 class CategoryError extends Error {
   constructor(message) {
@@ -74,6 +75,7 @@ async function deleteCategory(id) {
   }
 
   await prisma.category.delete({ where: { id } });
+  imageStorage.deleteIfOwned(existing.imageUrl);
   return existing._count.courses;
 }
 
