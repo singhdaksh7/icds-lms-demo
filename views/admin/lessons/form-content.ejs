@@ -95,6 +95,7 @@
 </div>
 
 <% if (lesson) { %>
+<% const r2Direct = (typeof directR2Upload !== 'undefined') && directR2Upload; %>
 <div class="admin-card mt-4">
     <h5 class="mb-3">Lesson Video</h5>
 
@@ -108,7 +109,7 @@
 
         <h6 class="small fw-semibold">Replace video</h6>
         <p class="form-text mt-0">Upload an MP4 video. The file will be available only to enrolled students. Accepted formats: MP4, WebM. Max size depends on the active storage provider (see Video Storage). The old video is deleted only after the new one is saved.</p>
-        <form method="POST" action="/admin/lessons/<%= lesson.id %>/video/upload" enctype="multipart/form-data" class="mb-3">
+        <form method="POST" action="/admin/lessons/<%= lesson.id %>/video/upload" enctype="multipart/form-data" class="mb-3"<%- r2Direct ? ' data-r2-direct="' + lesson.id + '"' : '' %>>
             <input type="hidden" name="_csrf" value="<%= csrfToken %>">
             <input type="file" name="video" id="lesson-video-replace-input" accept="video/mp4,video/webm,video/quicktime" class="form-control form-control-custom mb-1" required>
             <div id="lesson-video-replace-name" class="small text-success mb-2" style="display:none;"></div>
@@ -132,7 +133,7 @@
 
         <h6 class="small fw-semibold">Upload video</h6>
         <p class="form-text mt-0">Upload an MP4 video. The file will be available only to enrolled students. Accepted formats: MP4, WebM. Max size: 200MB.</p>
-        <form method="POST" action="/admin/lessons/<%= lesson.id %>/video/upload" enctype="multipart/form-data" class="mb-4">
+        <form method="POST" action="/admin/lessons/<%= lesson.id %>/video/upload" enctype="multipart/form-data" class="mb-4"<%- r2Direct ? ' data-r2-direct="' + lesson.id + '"' : '' %>>
             <input type="hidden" name="_csrf" value="<%= csrfToken %>">
             <input type="file" name="video" id="lesson-video-replace-input" accept="video/mp4,video/webm,video/quicktime" class="form-control form-control-custom mb-1" required>
             <div id="lesson-video-replace-name" class="small text-success mb-2" style="display:none;"></div>
@@ -158,6 +159,9 @@
 </div>
 <% } %>
 
+<% if (lesson && (typeof directR2Upload !== 'undefined') && directR2Upload) { %>
+<script src="/js/lesson-r2-upload.js" defer></script>
+<% } %>
 <script nonce="<%= cspNonce %>">
 (function () {
     // Purely cosmetic: shows the picked filename next to each file input.

@@ -163,6 +163,7 @@ async function editLessonForm(req, res, next) {
       statuses: STATUSES,
       errors: [],
       values: lesson,
+      directR2Upload: (await videoStorageSettings.getConfig()).activeProvider === 'CLOUDFLARE_R2',
     });
   } catch (err) {
     next(err);

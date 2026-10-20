@@ -33,6 +33,7 @@ const paymentSettingsController = require('../controllers/admin/paymentSettings.
 const emailSettingsController = require('../controllers/admin/emailSettings.controller');
 const paymentLimiter = require('../middleware/paymentRateLimit');
 const videoStorageController = require('../controllers/admin/videoStorage.controller');
+const r2UploadController = require('../controllers/admin/r2Upload.controller');
 
 // Every route in this file is admin-only — enforced once here rather than
 // repeated per-route, so it's impossible to accidentally add an
@@ -113,6 +114,12 @@ router.post(
   doubleCsrfProtection,
   lessonController.migrateLessonVideoToR2
 );
+
+// Direct browser -> R2 multipart upload (JSON; CSRF token in the JSON body).
+router.post('/lessons/:id/video/r2/start', doubleCsrfProtection, r2UploadController.start);
+router.post('/lessons/:id/video/r2/part-urls', doubleCsrfProtection, r2UploadController.partUrls);
+router.post('/lessons/:id/video/r2/complete', doubleCsrfProtection, r2UploadController.complete);
+router.post('/lessons/:id/video/r2/abort', doubleCsrfProtection, r2UploadController.abort);
 
 // --- Video Storage (LOCAL / Cloudflare R2) ------------------------------------
 router.get('/video-storage', videoStorageController.showPage);

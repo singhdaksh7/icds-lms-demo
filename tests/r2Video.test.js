@@ -359,6 +359,54 @@ test('manual "Mark Complete" is refused for R2 videos (progress rules unchanged)
   } finally { prisma.lesson.findUnique = o.l; prisma.enrollment.findUnique = o.e; }
 });
 
+// --- direct browser -> R2 multipart sessions ----------------------------------------
+
+test('direct-upload session tokens bind lesson, key, uploadId and size', () => {
+  const up = require('../src/controllers/admin/r2Upload.controller');
+  const t = up.sign(9, GOOD_KEY, 'upload-1', 5000);
+  assert.equal(up.tokenOk(9, GOOD_KEY, 'upload-1', 5000, t), true);
+  assert.equal(up.tokenOk(10, GOOD_KEY, 'upload-1', 5000, t), false); // other lesson
+  assert.equal(up.tokenOk(9, GOOD_KEY.replace('.mp4', '.webm'), 'upload-1', 5000, t), false); // other key
+  assert.equal(up.tokenOk(9, GOOD_KEY, 'upload-2', 5000, t), false); // other upload
+  assert.equal(up.tokenOk(9, GOOD_KEY, 'upload-1', 5001, t), false); // other size
+  assert.equal(up.tokenOk(9, GOOD_KEY, 'upload-1', 5000, 'x'.repeat(64)), false);
+  assert.equal(up.tokenOk(9, GOOD_KEY, 'upload-1', 5000, undefined), false);
+});
+
+test('direct-upload endpoints reject forged sessions, foreign keys and bad part numbers', async () => {
+  const up = require('../src/controllers/admin/r2Upload.controller');
+  const o = { l: prisma.lesson.findUnique, c: settingsSvc.getR2ConfigOrNull };
+  prisma.lesson.findUnique = async () => ({ id: 9, courseId: 3, course: { slug: 'c' } });
+  settingsSvc.getR2ConfigOrNull = async () => FAKE;
+  const call = async (fn, body) => {
+    const res = { code: 200, body: null, status(c) { this.code = c; return this; }, json(b) { this.body = b; return this; } };
+    await fn({ params: { id: '9' }, body }, res);
+    return res;
+  };
+  try {
+    const good = up.sign(9, GOOD_KEY, 'up1', 70 * 1024 * 1024);
+    assert.equal((await call(up.partUrls, { key: GOOD_KEY, uploadId: 'up1', token: 'f'.repeat(64), size: 70 * 1024 * 1024, partNumbers: [1] })).code, 403);
+    assert.equal((await call(up.partUrls, { key: '../../x', uploadId: 'up1', token: good, size: 70 * 1024 * 1024, partNumbers: [1] })).code, 403);
+    // a validly-signed key that belongs to a different lesson path is still refused
+    const foreign = 'courses/3/lessons/77/123e4567-e89b-12d3-a456-426614174000.mp4';
+    assert.equal((await call(up.partUrls, { key: foreign, uploadId: 'up1', token: up.sign(9, foreign, 'up1', 5000), size: 5000, partNumbers: [1] })).code, 403);
+    for (const partNumbers of [[], [0], [4], [1.5], ['1'], Array.from({ length: 51 }, (_, i) => i + 1)]) {
+      assert.equal((await call(up.partUrls, { key: GOOD_KEY, uploadId: 'up1', token: good, size: 70 * 1024 * 1024, partNumbers })).code, 400, JSON.stringify(partNumbers).slice(0, 30));
+    }
+    const ok = await call(up.partUrls, { key: GOOD_KEY, uploadId: 'up1', token: good, size: 70 * 1024 * 1024, partNumbers: [1, 2, 3] });
+    assert.equal(ok.code, 200);
+    assert.equal(Object.keys(ok.body.urls).length, 3);
+    assert.ok(!JSON.stringify(ok.body).includes(FAKE.secretAccessKey));
+    // start: rejects non-video names, tiny/huge sizes
+    assert.equal((await call(up.start, { filename: 'evil.exe', size: 5000 })).code, 400);
+    assert.equal((await call(up.start, { filename: 'a.mp4', size: 10 })).code, 400);
+    assert.equal((await call(up.start, { filename: 'a.mp4', size: 6 * 1024 ** 3 })).code, 400);
+    // complete with a forged token / incomplete parts is refused before touching R2
+    assert.equal((await call(up.complete, { key: GOOD_KEY, uploadId: 'up1', token: 'a'.repeat(64), size: 5000, parts: [] })).code, 403);
+    assert.equal((await call(up.complete, { key: GOOD_KEY, uploadId: 'up1', token: good, size: 70 * 1024 * 1024, parts: [{ PartNumber: 1, ETag: '"abcdef12"' }] })).code, 400);
+  } finally { prisma.lesson.findUnique = o.l; settingsSvc.getR2ConfigOrNull = o.c; }
+});
+
 // --- admin-only + CSRF -------------------------------------------------------------
 
 function adminApp(user) {
@@ -384,14 +432,14 @@ test('Video Storage admin routes: admin-only and CSRF-protected', async () => {
 
   ({ server, port } = await adminApp({ id: 5, role: 'STUDENT' }));
   try {
-    for (const [m, p] of [['GET', '/admin/video-storage'], ['POST', '/admin/video-storage'], ['POST', '/admin/video-storage/test'], ['POST', '/admin/lessons/9/video/migrate-r2']]) {
+    for (const [m, p] of [['GET', '/admin/video-storage'], ['POST', '/admin/video-storage'], ['POST', '/admin/video-storage/test'], ['POST', '/admin/lessons/9/video/migrate-r2'], ['POST', '/admin/lessons/9/video/r2/start'], ['POST', '/admin/lessons/9/video/r2/part-urls'], ['POST', '/admin/lessons/9/video/r2/complete'], ['POST', '/admin/lessons/9/video/r2/abort']]) {
       assert.equal((await fetch(`http://127.0.0.1:${port}${p}`, { method: m })).status, 403, `${m} ${p}`);
     }
   } finally { server.close(); }
 
   ({ server, port } = await adminApp({ id: 1, role: 'ADMIN' }));
   try {
-    for (const p of ['/admin/video-storage', '/admin/video-storage/test', '/admin/lessons/9/video/migrate-r2']) {
+    for (const p of ['/admin/video-storage', '/admin/video-storage/test', '/admin/lessons/9/video/migrate-r2', '/admin/lessons/9/video/r2/start', '/admin/lessons/9/video/r2/complete']) {
       const res = await fetch(`http://127.0.0.1:${port}${p}`, {
         method: 'POST',
         headers: { 'content-type': 'application/x-www-form-urlencoded' },

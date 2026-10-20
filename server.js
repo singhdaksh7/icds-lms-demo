@@ -106,6 +106,8 @@ app.use(
         ],
         'connect-src': [
           "'self'",
+          // Direct browser -> R2 multipart upload of lesson videos (admin).
+          'https://*.r2.cloudflarestorage.com',
           'https://api.razorpay.com',
           'https://cdn.razorpay.com',
           'https://lumberjack.razorpay.com',

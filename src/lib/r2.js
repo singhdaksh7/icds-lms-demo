@@ -10,6 +10,10 @@ const {
   PutObjectCommand,
   DeleteObjectCommand,
   GetObjectCommand,
+  CreateMultipartUploadCommand,
+  UploadPartCommand,
+  CompleteMultipartUploadCommand,
+  AbortMultipartUploadCommand,
 } = require('@aws-sdk/client-s3');
 const { Upload } = require('@aws-sdk/lib-storage');
 const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
@@ -119,6 +123,57 @@ async function signedGetUrl(config, key, ttlSeconds = SIGNED_URL_TTL_SECONDS) {
   return { url, expiresInSeconds: ttl };
 }
 
+// --- Direct browser -> R2 multipart upload -------------------------------------
+// ICDS authorizes and orchestrates; the browser PUTs each part straight to R2
+// with a short-lived presigned URL, so large videos never pass through the VPS
+// or its reverse proxy (which would time out). The Secret Access Key never
+// reaches the browser - only per-part signed URLs do.
+const PART_URL_TTL_SECONDS = 3600;
+
+async function createMultipart(config, key, contentType) {
+  if (!isOwnedObjectKey(key)) throw new Error('Invalid object key.');
+  const out = await getClient(config).send(
+    new CreateMultipartUploadCommand({ Bucket: config.bucket, Key: key, ContentType: contentType })
+  );
+  return out.UploadId;
+}
+
+async function signUploadPartUrl(config, key, uploadId, partNumber) {
+  if (!isOwnedObjectKey(key)) throw new Error('Invalid object key.');
+  return getSignedUrl(
+    getClient(config),
+    new UploadPartCommand({ Bucket: config.bucket, Key: key, UploadId: uploadId, PartNumber: partNumber }),
+    { expiresIn: PART_URL_TTL_SECONDS }
+  );
+}
+
+async function completeMultipart(config, key, uploadId, parts) {
+  if (!isOwnedObjectKey(key)) throw new Error('Invalid object key.');
+  await getClient(config).send(
+    new CompleteMultipartUploadCommand({
+      Bucket: config.bucket,
+      Key: key,
+      UploadId: uploadId,
+      MultipartUpload: { Parts: parts.map((p) => ({ PartNumber: p.PartNumber, ETag: p.ETag })) },
+    })
+  );
+}
+
+async function abortMultipart(config, key, uploadId) {
+  if (!isOwnedObjectKey(key)) return;
+  await getClient(config).send(new AbortMultipartUploadCommand({ Bucket: config.bucket, Key: key, UploadId: uploadId }));
+}
+
+// First `n` bytes of an object (for file-signature verification).
+async function readHead(config, key, n = 16) {
+  const out = await getClient(config).send(
+    new GetObjectCommand({ Bucket: config.bucket, Key: key, Range: `bytes=0-${n - 1}` })
+  );
+  const chunks = [];
+  for await (const c of out.Body) chunks.push(c);
+  return Buffer.concat(chunks);
+}
+
 // Safe connectivity check: bucket HEAD (exists + credentials valid) and a
 // tiny temporary object written then deleted under a reserved prefix. Never
 // touches lesson videos.
@@ -162,6 +217,11 @@ module.exports = {
   objectExists,
   deleteObject,
   signedGetUrl,
+  createMultipart,
+  signUploadPartUrl,
+  completeMultipart,
+  abortMultipart,
+  readHead,
   testConnection,
   describeError,
 };
