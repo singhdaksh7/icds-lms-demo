@@ -36,6 +36,7 @@ const fakePrisma = {
   },
   enrollment: { async count() { return 0; } },
   orderItem: { async count() { return 0; } },
+  lesson: { async findMany() { return []; } },
   category: entityDelegate(store.category),
   course: entityDelegate(store.course),
   instructor: entityDelegate(store.instructor),

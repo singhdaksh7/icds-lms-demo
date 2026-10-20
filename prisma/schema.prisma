@@ -52,6 +52,7 @@ enum LessonStatus {
 enum VideoType {
   EXTERNAL
   LOCAL
+  R2
 }
 
 enum EnrollmentStatus {
@@ -211,6 +212,13 @@ model Lesson {
   // only used server-side to stream via the protected /media route. Not an
   // absolute filesystem path, so it carries no meaningful info if leaked.
   videoPath       String?      @db.VarChar(500)
+  // Cloudflare R2 videos (videoType = R2): only the server-generated object
+  // key is stored (courses/<courseId>/lessons/<lessonId>/<uuid>.mp4), never a
+  // URL. Playback uses short-lived presigned URLs minted after authorization.
+  videoObjectKey  String?      @db.VarChar(500)
+  videoDurationSeconds Int?
+  videoSizeBytes  BigInt?
+  videoMimeType   String?      @db.VarChar(100)
   duration        String?
   sortOrder       Int          @default(0)
   preview         Boolean      @default(false)

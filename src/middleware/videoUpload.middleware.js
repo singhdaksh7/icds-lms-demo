@@ -13,6 +13,8 @@ const {
   ensureCourseDir,
   isAllowedVideoFile,
 } = require('../lib/videoStorage');
+const { createR2Storage, VideoSignatureError } = require('../lib/r2MulterStorage');
+const videoStorageSettings = require('../services/videoStorageSettings.service');
 
 // Loads the target lesson (+ course, for its slug) before multer starts
 // streaming the upload, so the destination directory can be computed safely
@@ -71,13 +73,36 @@ const storage = multer.diskStorage({
   },
 });
 
+const videoFileFilter = (req, file, cb) => cb(null, isAllowedVideoFile(file.originalname, file.mimetype));
+
 const multerUpload = multer({
   storage,
   limits: { fileSize: MAX_UPLOAD_BYTES, files: 1 },
-  fileFilter(req, file, cb) {
-    cb(null, isAllowedVideoFile(file.originalname, file.mimetype));
-  },
+  fileFilter: videoFileFilter,
 }).single('video');
+
+// Cloudflare R2 uploads stream straight to the bucket (no VPS disk, no whole-
+// file buffering), so the cap can be far larger than the 200 MB local limit.
+const R2_MAX_UPLOAD_BYTES = Number(process.env.R2_MAX_UPLOAD_BYTES) || 5 * 1024 * 1024 * 1024; // 5 GiB
+const r2MulterUpload = multer({
+  storage: createR2Storage(),
+  limits: { fileSize: R2_MAX_UPLOAD_BYTES, files: 1 },
+  fileFilter: videoFileFilter,
+}).single('video');
+
+// Picks the upload destination from the admin's Video Storage settings.
+// Existing LOCAL lessons are unaffected; only where NEW uploads go changes.
+async function resolveUploadTarget(req) {
+  const cfg = await videoStorageSettings.getConfig();
+  if (cfg.activeProvider !== 'CLOUDFLARE_R2') {
+    req.videoProvider = 'LOCAL';
+    return;
+  }
+  req.videoProvider = 'R2';
+  req.r2UploadConfig = cfg.r2;
+  req.r2CourseId = req.lessonForVideo ? req.lessonForVideo.courseId : req.courseForVideo.id;
+  req.r2LessonId = req.lessonForVideo ? req.lessonForVideo.id : 'new';
+}
 
 // Translates multer's errors (oversized file, rejected type) into a normal
 // flash-message redirect instead of a raw 500 from the generic error
@@ -86,15 +111,27 @@ const multerUpload = multer({
 // failure (edit page for replace uploads, new-lesson form for create-time
 // uploads).
 function uploadVideo(redirectTo) {
-  return function (req, res, next) {
-    multerUpload(req, res, (err) => {
+  return async function (req, res, next) {
+    try {
+      await resolveUploadTarget(req);
+    } catch (err) {
+      return next(err);
+    }
+    const handler = req.videoProvider === 'R2' ? r2MulterUpload : multerUpload;
+    handler(req, res, (err) => {
       if (!err) {
         return next();
       }
       if (err.code === 'LIMIT_FILE_SIZE') {
         req.flashError(
-          'Video file is too large for direct upload (max 200MB). Use File Manager/SFTP for large videos (see README "Video Upload").'
+          req.videoProvider === 'R2'
+            ? 'Video file is too large (max 5 GB).'
+            : 'Video file is too large for direct upload (max 200MB). Use File Manager/SFTP for large videos (see README "Video Upload").'
         );
+      } else if (req.videoProvider === 'R2' && !(err instanceof VideoSignatureError) && !/Unsupported video/.test(err.message || '')) {
+        // Never surface raw storage-SDK errors to the browser.
+        console.error('R2 upload failed:', err && err.name);
+        req.flashError('Video upload to cloud storage failed. Check Admin > Video Storage and try again.');
       } else {
         req.flashError(err.message || 'Video upload failed.');
       }

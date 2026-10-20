@@ -26,6 +26,7 @@ const adminRoutes = require('./src/routes/admin.routes');
 const mediaRoutes = require('./src/routes/media.routes');
 const internalRoutes = require('./src/routes/internal.routes');
 const healthRoutes = require('./src/routes/api/health.routes');
+const lessonApiRoutes = require('./src/routes/api/lessons.routes');
 const notFound = require('./src/middleware/notFound');
 const errorHandler = require('./src/middleware/errorHandler');
 
@@ -93,7 +94,9 @@ app.use(
         'style-src': ["'self'", "'unsafe-inline'", 'https://cdn.jsdelivr.net', 'https://fonts.googleapis.com'],
         'font-src': ["'self'", 'https://fonts.gstatic.com', 'https://cdn.jsdelivr.net', 'data:'],
         'img-src': ["'self'", 'data:', 'https:'],
-        'media-src': ["'self'"],
+        // R2 lesson videos play from short-lived presigned URLs on Cloudflare's
+        // S3 endpoint (never a public bucket / r2.dev domain).
+        'media-src': ["'self'", 'https://*.r2.cloudflarestorage.com'],
         'frame-src': [
           'https://www.youtube.com',
           'https://www.youtube-nocookie.com',
@@ -184,6 +187,7 @@ app.use(siteMiddleware);
 app.use(require('./src/lib/richText').middleware);
 
 app.use('/api/health', healthRoutes);
+app.use('/api/lessons', lessonApiRoutes);
 app.use('/', authRoutes);
 app.use('/', courseRoutes);
 app.use('/', checkoutRoutes);

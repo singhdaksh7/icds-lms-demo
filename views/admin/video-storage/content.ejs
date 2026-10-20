@@ -1,0 +1,101 @@
+<% const v = values || {}; %>
+<h1 style="font-size:24px;" class="mb-4">Video Storage</h1>
+
+<% if (errors && errors.length) { %>
+    <div class="alert alert-danger">
+        <ul class="mb-0 ps-3">
+            <% errors.forEach(function (error) { %><li><%= error %></li><% }) %>
+        </ul>
+    </div>
+<% } %>
+
+<div class="row g-4">
+    <div class="col-lg-4">
+        <div class="admin-card">
+            <h6 class="mb-3">Status</h6>
+            <dl class="small mb-0">
+                <dt>Provider for new uploads</dt>
+                <dd><%= status.activeProvider === 'CLOUDFLARE_R2' ? 'Cloudflare R2' : 'Local (VPS disk)' %></dd>
+                <dt>Connection</dt>
+                <dd>
+                    <% if (testResult && testResult.ok) { %>
+                        <span class="text-success"><i class="bi bi-check-circle-fill"></i> Connected</span>
+                    <% } else if (testResult) { %>
+                        <span class="text-danger"><i class="bi bi-x-circle-fill"></i> <%= testResult.message %></span>
+                    <% } else { %>
+                        <span class="text-muted">Not tested in this view</span>
+                    <% } %>
+                </dd>
+                <dt>Bucket</dt>
+                <dd><%= status.bucket || '—' %></dd>
+                <dt>Access Key</dt>
+                <dd><code><%= status.accessKeyMasked || '—' %></code></dd>
+                <dt>Secret</dt>
+                <dd><%= status.secretConfigured ? 'Configured' : 'Not configured' %></dd>
+                <% if (status.secretError) { %><dd class="text-danger"><%= status.secretError %></dd><% } %>
+            </dl>
+            <% if (status.r2Complete) { %>
+                <form method="POST" action="/admin/video-storage/test" class="mt-3">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                    <button type="submit" class="btn btn-sm btn-outline-primary">Test Connection</button>
+                </form>
+            <% } %>
+            <% if (testResult && testResult.ok) { %>
+                <p class="small text-muted mt-2 mb-0">Bucket reachable, write and delete verified (temporary test object only).</p>
+            <% } %>
+        </div>
+    </div>
+
+    <div class="col-lg-8">
+        <div class="admin-card">
+            <h6 class="mb-3">Storage provider</h6>
+            <form method="POST" action="/admin/video-storage" autocomplete="off">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <% const selected = v.provider || status.provider; %>
+
+                <div class="mb-3">
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="provider" id="p-local" value="LOCAL" <%= selected === 'LOCAL' ? 'checked' : '' %>>
+                        <label class="form-check-label" for="p-local">Local (VPS disk) - existing behaviour, 200 MB per upload</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="provider" id="p-r2" value="CLOUDFLARE_R2" <%= selected === 'CLOUDFLARE_R2' ? 'checked' : '' %>>
+                        <label class="form-check-label" for="p-r2">Cloudflare R2 - private bucket, up to 5 GB per upload, streamed to students via short-lived signed links</label>
+                    </div>
+                    <div class="form-text">Switching only affects NEW uploads. Existing lessons keep playing from wherever they are stored.</div>
+                </div>
+
+                <h6 class="mt-4 mb-3">Cloudflare R2</h6>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Account ID</label>
+                        <input type="text" name="accountId" class="form-control form-control-custom" value="<%= v.accountId !== undefined ? v.accountId : status.accountId %>" maxlength="32">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Bucket name</label>
+                        <input type="text" name="bucket" class="form-control form-control-custom" value="<%= v.bucket !== undefined ? v.bucket : status.bucket %>" maxlength="63">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Access Key ID</label>
+                        <input type="text" name="accessKeyId" class="form-control form-control-custom" value="<%= v.accessKeyId || '' %>" placeholder="<%= status.accessKeyMasked ? 'Saved: ' + status.accessKeyMasked + ' (re-enter to change)' : '' %>" maxlength="128" autocomplete="off">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Secret Access Key</label>
+                        <input type="password" name="secretAccessKey" class="form-control form-control-custom" value="" placeholder="<%= status.secretConfigured ? 'Configured - leave blank to keep' : '' %>" maxlength="256" autocomplete="new-password">
+                        <div class="form-text">Stored encrypted. Never shown again.</div>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label small fw-semibold">Endpoint (optional)</label>
+                        <input type="text" name="endpoint" class="form-control form-control-custom" value="<%= v.endpoint !== undefined ? v.endpoint : status.endpoint %>" placeholder="https://&lt;account&gt;.r2.cloudflarestorage.com">
+                        <div class="form-text">Leave blank to use the standard endpoint for the Account ID. The bucket stays private - no public access or r2.dev URL needed.</div>
+                    </div>
+                </div>
+
+                <button type="submit" class="auth-submit mt-4" style="width:auto; padding:0 32px;">Save</button>
+            </form>
+            <p class="small text-muted mt-3 mb-0">
+                Signed streaming links are access control, not DRM: an enrolled viewer with technical skill can still capture video that plays in their browser.
+            </p>
+        </div>
+    </div>
+</div>

@@ -260,7 +260,13 @@ async function deleteCourseIfSafe(id) {
   }
 
   const existing = await prisma.course.findUnique({ where: { id }, select: { thumbnailUrl: true } });
+  const lessonsWithVideo = await prisma.lesson.findMany({
+    where: { courseId: id, videoType: 'R2' },
+    select: { id: true, videoType: true, videoObjectKey: true },
+  });
   await prisma.course.delete({ where: { id } });
+  // DB first, objects after: a failure here only leaves an orphan, never a broken lesson.
+  await require('./r2Cleanup.service').deleteObjectsForCourse(lessonsWithVideo);
   // The record is gone; remove its managed image file too (bundled/external URLs are never touched).
   if (existing) imageStorage.deleteIfOwned(existing.thumbnailUrl);
 }

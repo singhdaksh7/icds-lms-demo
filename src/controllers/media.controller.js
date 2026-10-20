@@ -10,6 +10,8 @@ const { prisma } = require('../config/db');
 const { isUserEnrolled } = require('../services/enrollment.service');
 const { resolveVideoPath, mimeTypeFor } = require('../lib/videoStorage');
 const path = require('path');
+const r2 = require('../lib/r2');
+const videoStorageSettings = require('../services/videoStorageSettings.service');
 
 async function getLessonVideo(req, res, next) {
   try {
@@ -130,4 +132,56 @@ async function getLessonVideo(req, res, next) {
   }
 }
 
-module.exports = { getLessonVideo };
+// GET /api/lessons/:lessonId/video-source
+//
+// For R2-hosted lessons: authenticates + authorizes exactly like the local
+// /media route, then returns ONLY a short-lived presigned GET URL. The video
+// bytes flow R2 -> browser (Range/seek handled by R2); nothing is proxied
+// through this server. R2 credentials and the bucket stay server-side.
+//
+// A signed URL is access control, not DRM: an authorized, technically skilled
+// viewer can still capture the stream while it plays.
+async function getLessonVideoSource(req, res, next) {
+  try {
+    res.setHeader('Cache-Control', 'private, no-store, max-age=0');
+    const raw = req.params.lessonId;
+    const lessonId = /^\d{1,10}$/.test(raw) ? parseInt(raw, 10) : NaN;
+    if (!Number.isInteger(lessonId) || lessonId <= 0 || lessonId > 2147483647) {
+      return res.status(404).json({ error: 'Not found' });
+    }
+
+    const lesson = await prisma.lesson.findUnique({
+      where: { id: lessonId },
+      include: { course: true },
+    });
+    if (!lesson || lesson.status !== 'PUBLISHED' || !lesson.course) {
+      return res.status(404).json({ error: 'Not found' });
+    }
+    if (lesson.videoType !== 'R2' || !lesson.videoObjectKey) {
+      return res.status(404).json({ error: 'Not found' });
+    }
+
+    const isAdmin = Boolean(req.currentUser && req.currentUser.role === 'ADMIN');
+    let authorized = isAdmin || lesson.preview;
+    if (!authorized) {
+      if (!req.currentUser) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+      authorized = await isUserEnrolled(req.currentUser.id, lesson.courseId);
+    }
+    if (!authorized) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+
+    const config = await videoStorageSettings.getR2ConfigOrNull();
+    if (!config) {
+      return res.status(503).json({ error: 'Video storage unavailable' });
+    }
+    const { url, expiresInSeconds } = await r2.signedGetUrl(config, lesson.videoObjectKey);
+    return res.json({ url, expiresInSeconds, mimeType: lesson.videoMimeType || 'video/mp4' });
+  } catch (err) {
+    next(err);
+  }
+}
+
+module.exports = { getLessonVideo, getLessonVideoSource };

@@ -824,3 +824,16 @@ SEO/email/local-integration work only, no hosting changes.
 **Email.** Admins can set SMTP themselves in *Admin → Email Settings* (password encrypted at rest, write-only, "Send test email" button). Saved settings override the env defaults. TLS certificate verification is always on; STARTTLS is required on non-SSL ports. Email failure never affects payments.
 
 **Text formatting.** In Admin text fields use the toolbar (or type `[b]..[/b]`, `[i]`, `[u]`, `[s]`, `[size=24]..[/size]`, `[color=#c0392b]..[/color]`). Rendered safely on the public site by `src/lib/richText.js`.
+
+## Cloudflare R2 Video Storage
+
+Admin > **Video Storage** switches where NEW lesson videos are stored: `LOCAL` (VPS disk, 200 MB limit, existing behaviour) or `CLOUDFLARE_R2` (private bucket, up to 5 GB, no VPS disk).
+
+- **Bucket stays private.** No public access, `r2.dev` URL or public custom domain is needed or used.
+- **Upload:** browser -> ICDS (admin only, CSRF-protected, extension + MIME + file-signature validated) -> streamed to R2 as a multipart upload (never buffered whole in RAM, never written to disk). Object keys are server-generated: `courses/<courseId>/lessons/<lessonId>/<uuid>.mp4`; only the key is stored in the DB.
+- **Playback:** the lesson page has no video URL. After login + enrollment checks, `GET /api/lessons/:id/video-source` returns a short-lived (10 min) presigned URL and the browser streams (with Range/seek) directly from R2, so video bandwidth never touches the VPS. The player fetches a fresh URL if it expires.
+- **Secrets:** the Secret Access Key is encrypted with `SETTINGS_ENCRYPTION_KEY` and never displayed again; leaving the field blank keeps the stored one.
+- **Replace/delete:** the new object is stored and linked in the DB first; the old object is deleted only afterwards. Deleting a lesson/course deletes its R2 objects (only ICDS-generated keys are ever deleted).
+- **Existing videos** stay `LOCAL`. A lesson's edit page has an admin-only **Migrate to R2** button (copy -> verify size -> switch; local copy is kept).
+- **Optional bucket CORS** (not required for playback): `GET`/`HEAD` from `https://icds.drtanuraghav.in`, header `Range`.
+- A signed streaming URL is access control, **not DRM**: an authorized, technically skilled viewer can still capture video that plays in their browser.

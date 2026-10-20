@@ -41,10 +41,10 @@
                 <div class="form-text">Upload an MP4 video. The file will be available only to enrolled students. Accepted formats: MP4, WebM. Max size: 200MB. You can also add this later from the Edit Lesson page.</div>
                 <div id="lesson-video-selected-name" class="small text-success mt-1" style="display:none;"></div>
             </div>
-            <% } else if (lesson.videoType === 'LOCAL' && lesson.videoPath) { %>
+            <% } else if ((lesson.videoType === 'LOCAL' && lesson.videoPath) || (lesson.videoType === 'R2' && lesson.videoObjectKey)) { %>
             <div class="col-12">
                 <label class="form-label small fw-semibold">Lesson Video</label>
-                <div class="form-text mb-1">Current video: <code><%= lesson.videoPath.split('/').pop() %></code></div>
+                <div class="form-text mb-1">Current video: <code><%= (lesson.videoType === 'R2' ? lesson.videoObjectKey : lesson.videoPath).split('/').pop() %></code> (<%= lesson.videoType === 'R2' ? 'Cloudflare R2' : 'local' %>)</div>
                 <div class="form-text">To replace it, use "Replace video" below. Saving this form does not touch the video.</div>
             </div>
             <% } %>
@@ -98,14 +98,16 @@
 <div class="admin-card mt-4">
     <h5 class="mb-3">Lesson Video</h5>
 
-    <% if (lesson.videoType === 'LOCAL' && lesson.videoPath) { %>
+    <% if ((lesson.videoType === 'LOCAL' && lesson.videoPath) || (lesson.videoType === 'R2' && lesson.videoObjectKey)) { %>
         <p class="small text-success mb-3">
             <i class="bi bi-check-circle-fill me-1"></i>
-            Current video: <code><%= lesson.videoPath.split('/').pop() %></code>
+            Current video: <code><%= (lesson.videoType === 'R2' ? lesson.videoObjectKey : lesson.videoPath).split('/').pop() %></code>
+            - stored on <%= lesson.videoType === 'R2' ? 'Cloudflare R2 (private)' : 'the server disk' %>
+            <% if (lesson.videoType === 'R2' && lesson.videoSizeBytes) { %> (<%= (Number(lesson.videoSizeBytes) / 1048576).toFixed(1) %> MB)<% } %>
         </p>
 
         <h6 class="small fw-semibold">Replace video</h6>
-        <p class="form-text mt-0">Upload an MP4 video. The file will be available only to enrolled students. Accepted formats: MP4, WebM. Max size: 200MB.</p>
+        <p class="form-text mt-0">Upload an MP4 video. The file will be available only to enrolled students. Accepted formats: MP4, WebM. Max size depends on the active storage provider (see Video Storage). The old video is deleted only after the new one is saved.</p>
         <form method="POST" action="/admin/lessons/<%= lesson.id %>/video/upload" enctype="multipart/form-data" class="mb-3">
             <input type="hidden" name="_csrf" value="<%= csrfToken %>">
             <input type="file" name="video" id="lesson-video-replace-input" accept="video/mp4,video/webm,video/quicktime" class="form-control form-control-custom mb-1" required>
@@ -113,7 +115,15 @@
             <button type="submit" class="btn btn-sm btn-outline-primary">Replace video</button>
         </form>
 
-        <form method="POST" action="/admin/lessons/<%= lesson.id %>/video/remove" data-confirm="Detach the local video? The file itself is not deleted.">
+        <% if (lesson.videoType === 'LOCAL') { %>
+        <form method="POST" action="/admin/lessons/<%= lesson.id %>/video/migrate-r2" class="mb-3" data-confirm="Copy this video to Cloudflare R2 and switch the lesson to it? The local file is kept.">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <button type="submit" class="btn btn-sm btn-outline-secondary">Migrate to R2</button>
+            <span class="form-text ms-2">Copies, verifies size, then switches. Local copy is kept.</span>
+        </form>
+        <% } %>
+
+        <form method="POST" action="/admin/lessons/<%= lesson.id %>/video/remove" data-confirm="<%= lesson.videoType === 'R2' ? 'Detach and DELETE this video from R2?' : 'Detach the local video? The file itself is not deleted.' %>">
             <input type="hidden" name="_csrf" value="<%= csrfToken %>">
             <button type="submit" class="btn btn-sm btn-outline-danger">Detach local video (fall back to external Video URL)</button>
         </form>

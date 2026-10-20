@@ -16,7 +16,8 @@
                     <%= lesson.title %>
                 </h1>
 
-                <% if (lesson.videoType === 'LOCAL' && lesson.videoPath) { %>
+                <% const isR2Video = lesson.videoType === 'R2' && lesson.videoObjectKey; %>
+                <% if ((lesson.videoType === 'LOCAL' && lesson.videoPath) || isR2Video) { %>
                     <% const trackProgress = enrolled && !isAdmin; %>
                     <% const savedProgress = trackProgress ? progressMap[lesson.id] : null; %>
                     <div class="ratio ratio-16x9 mb-4 rounded-4 overflow-hidden bg-dark">
@@ -28,15 +29,23 @@
                             data-progress-url="/student/lessons/<%= lesson.id %>/progress"
                             data-csrf="<%= csrfToken %>"
                             <% } %>
+                            <% if (isR2Video) { %>
+                            data-source-url="/api/lessons/<%= lesson.id %>/video-source"
+                            <% } %>
                             controls preload="metadata" playsinline
                             controlsList="nodownload noremoteplayback"
                             disablePictureInPicture>
+                            <% if (!isR2Video) { %>
                             <source src="/media/lessons/<%= lesson.id %>/video" type="<%= lesson.videoPath.endsWith('.webm') ? 'video/webm' : 'video/mp4' %>">
+                            <% } %>
                             Your browser does not support the video tag.
                         </video>
                     </div>
                     <!-- These attributes/listeners deter casual right-click/PiP downloading; they are not DRM and cannot stop a determined user from capturing an MP4 stream. Scoped to #lesson-video only, never document-wide. -->
                     <script src="/js/lesson-video-guard.js" defer></script>
+                    <% if (isR2Video) { %>
+                        <script src="/js/lesson-video-source.js" defer></script>
+                    <% } %>
                     <% if (trackProgress) { %>
                         <script src="/js/lesson-progress.js" defer></script>
                     <% } %>
@@ -64,7 +73,7 @@
                     </p>
                 <% } %>
 
-                <% if (enrolled && !isAdmin && lesson.videoType !== 'LOCAL') { %>
+                <% if (enrolled && !isAdmin && lesson.videoType !== 'LOCAL' && lesson.videoType !== 'R2') { %>
                     <% const isDone = progressMap[lesson.id] && progressMap[lesson.id].completed; %>
                     <form method="POST" action="/student/lessons/<%= lesson.id %>/complete" class="mt-3">
                         <input type="hidden" name="_csrf" value="<%= csrfToken %>">

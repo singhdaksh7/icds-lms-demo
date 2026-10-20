@@ -144,7 +144,31 @@ function deleteFile(relativePath) {
   fs.unlink(absolute, () => {}); // never let cleanup failure break the request
 }
 
+// True for any lesson whose video bytes are hosted by ICDS (VPS disk or R2),
+// as opposed to an external YouTube/Vimeo embed. Self-hosted videos are
+// completed only by genuine watched time, never a manual "Mark Complete".
+function isSelfHostedVideo(lesson) {
+  return Boolean(
+    lesson &&
+      ((lesson.videoType === 'LOCAL' && lesson.videoPath) ||
+        (lesson.videoType === 'R2' && lesson.videoObjectKey))
+  );
+}
+
+// File-signature check on the first bytes of an upload (extension and MIME
+// are client-controlled, so they are never trusted alone).
+//   MP4/MOV family: bytes 4-7 are "ftyp"
+//   WebM/Matroska:  EBML header 1A 45 DF A3
+function hasVideoSignature(head, extension) {
+  if (!Buffer.isBuffer(head) || head.length < 12) return false;
+  if (extension === '.mp4') return head.toString('latin1', 4, 8) === 'ftyp';
+  if (extension === '.webm') return head[0] === 0x1a && head[1] === 0x45 && head[2] === 0xdf && head[3] === 0xa3;
+  return false;
+}
+
 module.exports = {
+  isSelfHostedVideo,
+  hasVideoSignature,
   STORAGE_ROOT,
   ALLOWED_VIDEO_TYPES,
   MAX_UPLOAD_BYTES,

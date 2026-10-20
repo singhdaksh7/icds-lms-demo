@@ -32,6 +32,7 @@ const taxSettingsController = require('../controllers/admin/taxSettings.controll
 const paymentSettingsController = require('../controllers/admin/paymentSettings.controller');
 const emailSettingsController = require('../controllers/admin/emailSettings.controller');
 const paymentLimiter = require('../middleware/paymentRateLimit');
+const videoStorageController = require('../controllers/admin/videoStorage.controller');
 
 // Every route in this file is admin-only — enforced once here rather than
 // repeated per-route, so it's impossible to accidentally add an
@@ -106,6 +107,17 @@ router.post(
   doubleCsrfProtection,
   lessonController.removeLessonVideo
 );
+
+router.post(
+  '/lessons/:id/video/migrate-r2',
+  doubleCsrfProtection,
+  lessonController.migrateLessonVideoToR2
+);
+
+// --- Video Storage (LOCAL / Cloudflare R2) ------------------------------------
+router.get('/video-storage', videoStorageController.showPage);
+router.post('/video-storage', doubleCsrfProtection, videoStorageController.saveSettings);
+router.post('/video-storage/test', doubleCsrfProtection, videoStorageController.testConnection);
 
 // --- Categories --------------------------------------------------------------
 router.get('/categories', categoryController.listCategories);

@@ -208,7 +208,7 @@ async function markLessonComplete(userId, lessonId) {
   // "Mark Complete" would be a way to skip the lesson entirely (and then
   // unlock the certificate). It stays available only for externally
   // embedded videos, whose playback the server cannot observe.
-  if (lesson.videoType === 'LOCAL') {
+  if (lesson.videoType === 'LOCAL' || lesson.videoType === 'R2') {
     throw new ProgressError('This lesson is completed by watching the video.');
   }
 

@@ -2,7 +2,48 @@ const path = require('path');
 const lessonService = require('../../services/lesson.service');
 const { prisma } = require('../../config/db');
 const { validateLesson, STATUSES } = require('../../validators/lesson.validator');
-const { findExistingFile, deleteFile } = require('../../lib/videoStorage');
+const fs = require('fs');
+const { findExistingFile, deleteFile, resolveVideoPath, mimeTypeFor } = require('../../lib/videoStorage');
+const r2 = require('../../lib/r2');
+const videoStorageSettings = require('../../services/videoStorageSettings.service');
+
+const CLEAR_R2_FIELDS = {
+  videoObjectKey: null,
+  videoDurationSeconds: null,
+  videoSizeBytes: null,
+  videoMimeType: null,
+};
+
+// DB fields for a freshly uploaded file, for either provider.
+function videoFieldsForUpload(req, courseSlug) {
+  if (req.file.provider === 'R2') {
+    return {
+      videoType: 'R2',
+      videoPath: null,
+      videoObjectKey: req.file.r2Key,
+      videoDurationSeconds: null,
+      videoSizeBytes: BigInt(req.file.size),
+      videoMimeType: req.file.mimetype,
+    };
+  }
+  return {
+    videoType: 'LOCAL',
+    videoPath: path.posix.join(courseSlug, req.file.filename),
+    ...CLEAR_R2_FIELDS,
+  };
+}
+
+// Removes an upload that never got (or lost) its DB link. Best-effort.
+function discardUpload(req, courseSlug) {
+  if (!req.file) return;
+  if (req.file.provider === 'R2') {
+    if (req.r2UploadConfig && req.file.r2Key) {
+      r2.deleteObject(req.r2UploadConfig, req.file.r2Key).catch(() => {});
+    }
+  } else if (courseSlug) {
+    deleteFile(path.posix.join(courseSlug, req.file.filename));
+  }
+}
 
 async function listLessons(req, res, next) {
   try {
@@ -64,9 +105,7 @@ async function createLesson(req, res, next) {
       // A video file may already have been streamed to disk by multer
       // before validation ran — don't leave it orphaned on disk if the rest
       // of the form is being re-rendered for correction.
-      if (req.file) {
-        deleteFile(path.posix.join(course.slug, req.file.filename));
-      }
+      discardUpload(req, course.slug);
       return res.status(400).render('admin/lessons/form', {
         pageTitle: `New Lesson: ${course.title} | Admin`,
         metaDescription: 'Create a new lesson.',
@@ -86,10 +125,9 @@ async function createLesson(req, res, next) {
     // already safely on disk under storage/videos/<course.slug>/<uuid>.ext;
     // only the safe relative path is ever written to the DB.
     if (req.file) {
-      const relativePath = path.posix.join(course.slug, req.file.filename);
       await prisma.lesson.update({
         where: { id: lesson.id },
-        data: { videoType: 'LOCAL', videoPath: relativePath },
+        data: videoFieldsForUpload(req, course.slug),
       });
     }
 
@@ -99,9 +137,7 @@ async function createLesson(req, res, next) {
     // Clean up an already-uploaded file if lesson creation/attach failed
     // partway through, using the course slug the upload middleware resolved
     // (req.videoCourseSlug) rather than re-deriving anything from user input.
-    if (req.file && req.videoCourseSlug) {
-      deleteFile(path.posix.join(req.videoCourseSlug, req.file.filename));
-    }
+    discardUpload(req, req.videoCourseSlug);
     if (err instanceof lessonService.LessonError) {
       req.flashError(err.message);
       return res.redirect(`/admin/courses/${req.params.courseId}/lessons`);
@@ -194,15 +230,20 @@ async function uploadLessonVideo(req, res, next) {
       return res.redirect(`/admin/lessons/${lesson.id}/edit`);
     }
 
-    const relativePath = path.posix.join(lesson.course.slug, req.file.filename);
-    await prisma.lesson.update({
-      where: { id: lesson.id },
-      data: { videoType: 'LOCAL', videoPath: relativePath },
-    });
-
-    if (lesson.videoType === 'LOCAL' && lesson.videoPath && lesson.videoPath !== relativePath) {
-      await lessonService.cleanupOrphanedVideo(lesson.videoPath, lesson.id);
+    // New file is already stored. Link it in the DB FIRST; only after that
+    // succeeds is the previous video removed. If the DB update fails the new
+    // orphan is deleted and the current working video is left untouched.
+    try {
+      await prisma.lesson.update({
+        where: { id: lesson.id },
+        data: videoFieldsForUpload(req, lesson.course.slug),
+      });
+    } catch (dbErr) {
+      discardUpload(req, lesson.course.slug);
+      throw dbErr;
     }
+
+    await lessonService.cleanupPreviousVideo(lesson, lesson.id);
 
     req.flashSuccess('Video uploaded and attached to this lesson.');
     res.redirect(`/admin/lessons/${lesson.id}/edit`);
@@ -238,11 +279,11 @@ async function registerLessonVideo(req, res, next) {
 
     await prisma.lesson.update({
       where: { id },
-      data: { videoType: 'LOCAL', videoPath: relativePath },
+      data: { videoType: 'LOCAL', videoPath: relativePath, ...CLEAR_R2_FIELDS },
     });
 
-    if (lesson.videoType === 'LOCAL' && lesson.videoPath && lesson.videoPath !== relativePath) {
-      await lessonService.cleanupOrphanedVideo(lesson.videoPath, id);
+    if (!(lesson.videoType === 'LOCAL' && lesson.videoPath === relativePath)) {
+      await lessonService.cleanupPreviousVideo(lesson, id);
     }
 
     req.flashSuccess('Existing video file registered for this lesson.');
@@ -266,21 +307,90 @@ async function removeLessonVideo(req, res, next) {
 
     await prisma.lesson.update({
       where: { id },
-      data: { videoType: 'EXTERNAL', videoPath: null },
+      data: { videoType: 'EXTERNAL', videoPath: null, ...CLEAR_R2_FIELDS },
     });
 
-    if (lesson.videoType === 'LOCAL' && lesson.videoPath) {
-      await lessonService.cleanupOrphanedVideo(lesson.videoPath, id);
-    }
+    await lessonService.cleanupPreviousVideo(lesson, id);
 
-    req.flashSuccess('Local video detached from this lesson.');
+    req.flashSuccess('Video detached from this lesson.');
     res.redirect(`/admin/lessons/${id}/edit`);
   } catch (err) {
     next(err);
   }
 }
 
+// Admin-triggered only (never automatic): copy a LOCAL video to R2, verify the
+// stored size matches, THEN switch the lesson to R2. The local file and
+// videoPath are kept so the move can be rolled back; delete the local copy
+// manually once playback is verified.
+async function migrateLessonVideoToR2(req, res, next) {
+  const id = parseInt(req.params.id, 10);
+  const back = () => res.redirect(`/admin/lessons/${id}/edit`);
+  let config;
+  let key;
+  try {
+    const lesson = await lessonService.getLessonByIdAdmin(id);
+    if (!lesson) {
+      req.flashError('Lesson not found.');
+      return res.redirect('/admin/courses');
+    }
+    if (lesson.videoType !== 'LOCAL' || !lesson.videoPath) {
+      req.flashError('Only lessons with a local video can be migrated.');
+      return back();
+    }
+    config = await videoStorageSettings.getR2ConfigOrNull();
+    if (!config) {
+      req.flashError('Cloudflare R2 is not configured. See Admin > Video Storage.');
+      return back();
+    }
+    const absolute = resolveVideoPath(lesson.videoPath);
+    const stat = absolute && fs.existsSync(absolute) ? fs.statSync(absolute) : null;
+    if (!stat || !stat.isFile()) {
+      req.flashError('The local video file could not be found.');
+      return back();
+    }
+    const ext = path.extname(absolute).toLowerCase();
+    const mime = mimeTypeFor(ext);
+    if (!mime) {
+      req.flashError('Unsupported local video type.');
+      return back();
+    }
+
+    key = r2.buildObjectKey(lesson.courseId, lesson.id, ext);
+    const meta = await r2.uploadStream(config, key, fs.createReadStream(absolute), mime);
+    if (meta.size !== stat.size) {
+      await r2.deleteObject(config, key);
+      req.flashError('Upload verification failed (size mismatch); nothing was changed.');
+      return back();
+    }
+
+    try {
+      await prisma.lesson.update({
+        where: { id },
+        data: {
+          videoType: 'R2',
+          videoObjectKey: key,
+          videoSizeBytes: BigInt(stat.size),
+          videoMimeType: mime,
+        },
+      });
+    } catch (dbErr) {
+      await r2.deleteObject(config, key).catch(() => {});
+      throw dbErr;
+    }
+
+    req.flashSuccess('Video migrated to Cloudflare R2. The local copy was kept - verify playback, then delete it manually.');
+    return back();
+  } catch (err) {
+    if (config && key) r2.deleteObject(config, key).catch(() => {});
+    console.error('R2 migration failed:', err && err.name);
+    req.flashError('Migration to R2 failed; the lesson was not changed.');
+    return back();
+  }
+}
+
 module.exports = {
+  migrateLessonVideoToR2,
   listLessons,
   newLessonForm,
   createLesson,

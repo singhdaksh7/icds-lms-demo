@@ -1,6 +1,7 @@
 const { prisma } = require('../config/db');
 const { generateUniqueSlug } = require('../lib/slug');
 const { deleteFile } = require('../lib/videoStorage');
+const r2Cleanup = require('./r2Cleanup.service');
 
 class LessonError extends Error {
   constructor(message) {
@@ -96,7 +97,21 @@ async function deleteLesson(id) {
   if (existing.videoType === 'LOCAL' && existing.videoPath) {
     await cleanupOrphanedVideo(existing.videoPath, id);
   }
+  if (existing.videoType === 'R2' && existing.videoObjectKey) {
+    await r2Cleanup.deleteObjectIfUnreferenced(existing.videoObjectKey, [id]);
+  }
   return existing.courseId;
+}
+
+// After a lesson's video has been successfully replaced/detached in the DB,
+// remove the previous file (LOCAL or R2) - never before, so a failure can
+// never leave the lesson without a working video.
+async function cleanupPreviousVideo(previous, lessonId) {
+  if (previous.videoType === 'LOCAL' && previous.videoPath) {
+    await cleanupOrphanedVideo(previous.videoPath, lessonId);
+  } else if (previous.videoType === 'R2' && previous.videoObjectKey) {
+    await r2Cleanup.deleteObjectIfUnreferenced(previous.videoObjectKey, [lessonId]);
+  }
 }
 
 // Deletes a LOCAL video file from disk only if no other lesson still
@@ -121,4 +136,5 @@ module.exports = {
   updateLesson,
   deleteLesson,
   cleanupOrphanedVideo,
+  cleanupPreviousVideo,
 };
