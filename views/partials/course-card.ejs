@@ -61,9 +61,9 @@
         <div class="course-footer">
 
             <div class="course-price">
-                <%= course.currency === 'INR' ? '₹' : course.currency + ' ' %><%= Number(course.salePrice || course.price).toLocaleString('en-IN') %>
+                <% if (Number(course.salePrice || course.price) === 0) { %>Free<% } else { %><%= course.currency === 'INR' ? '₹' : course.currency + ' ' %><%= Number(course.salePrice || course.price).toLocaleString('en-IN') %><% } %>
 
-                <% if (course.salePrice) { %>
+                <% if (course.salePrice && Number(course.salePrice || course.price) !== 0) { %>
                     <del><%= course.currency === 'INR' ? '₹' : course.currency + ' ' %><%= Number(course.price).toLocaleString('en-IN') %></del>
                 <% } %>
             </div>

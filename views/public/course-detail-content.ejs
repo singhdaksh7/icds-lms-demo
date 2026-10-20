@@ -105,8 +105,8 @@
                 <div class="course-pricing-card">
 
                     <div class="course-price">
-                        <%= course.currency === 'INR' ? '₹' : course.currency + ' ' %><%= Number(course.salePrice || course.price).toLocaleString('en-IN') %>
-                        <% if (course.salePrice) { %>
+                        <% if (Number(course.salePrice || course.price) === 0) { %>Free<% } else { %><%= course.currency === 'INR' ? '₹' : course.currency + ' ' %><%= Number(course.salePrice || course.price).toLocaleString('en-IN') %><% } %>
+                        <% if (course.salePrice && Number(course.salePrice || course.price) !== 0) { %>
                             <del><%= course.currency === 'INR' ? '₹' : course.currency + ' ' %><%= Number(course.price).toLocaleString('en-IN') %></del>
                         <% } %>
                     </div>
