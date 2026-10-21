@@ -112,7 +112,7 @@ async function getCourseDetail(req, res, next) {
       curriculumService.getPublishedCurriculum(course.id),
       curriculumService.getPublicCourseStats(course.id),
       curriculumService.listResourcesForCourse(course.id, { publishedOnly: true }),
-      prisma.faq.findMany({ where: { status: 'PUBLISHED' }, orderBy: { sortOrder: 'asc' }, take: 6 }),
+      prisma.faq.findMany({ where: { isActive: true }, orderBy: { sortOrder: 'asc' }, take: 6 }),
     ]);
 
     const jsonLd = {
