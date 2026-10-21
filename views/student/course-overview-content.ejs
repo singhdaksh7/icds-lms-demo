@@ -109,7 +109,7 @@
                                     <strong class="d-block text-dark"><%= resItem.title %></strong>
                                     <span class="small text-muted">
                                         <%= resItem.contentType %> &bull;
-                                        <%= resItem.sizeBytes ? (resItem.sizeBytes / (1024 * 1024)).toFixed(2) + ' MB' : 'Document' %>
+                                        <%= resItem.sizeBytes ? (Number(resItem.sizeBytes) / (1024 * 1024)).toFixed(2) + ' MB' : 'Document' %>
                                     </span>
                                 </div>
                             </div>

@@ -520,7 +520,7 @@
                             <td>
                                 <span class="badge bg-light text-muted border"><%= resItem.contentType %></span>
                                 <% if (resItem.sizeBytes) { %>
-                                    <div class="small text-muted"><%= (resItem.sizeBytes / (1024 * 1024)).toFixed(2) %> MB</div>
+                                    <div class="small text-muted"><%= (Number(resItem.sizeBytes) / (1024 * 1024)).toFixed(2) %> MB</div>
                                 <% } %>
                             </td>
                             <td>

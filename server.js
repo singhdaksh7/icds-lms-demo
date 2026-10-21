@@ -30,6 +30,12 @@ const lessonApiRoutes = require('./src/routes/api/lessons.routes');
 const notFound = require('./src/middleware/notFound');
 const errorHandler = require('./src/middleware/errorHandler');
 
+// Enable JSON serialization for BigInt values
+BigInt.prototype.toJSON = function() {
+  const intVal = Number(this);
+  return Number.isSafeInteger(intVal) ? intVal : this.toString();
+};
+
 const app = express();
 
 // Hostinger's Node.js hosting sits behind a reverse proxy that terminates

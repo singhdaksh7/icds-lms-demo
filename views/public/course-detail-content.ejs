@@ -387,7 +387,7 @@ const hasPending = typeof hasPendingRequest !== 'undefined' && hasPendingRequest
                                             <h6 class="mb-1 fw-bold text-dark"><%= resItem.title %></h6>
                                             <span class="small text-muted">
                                                 <%= resItem.contentType %> &bull;
-                                                <%= resItem.sizeBytes ? (resItem.sizeBytes / (1024 * 1024)).toFixed(2) + ' MB' : 'Official Document' %>
+                                                <%= resItem.sizeBytes ? (Number(resItem.sizeBytes) / (1024 * 1024)).toFixed(2) + ' MB' : 'Official Document' %>
                                             </span>
                                         </div>
                                     </div>
