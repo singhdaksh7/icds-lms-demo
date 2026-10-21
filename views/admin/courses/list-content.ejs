@@ -42,6 +42,7 @@
                         <td><%= course._count.enrollments %></td>
                         <td class="text-end">
                             <div class="d-flex justify-content-end gap-2 flex-wrap">
+                                <a href="/admin/courses/<%= course.id %>/curriculum" class="btn btn-sm btn-outline-primary"><i class="bi bi-diagram-3"></i> Curriculum</a>
                                 <a href="/admin/courses/<%= course.id %>/lessons" class="btn btn-sm btn-outline-secondary">Lessons</a>
                                 <a href="/admin/courses/<%= course.id %>/edit" class="btn btn-sm btn-outline-secondary">Edit</a>
 

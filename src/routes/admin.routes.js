@@ -35,6 +35,8 @@ const paymentLimiter = require('../middleware/paymentRateLimit');
 const videoStorageController = require('../controllers/admin/videoStorage.controller');
 const r2UploadController = require('../controllers/admin/r2Upload.controller');
 
+const curriculumController = require('../controllers/admin/curriculum.controller');
+
 // Every route in this file is admin-only — enforced once here rather than
 // repeated per-route, so it's impossible to accidentally add an
 // unprotected admin route.
@@ -50,9 +52,30 @@ function requireNumericId(req, res, next, value) {
   }
   return next();
 }
-['id', 'courseId', 'lessonId'].forEach((name) => router.param(name, requireNumericId));
+['id', 'courseId', 'lessonId', 'moduleId', 'topicId', 'resourceId'].forEach((name) => router.param(name, requireNumericId));
 
 router.get('/', dashboardController.getDashboard);
+
+// --- Curriculum Builder (Modules, Topics, Reorder, Resources) --------------
+router.get('/courses/:courseId/curriculum', curriculumController.getCurriculumBuilder);
+router.post('/courses/:courseId/curriculum/modules', doubleCsrfProtection, curriculumController.createModule);
+router.post('/courses/:courseId/curriculum/modules/:moduleId/edit', doubleCsrfProtection, curriculumController.updateModule);
+router.post('/courses/:courseId/curriculum/modules/:moduleId/delete', doubleCsrfProtection, curriculumController.deleteModule);
+router.post('/courses/:courseId/curriculum/modules/reorder', doubleCsrfProtection, curriculumController.reorderModules);
+
+router.post('/courses/:courseId/curriculum/topics', doubleCsrfProtection, curriculumController.createTopic);
+router.post('/courses/:courseId/curriculum/topics/:topicId/edit', doubleCsrfProtection, curriculumController.updateTopic);
+router.post('/courses/:courseId/curriculum/topics/:topicId/delete', doubleCsrfProtection, curriculumController.deleteTopic);
+router.post('/courses/:courseId/curriculum/topics/:topicId/move', doubleCsrfProtection, curriculumController.moveTopic);
+router.post('/courses/:courseId/curriculum/topics/reorder', doubleCsrfProtection, curriculumController.reorderTopics);
+
+router.post('/courses/:courseId/curriculum/lessons/move', doubleCsrfProtection, curriculumController.moveLesson);
+router.post('/courses/:courseId/curriculum/lessons/reorder', doubleCsrfProtection, curriculumController.reorderLessons);
+
+router.post('/courses/:courseId/curriculum/resources', doubleCsrfProtection, curriculumController.createResource);
+router.post('/courses/:courseId/curriculum/resources/:resourceId/edit', doubleCsrfProtection, curriculumController.updateResource);
+router.post('/courses/:courseId/curriculum/resources/:resourceId/delete', doubleCsrfProtection, curriculumController.deleteResource);
+router.get('/courses/:courseId/curriculum/resources/:resourceId/download', curriculumController.adminDownloadResource);
 
 // --- Courses ---------------------------------------------------------------
 router.get('/courses', courseController.listCourses);

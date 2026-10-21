@@ -1,0 +1,12 @@
+<%- include('../../layouts/admin', {
+    ...locals,
+    pageTitle,
+    metaDescription: `Curriculum management for ${course.title}`,
+    activeNav: 'courses',
+    contentView: '../admin/curriculum/builder-content',
+    course,
+    curriculum,
+    resources,
+    allTopics,
+    stats,
+}) %>
