@@ -283,7 +283,7 @@ async function getCurriculumProgress(userId, structuredCurriculum) {
 
 async function getPublicCourseStats(courseId) {
   const numericCourseId = Number(courseId);
-  const [course, modules, topics, lessons, resources] = await Promise.all([
+  const [course, modules, topics, allLessons, resources] = await Promise.all([
     prisma.course.findUnique({
       where: { id: numericCourseId },
       select: { id: true, duration: true },
@@ -297,9 +297,10 @@ async function getPublicCourseStats(courseId) {
       select: { id: true },
     }),
     prisma.lesson.findMany({
-      where: { courseId: numericCourseId, status: 'PUBLISHED' },
+      where: { courseId: numericCourseId },
       select: {
         id: true,
+        status: true,
         duration: true,
         videoType: true,
         videoObjectKey: true,
@@ -314,12 +315,13 @@ async function getPublicCourseStats(courseId) {
     }),
   ]);
 
-  const availableVideoLessons = lessons.filter(
+  const publishedLessons = allLessons.filter((l) => l.status === 'PUBLISHED');
+  const availableVideoLessons = publishedLessons.filter(
     (l) => Boolean(l.videoObjectKey) || Boolean(l.videoPath) || Boolean(l.videoUrl)
   );
 
   let totalSeconds = 0;
-  for (const l of lessons) {
+  for (const l of publishedLessons) {
     if (l.videoDurationSeconds && l.videoDurationSeconds > 0) {
       totalSeconds += l.videoDurationSeconds;
     } else if (l.duration) {
@@ -328,13 +330,20 @@ async function getPublicCourseStats(courseId) {
     }
   }
 
+  const durationStr = formatSecondsToHuman(totalSeconds, course?.duration);
+
   return {
     moduleCount: modules.length,
+    publishedModuleCount: modules.length,
     topicCount: topics.length,
-    lessonCount: lessons.length,
+    publishedTopicCount: topics.length,
+    lessonCount: allLessons.length,
+    publishedLessonCount: publishedLessons.length,
     videoCount: availableVideoLessons.length,
     totalSeconds,
-    formattedDuration: formatSecondsToHuman(totalSeconds, course?.duration),
+    totalDurationSeconds: totalSeconds,
+    totalDurationFormatted: durationStr,
+    formattedDuration: durationStr,
     resourceCount: resources.length,
   };
 }
