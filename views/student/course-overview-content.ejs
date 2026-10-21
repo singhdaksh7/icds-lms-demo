@@ -1,49 +1,124 @@
-<section class="section-space">
+<section class="section-space bg-light-subtle py-4 py-lg-5">
     <div class="container">
 
         <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
             <div>
-                <div class="course-category mb-2"><%= course.category ? course.category.name : 'General' %></div>
-                <h1 class="section-title" style="text-align:left;"><%= course.title %></h1>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb mb-1 small">
+                        <li class="breadcrumb-item"><a href="/student/dashboard" class="text-decoration-none text-muted">My Courses</a></li>
+                        <li class="breadcrumb-item active text-dark" aria-current="page"><%= course.title %></li>
+                    </ol>
+                </nav>
+                <h1 class="h3 fw-bold text-dark mb-0"><%= course.title %></h1>
             </div>
 
-            <a href="/student/dashboard" class="hero-secondary-btn">
-                <i class="bi bi-arrow-left me-1"></i> My Courses
+            <a href="/student/dashboard" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-arrow-left me-1"></i> Dashboard
             </a>
         </div>
 
-        <% if (!isAdmin) { %>
-            <div class="mb-5">
-                <div class="d-flex justify-content-between small mb-1">
-                    <span>Course Progress</span>
-                    <span><%= progress.completed %> / <%= progress.total %> lessons (<%= progress.percent %>%)</span>
+        <!-- Course Progress Card -->
+        <div class="bg-white p-4 rounded-4 border shadow-sm mb-4">
+            <% if (!isAdmin) { %>
+                <div class="d-flex justify-content-between align-items-center small mb-2">
+                    <span class="fw-bold text-dark">Overall Completion</span>
+                    <span class="badge bg-primary text-white"><%= progress.percent %>%</span>
                 </div>
-                <div class="progress" style="height:8px; border-radius:6px;">
+                <div class="progress mb-2" style="height:8px; border-radius:6px;">
                     <div class="progress-bar" role="progressbar" style="width: <%= progress.percent %>%; background: var(--primary-color);"></div>
                 </div>
-            </div>
-        <% } else { %>
-            <p class="text-muted mb-5"><i class="bi bi-shield-check me-1"></i> Viewing as Admin (QA mode).</p>
-        <% } %>
+                <div class="small text-muted">
+                    <%= progress.completed %> of <%= progress.total %> lessons completed
+                </div>
+            <% } else { %>
+                <div class="text-muted"><i class="bi bi-shield-check me-1"></i> Viewing course overview as Administrator.</div>
+            <% } %>
+        </div>
 
-        <% if (lessons.length === 0) { %>
-            <p class="text-muted">No lessons have been published for this course yet.</p>
-        <% } else { %>
-            <div class="list-group">
-                <% lessons.forEach(function (lesson, index) { %>
-                    <% const done = progressMap[lesson.id] && progressMap[lesson.id].completed; %>
-                    <a href="/learn/<%= course.slug %>/<%= lesson.slug %>" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
-                        <span>
-                            <% if (done) { %>
-                                <i class="bi bi-check-circle-fill me-2" style="color:var(--success-color);"></i>
-                            <% } else { %>
-                                <i class="bi bi-play-circle me-2" style="color:var(--primary-color);"></i>
-                            <% } %>
-                            <%= index + 1 %>. <%= lesson.title %>
-                        </span>
-                        <small class="text-muted"><%= lesson.duration || '' %></small>
-                    </a>
-                <% }); %>
+        <!-- Hierarchical Curriculum List -->
+        <div class="bg-white p-4 rounded-4 border shadow-sm mb-4">
+            <h4 class="h5 fw-bold text-dark mb-3">
+                <i class="bi bi-collection-play-fill text-primary me-2"></i>Curriculum
+            </h4>
+
+            <% if (!curriculum || curriculum.length === 0) { %>
+                <p class="text-muted">No lessons published yet.</p>
+            <% } else { %>
+                <div class="accordion" id="courseOverviewAccordion">
+                    <% curriculum.forEach(function(mod, modIdx) { %>
+                        <div class="accordion-item border rounded-3 mb-3 overflow-hidden shadow-none">
+                            <h2 class="accordion-header" id="heading-mod-<%= mod.id %>">
+                                <button class="accordion-button <%= modIdx === 0 ? '' : 'collapsed' %> bg-light-subtle py-3 px-3 fw-semibold text-dark"
+                                        type="button" data-bs-toggle="collapse" data-bs-target="#collapse-mod-<%= mod.id %>"
+                                        aria-expanded="<%= modIdx === 0 ? 'true' : 'false' %>">
+                                    <div class="d-flex justify-content-between align-items-center w-100 me-3">
+                                        <span><%= mod.title %></span>
+                                        <span class="badge bg-white text-muted border small">
+                                            <%= (mod.topics || []).reduce((acc, t) => acc + (t.lessons || []).length, 0) %> Lessons
+                                        </span>
+                                    </div>
+                                </button>
+                            </h2>
+                            <div id="collapse-mod-<%= mod.id %>" class="accordion-collapse collapse <%= modIdx === 0 ? 'show' : '' %>" data-bs-parent="#courseOverviewAccordion">
+                                <div class="accordion-body p-3 bg-white">
+                                    <% (mod.topics || []).forEach(function(topic) { %>
+                                        <div class="mb-3">
+                                            <div class="small text-muted fw-bold mb-2">
+                                                <i class="bi bi-folder2-open me-1 text-primary"></i> <%= topic.title %>
+                                            </div>
+                                            <div class="list-group">
+                                                <% (topic.lessons || []).forEach(function(lesson) { %>
+                                                    <% const done = progressMap[lesson.id] && progressMap[lesson.id].completed; %>
+                                                    <a href="/learn/<%= course.slug %>/<%= lesson.slug %>" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center py-2 px-3">
+                                                        <div class="d-flex align-items-center gap-2">
+                                                            <% if (done) { %>
+                                                                <i class="bi bi-check-circle-fill text-success fs-5"></i>
+                                                            <% } else { %>
+                                                                <i class="bi bi-play-circle text-primary fs-5"></i>
+                                                            <% } %>
+                                                            <span class="fw-medium text-dark"><%= lesson.title %></span>
+                                                        </div>
+                                                        <small class="text-muted"><%= lesson.duration || '' %></small>
+                                                    </a>
+                                                <% }); %>
+                                            </div>
+                                        </div>
+                                    <% }); %>
+                                </div>
+                            </div>
+                        </div>
+                    <% }); %>
+                </div>
+            <% } %>
+        </div>
+
+        <!-- Resources Section -->
+        <% if (resources && resources.length > 0) { %>
+            <div class="bg-white p-4 rounded-4 border shadow-sm">
+                <h4 class="h5 fw-bold text-dark mb-3">
+                    <i class="bi bi-file-earmark-pdf-fill text-danger me-2"></i>Downloadable Course Resources
+                </h4>
+                <div class="list-group">
+                    <% resources.forEach(function(resItem) { %>
+                        <div class="list-group-item d-flex justify-content-between align-items-center p-3 rounded-3 border mb-2">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="bg-danger-subtle text-danger p-2 rounded-3">
+                                    <i class="bi bi-file-earmark-pdf fs-4"></i>
+                                </div>
+                                <div>
+                                    <strong class="d-block text-dark"><%= resItem.title %></strong>
+                                    <span class="small text-muted">
+                                        <%= resItem.contentType %> &bull;
+                                        <%= resItem.sizeBytes ? (resItem.sizeBytes / (1024 * 1024)).toFixed(2) + ' MB' : 'Document' %>
+                                    </span>
+                                </div>
+                            </div>
+                            <a href="/learn/<%= course.slug %>/resources/<%= resItem.id %>/download" class="btn btn-sm btn-outline-primary px-3">
+                                <i class="bi bi-download me-1"></i> Download
+                            </a>
+                        </div>
+                    <% }); %>
+                </div>
             </div>
         <% } %>
 

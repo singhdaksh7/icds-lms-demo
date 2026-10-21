@@ -8,6 +8,7 @@ const learnController = require('../controllers/learn.controller');
 // overview always requires auth + enrollment; the lesson page allows
 // anonymous/non-enrolled access only when lesson.preview is true).
 router.get('/:courseSlug', learnController.getCourseOverview);
+router.get('/:courseSlug/resources/:resourceId/download', learnController.downloadResource);
 router.get('/:courseSlug/:lessonSlug', learnController.getLessonPage);
 
 module.exports = router;

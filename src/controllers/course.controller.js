@@ -107,6 +107,14 @@ async function getCourseDetail(req, res, next) {
       : null;
 
     const price = getCoursePurchasePrice(course);
+    const curriculumService = require('../services/curriculum.service');
+    const [curriculum, stats, resources, faqs] = await Promise.all([
+      curriculumService.getPublishedCurriculum(course.id),
+      curriculumService.getPublicCourseStats(course.id),
+      curriculumService.listResourcesForCourse(course.id, { publishedOnly: true }),
+      prisma.faq.findMany({ where: { status: 'PUBLISHED' }, orderBy: { sortOrder: 'asc' }, take: 6 }),
+    ]);
+
     const jsonLd = {
       '@context': 'https://schema.org',
       '@type': 'Course',
@@ -131,7 +139,11 @@ async function getCourseDetail(req, res, next) {
       metaDescription: description,
       seo: buildSeo(req, { title, description, robots: PUBLIC_ROBOTS, ogType: 'website', ogImage, jsonLd }),
       course,
-      lessonCount,
+      lessonCount: stats.lessonCount,
+      curriculum,
+      stats,
+      resources,
+      faqs,
       isEnrolled,
       hasPendingRequest,
       isFree,

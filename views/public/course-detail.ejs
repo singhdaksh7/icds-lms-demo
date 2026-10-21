@@ -1,9 +1,19 @@
 <%- include('../layouts/main', {
+    ...locals,
     pageTitle,
     metaDescription,
     contentView: '../public/course-detail-content',
     course,
     lessonCount,
+    curriculum,
+    stats,
+    resources,
+    faqs,
     isEnrolled,
+    hasPendingRequest,
     isFree,
+    paymentsEnabled,
+    priceLabel,
+    gstNote,
 }) %>
+

@@ -1,5 +1,27 @@
-<% const cd = cms.course; %>
-<section class="section-space">
+<%
+const cd = cms.course;
+const effectivePrice = Number(course.salePrice || course.price);
+const freeCourse = typeof isFree !== 'undefined' ? isFree : (effectivePrice === 0);
+const formattedPriceLabel = typeof priceLabel !== 'undefined' ? priceLabel : ((course.currency === 'INR' ? '₹' : course.currency + ' ') + effectivePrice.toLocaleString('en-IN'));
+const courseStats = typeof stats !== 'undefined' && stats ? stats : {
+    moduleCount: (typeof curriculum !== 'undefined' && Array.isArray(curriculum) ? curriculum.length : 0),
+    publishedModuleCount: (typeof curriculum !== 'undefined' && Array.isArray(curriculum) ? curriculum.length : 0),
+    topicCount: 0,
+    publishedTopicCount: 0,
+    lessonCount: (course.lessons ? course.lessons.length : 0),
+    publishedLessonCount: (course.lessons ? course.lessons.length : 0),
+    videoCount: (course.lessons ? course.lessons.filter(l => l.videoStorageKey || l.videoPath || l.videoType === 'R2').length : 0),
+    totalDurationSeconds: 0,
+    totalDurationFormatted: course.duration || 'Comprehensive',
+    resourceCount: (typeof resources !== 'undefined' && Array.isArray(resources) ? resources.length : 0),
+};
+const safeCurriculum = typeof curriculum !== 'undefined' && Array.isArray(curriculum) ? curriculum : [];
+const safeResources = typeof resources !== 'undefined' && Array.isArray(resources) ? resources : [];
+const safeFaqs = typeof faqs !== 'undefined' && Array.isArray(faqs) ? faqs : [];
+const userIsEnrolled = typeof isEnrolled !== 'undefined' && isEnrolled;
+const hasPending = typeof hasPendingRequest !== 'undefined' && hasPendingRequest;
+%>
+<div class="course-detail-page bg-light-subtle py-4 py-lg-5">
     <div class="container">
 
         <% if (cd.backLabel) { %>
@@ -10,155 +32,598 @@
             </div>
         <% } %>
 
-        <div class="row g-4 g-lg-5">
+        <!-- Top Breadcrumbs -->
+        <nav aria-label="breadcrumb" class="mb-4">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a href="/" class="text-decoration-none text-muted">Home</a></li>
+                <li class="breadcrumb-item"><a href="/courses" class="text-decoration-none text-muted">Courses</a></li>
+                <% if (course.category) { %>
+                    <li class="breadcrumb-item">
+                        <a href="/courses?category=<%= course.category.slug %>" class="text-decoration-none text-muted">
+                            <%= course.category.name %>
+                        </a>
+                    </li>
+                <% } %>
+                <li class="breadcrumb-item active text-dark fw-semibold" aria-current="page"><%= course.title %></li>
+            </ol>
+        </nav>
 
+        <div class="row g-4 g-xl-5">
+
+            <!-- Left Main Column (Content) -->
             <div class="col-lg-8">
 
-                <div class="course-category mb-2">
+                <!-- 1. Hero Content Area -->
+                <div class="course-hero-content mb-4 mb-lg-5">
                     <% if (course.category) { %>
-                        <a href="/courses?category=<%= course.category.slug %>" style="color:inherit; text-decoration:none;"><%= course.category.name %></a>
-                    <% } else { %>
-                        General
+                        <div class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-2 rounded-pill mb-3 fw-medium">
+                            <%= course.category.name %>
+                        </div>
+                    <% } %>
+
+                    <h1 class="display-6 fw-bold text-dark mb-3">
+                        <%= course.title %>
+                    </h1>
+
+                    <% if (course.shortDescription) { %>
+                        <p class="lead text-secondary mb-4" style="font-size:1.15rem; line-height:1.6;">
+                            <%= course.shortDescription %>
+                        </p>
+                    <% } %>
+
+                    <!-- Mobile Price / Quick CTA (visible on mobile only) -->
+                    <div class="d-lg-none p-3 rounded-4 bg-white border shadow-sm mb-4">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <div>
+                                <span class="text-muted small d-block">Tuition</span>
+                                <span class="fs-3 fw-bold text-dark">
+                                    <%= freeCourse ? 'Free' : formattedPriceLabel %>
+                                </span>
+                            </div>
+                            <div>
+                                <span class="badge bg-success-subtle text-success px-3 py-2 rounded-pill">
+                                    <i class="bi bi-shield-check me-1"></i> Full Masterclass Access
+                                </span>
+                            </div>
+                        </div>
+
+                        <% if (typeof currentUser !== 'undefined' && currentUser && currentUser.role === 'STUDENT') { %>
+                            <% if (userIsEnrolled) { %>
+                                <a href="/learn/<%= course.slug %>" class="btn btn-primary btn-lg w-100 py-3 fw-semibold">
+                                    Continue Learning
+                                </a>
+                            <% } else if (freeCourse) { %>
+                                <form method="POST" action="/courses/<%= course.slug %>/enroll-free" class="m-0">
+                                    <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+                                    <button type="submit" class="btn btn-primary btn-lg w-100 py-3 fw-semibold">
+                                        <%= cd.freeCta || 'Enroll Free' %>
+                                    </button>
+                                </form>
+                            <% } else if (typeof paymentsEnabled !== 'undefined' && paymentsEnabled) { %>
+                                <a href="/checkout/<%= course.slug %>" class="btn btn-primary btn-lg w-100 py-3 fw-semibold">
+                                    Buy Course – <%= formattedPriceLabel %>
+                                </a>
+                            <% } else if (hasPending) { %>
+                                <button class="btn btn-secondary btn-lg w-100 py-3 fw-semibold" disabled><%= cd.requestedLabel || 'Request Pending' %></button>
+                            <% } else { %>
+                                <form method="POST" action="/courses/<%= course.slug %>/request-enrollment" class="m-0">
+                                    <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+                                    <button type="submit" class="btn btn-primary btn-lg w-100 py-3 fw-semibold"><%= cd.requestCta || 'Request Enrollment' %></button>
+                                </form>
+                            <% } %>
+                        <% } else if (typeof currentUser !== 'undefined' && currentUser && currentUser.role === 'ADMIN') { %>
+                            <a href="/learn/<%= course.slug %>" class="btn btn-dark btn-lg w-100 py-3 fw-semibold">
+                                View as Admin
+                            </a>
+                        <% } else { %>
+                            <a href="/login?returnTo=<%= encodeURIComponent('/courses/' + course.slug) %>" class="btn btn-primary btn-lg w-100 py-3 fw-semibold">
+                                <%= freeCourse ? (cd.loginFreeCta || 'Log in to Enroll Free') : ((typeof paymentsEnabled !== 'undefined' && paymentsEnabled) ? 'Log in to Buy – ' + formattedPriceLabel : (cd.loginRequestCta || 'Sign in to Request Access')) %>
+                            </a>
+                        <% } %>
+                    </div>
+
+                    <!-- Meta Tags Row -->
+                    <div class="d-flex align-items-center flex-wrap gap-3 text-secondary mb-4 small">
+                        <span class="d-inline-flex align-items-center bg-white px-3 py-2 rounded-3 border">
+                            <i class="bi bi-bar-chart-fill me-2 text-primary"></i> Level: <%= course.level ? (course.level.charAt(0) + course.level.slice(1).toLowerCase()) : 'All Levels' %>
+                        </span>
+                        <span class="d-inline-flex align-items-center bg-white px-3 py-2 rounded-3 border">
+                            <i class="bi bi-clock-fill me-2 text-primary"></i> <%= courseStats.totalDurationFormatted || course.duration || 'Comprehensive' %>
+                        </span>
+                        <span class="d-inline-flex align-items-center bg-white px-3 py-2 rounded-3 border">
+                            <i class="bi bi-play-circle-fill me-2 text-primary"></i> <%= courseStats.videoCount %> Video Lessons Available
+                        </span>
+                        <button type="button" class="btn btn-sm btn-outline-secondary px-3 py-2 rounded-3 copy-course-link" data-url="<%= typeof seo !== 'undefined' && seo.ogUrl ? seo.ogUrl : '' %>">
+                            <i class="bi bi-share me-1"></i> Share
+                        </button>
+                    </div>
+
+                    <!-- Course Media Preview Banner -->
+                    <div class="course-banner-container overflow-hidden rounded-4 border shadow-sm mb-4 bg-dark">
+                        <img
+                            src="<%= course.thumbnailUrl || cms.brand.defaultCourseImageUrl || '/assets/images/course-placeholder.svg' %>"
+                            alt="<%= course.title %>"
+                            class="w-100 object-fit-cover"
+                            style="max-height:440px;"
+                            data-fallback-src="/assets/images/course-placeholder.svg">
+                    </div>
+                </div>
+
+                <!-- 2. Course Statistics Bar (Honest DB Data) -->
+                <div class="course-stats-section bg-white p-4 rounded-4 border shadow-sm mb-5">
+                    <h3 class="fs-6 text-uppercase text-muted fw-bold mb-3 tracking-wide">Course Key Facts</h3>
+                    <div class="row g-3 text-center">
+                        <div class="col-6 col-md-4 col-xl-2">
+                            <div class="p-2 border rounded-3 bg-light-subtle">
+                                <div class="fs-4 fw-bold text-primary"><%= courseStats.publishedModuleCount %></div>
+                                <div class="small text-muted">Modules</div>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-4 col-xl-2">
+                            <div class="p-2 border rounded-3 bg-light-subtle">
+                                <div class="fs-4 fw-bold text-primary"><%= courseStats.publishedTopicCount %></div>
+                                <div class="small text-muted">Clinical Topics</div>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-4 col-xl-2">
+                            <div class="p-2 border rounded-3 bg-light-subtle">
+                                <div class="fs-4 fw-bold text-dark"><%= courseStats.publishedLessonCount %></div>
+                                <div class="small text-muted">Published Lessons</div>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-4 col-xl-2">
+                            <div class="p-2 border rounded-3 bg-light-subtle">
+                                <div class="fs-4 fw-bold text-success"><%= courseStats.videoCount %></div>
+                                <div class="small text-muted">Verified Videos</div>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-4 col-xl-2">
+                            <div class="p-2 border rounded-3 bg-light-subtle">
+                                <div class="fs-4 fw-bold text-info"><%= courseStats.totalDurationFormatted %></div>
+                                <div class="small text-muted">Video Runtime</div>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-4 col-xl-2">
+                            <div class="p-2 border rounded-3 bg-light-subtle">
+                                <div class="fs-4 fw-bold text-warning"><%= courseStats.resourceCount %></div>
+                                <div class="small text-muted">Clinical Forms</div>
+                            </div>
+                        </div>
+                    </div>
+                    <% if (courseStats.lessonCount > courseStats.publishedLessonCount) { %>
+                        <div class="mt-3 p-2 bg-light border-start border-3 border-info rounded text-start">
+                            <small class="text-muted">
+                                <i class="bi bi-info-circle me-1 text-info"></i>
+                                Full curriculum contains <%= courseStats.lessonCount %> scheduled lessons; <strong><%= courseStats.publishedLessonCount %> active video lessons</strong> are currently published and ready for streaming. Upcoming modules are added on clinical release.
+                            </small>
+                        </div>
                     <% } %>
                 </div>
 
-                <h1 class="section-title" style="text-align:left;">
-                    <%= course.title %>
-                </h1>
-
-                <% if (course.shortDescription) { %>
-                    <p class="section-description" style="text-align:left;">
-                        <%= course.shortDescription %>
-                    </p>
-                <% } %>
-
-                <div class="course-meta mb-4 d-flex align-items-center flex-wrap" style="border:0; margin:0; padding:0; gap: 4px;">
-                    <span class="me-4"><i class="bi bi-signal"></i> <%= course.level.charAt(0) + course.level.slice(1).toLowerCase() %></span>
-                    <span class="me-4"><i class="bi bi-clock"></i> <%= course.duration || 'TBD' %></span>
-                    <span class="me-4"><i class="bi bi-play-btn"></i> <%= lessonCount %> Lesson<%= lessonCount === 1 ? '' : 's' %></span>
-                    <button type="button" class="btn btn-sm btn-outline-secondary copy-course-link" data-url="<%= typeof seo !== 'undefined' && seo.ogUrl ? seo.ogUrl : '' %>">
-                        <i class="bi bi-link-45deg"></i> Copy Link
-                    </button>
-                </div>
-
-                <img
-                    src="<%= course.thumbnailUrl || cms.brand.defaultCourseImageUrl || '/assets/images/course-placeholder.svg' %>"
-                    alt="<%= course.title %>"
-                    class="w-100 rounded-4 mb-4"
-                    style="max-height:420px; object-fit:cover;"
-                    data-fallback-src="/assets/images/course-placeholder.svg">
-
+                <!-- 3. About the Course -->
                 <% if (course.description) { %>
-                    <h3 class="mb-3"><%= cd.aboutHeading %></h3>
-                    <p class="section-description" style="text-align:left; white-space:pre-line;">
-                        <%= course.description %>
-                    </p>
-                <% } %>
-
-                <% if (course.instructor) { %>
-                    <% if (cd.instructorHeading) { %><h3 class="mt-5 mb-3"><%= cd.instructorHeading %></h3><% } %>
-                    <div class="d-flex align-items-center gap-3 <%= cd.instructorHeading ? '' : 'mt-5 ' %>p-3 rounded-4" style="background:var(--light-bg);">
-                        <img
-                            src="<%= course.instructor.photoUrl || cms.brand.defaultInstructorImageUrl || '/assets/images/instructor-placeholder.svg' %>"
-                            alt="<%= course.instructor.name %>"
-                            style="width:64px;height:64px;border-radius:50%;object-fit:cover;"
-                            data-fallback-src="/assets/images/instructor-placeholder.svg">
-                        <div>
-                            <strong class="d-block"><%= course.instructor.name %></strong>
-                            <small class="text-muted"><%= course.instructor.title || 'Instructor' %></small>
+                    <div class="course-about-section bg-white p-4 p-md-5 rounded-4 border shadow-sm mb-5">
+                        <h2 class="h4 fw-bold text-dark mb-3"><%= cd.aboutHeading || 'About This Masterclass' %></h2>
+                        <div class="course-description text-secondary" style="line-height:1.8; white-space:pre-line; font-size:1.05rem;">
+                            <%= course.description %>
                         </div>
                     </div>
                 <% } %>
 
-                <h3 class="mt-5 mb-3"><%= cd.curriculumHeading %></h3>
+                <!-- 4. What You Will Learn -->
+                <div class="course-learn-section bg-white p-4 p-md-5 rounded-4 border shadow-sm mb-5">
+                    <h2 class="h4 fw-bold text-dark mb-3">What You Will Master in This Course</h2>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-start gap-3 p-3 rounded-3 bg-light-subtle border h-100">
+                                <i class="bi bi-check2-circle fs-4 text-primary"></i>
+                                <div>
+                                    <h6 class="fw-bold mb-1">Foundational Occlusal Philosophy</h6>
+                                    <p class="small text-muted mb-0">Understand the foundational principles of Full Mouth Rehabilitation and core dental occlusal relationships.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-start gap-3 p-3 rounded-3 bg-light-subtle border h-100">
+                                <i class="bi bi-check2-circle fs-4 text-primary"></i>
+                                <div>
+                                    <h6 class="fw-bold mb-1">Tooth Wear & Bite Collapse</h6>
+                                    <p class="small text-muted mb-0">Differentiate bruxers from clenchers, manage anterior attrition, and establish treatment protocols for collapsed bites.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-start gap-3 p-3 rounded-3 bg-light-subtle border h-100">
+                                <i class="bi bi-check2-circle fs-4 text-primary"></i>
+                                <div>
+                                    <h6 class="fw-bold mb-1">Facebow Record & Protocols</h6>
+                                    <p class="small text-muted mb-0">Master clinical Facebow transfer theory and execute real patient demonstration protocols accurately.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-start gap-3 p-3 rounded-3 bg-light-subtle border h-100">
+                                <i class="bi bi-check2-circle fs-4 text-primary"></i>
+                                <div>
+                                    <h6 class="fw-bold mb-1">Articulator Programming</h6>
+                                    <p class="small text-muted mb-0">Master semi-adjustable Hanau articulators, zeroing, calibration, programming, and mechanical components.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-start gap-3 p-3 rounded-3 bg-light-subtle border h-100">
+                                <i class="bi bi-check2-circle fs-4 text-primary"></i>
+                                <div>
+                                    <h6 class="fw-bold mb-1">TMJ Clinical Examination</h6>
+                                    <p class="small text-muted mb-0">Systematic clinical muscle examination, joint palpation protocols, and diagnostic mapping.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-start gap-3 p-3 rounded-3 bg-light-subtle border h-100">
+                                <i class="bi bi-check2-circle fs-4 text-primary"></i>
+                                <div>
+                                    <h6 class="fw-bold mb-1">Comprehensive Clinical Documentation</h6>
+                                    <p class="small text-muted mb-0">Complete clinical dental case history forms and documentation protocols ready for immediate clinical practice.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
-                <% if (course.lessons.length === 0) { %>
-                    <p class="text-muted"><%= cd.emptyLessons %></p>
-                <% } else { %>
-                    <ul class="list-group">
-                        <% course.lessons.forEach(function (lesson, index) { %>
-                            <li class="list-group-item d-flex justify-content-between align-items-center">
-                                <span>
-                                    <i class="bi bi-play-circle me-2" style="color:var(--primary-color);"></i>
-                                    <%= index + 1 %>. <%= lesson.title %>
-                                    <% if (lesson.preview) { %>
-                                        <span class="badge ms-2" style="background:var(--primary-light); color:var(--primary-color);">Preview</span>
-                                    <% } %>
-                                </span>
-                                <span class="d-flex align-items-center gap-3">
-                                    <small class="text-muted"><%= lesson.duration || '' %></small>
-                                    <% if (lesson.preview) { %>
-                                        <a href="/learn/<%= course.slug %>/<%= lesson.slug %>" class="small" style="color:#565acf;">Preview</a>
-                                    <% } else { %>
-                                        <i class="bi bi-lock text-muted"></i>
-                                    <% } %>
-                                </span>
-                            </li>
-                        <% }); %>
-                    </ul>
+                <!-- 5. Hierarchical Curriculum (Module -> Topic -> Lesson Accordion) -->
+                <div class="course-curriculum-section bg-white p-4 p-md-5 rounded-4 border shadow-sm mb-5" id="curriculum">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+                        <div>
+                            <h2 class="h4 fw-bold text-dark mb-1"><%= cd.curriculumHeading || 'Curriculum & Course Content' %></h2>
+                            <p class="small text-muted mb-0">
+                                <%= courseStats.publishedModuleCount %> Modules &bull; <%= courseStats.publishedTopicCount %> Topics &bull; <%= courseStats.publishedLessonCount %> Published Video Lessons
+                            </p>
+                        </div>
+                        <span class="badge bg-light text-muted border px-3 py-2">
+                            <i class="bi bi-lock-fill me-1"></i> Full Access With Enrollment
+                        </span>
+                    </div>
+
+                    <% if (safeCurriculum.length === 0 && (!course.lessons || course.lessons.length === 0)) { %>
+                        <p class="text-muted"><%= cd.emptyLessons || 'No lessons published yet.' %></p>
+                    <% } else { %>
+                        <div class="accordion curriculum-accordion" id="publicCurriculumAccordion">
+                            <% safeCurriculum.forEach(function(mod, modIdx) { %>
+                                <div class="accordion-item border rounded-3 mb-3 overflow-hidden shadow-none">
+                                    <h2 class="accordion-header" id="heading-mod-<%= mod.id %>">
+                                        <button class="accordion-button <%= modIdx === 0 ? '' : 'collapsed' %> bg-light-subtle py-3 px-4 fw-semibold text-dark"
+                                                type="button" data-bs-toggle="collapse" data-bs-target="#collapse-mod-<%= mod.id %>"
+                                                aria-expanded="<%= modIdx === 0 ? 'true' : 'false' %>" aria-controls="collapse-mod-<%= mod.id %>">
+                                            <div class="d-flex justify-content-between align-items-center w-100 me-3 flex-wrap gap-2">
+                                                <div class="d-flex align-items-center gap-2">
+                                                    <span class="badge bg-primary text-white">Module <%= modIdx + 1 %></span>
+                                                    <span class="fs-6"><%= mod.title %></span>
+                                                </div>
+                                                <div class="small text-muted fw-normal">
+                                                    <% const modLessonCount = (mod.topics || []).reduce((acc, t) => acc + (t.lessons || []).length, 0); %>
+                                                    <%= mod.topics ? mod.topics.length : 0 %> Topic<%= (mod.topics ? mod.topics.length : 0) === 1 ? '' : 's' %> &bull;
+                                                    <%= modLessonCount %> Lesson<%= modLessonCount === 1 ? '' : 's' %>
+                                                </div>
+                                            </div>
+                                        </button>
+                                    </h2>
+                                    <div id="collapse-mod-<%= mod.id %>" class="accordion-collapse collapse <%= modIdx === 0 ? 'show' : '' %>" aria-labelledby="heading-mod-<%= mod.id %>">
+                                        <div class="accordion-body p-3 bg-white">
+                                            <% if (mod.description) { %>
+                                                <p class="small text-muted mb-3"><%= mod.description %></p>
+                                            <% } %>
+
+                                            <% (mod.topics || []).forEach(function(topic, topicIdx) { %>
+                                                <div class="topic-group mb-3 border rounded-3 overflow-hidden">
+                                                    <div class="bg-light py-2 px-3 border-bottom d-flex justify-content-between align-items-center">
+                                                        <div class="small fw-bold text-dark">
+                                                            <i class="bi bi-folder2-open me-2 text-primary"></i>Topic <%= topicIdx + 1 %>: <%= topic.title %>
+                                                        </div>
+                                                        <span class="badge bg-white text-muted border" style="font-size:11px;">
+                                                            <%= (topic.lessons || []).length %> Video<%= (topic.lessons || []).length === 1 ? '' : 's' %>
+                                                        </span>
+                                                    </div>
+                                                    <ul class="list-group list-group-flush mb-0">
+                                                        <% (topic.lessons || []).forEach(function(lesson, lesIdx) { %>
+                                                            <li class="list-group-item d-flex justify-content-between align-items-center py-2 px-3">
+                                                                <div class="d-flex align-items-center gap-2 flex-grow-1">
+                                                                    <i class="bi bi-play-circle-fill text-primary" style="font-size:1.1rem;"></i>
+                                                                    <span class="small fw-medium text-dark">
+                                                                        <%= lesson.title %>
+                                                                    </span>
+                                                                    <% if (lesson.preview) { %>
+                                                                        <span class="badge bg-info-subtle text-info border border-info-subtle" style="font-size:10px;">Free Preview</span>
+                                                                    <% } %>
+                                                                </div>
+                                                                <div class="d-flex align-items-center gap-3">
+                                                                    <% if (lesson.duration) { %>
+                                                                        <small class="text-muted"><%= lesson.duration %></small>
+                                                                    <% } %>
+                                                                    <% if (lesson.preview) { %>
+                                                                        <a href="/learn/<%= course.slug %>/<%= lesson.slug %>" class="btn btn-sm btn-outline-primary py-0 px-2" style="font-size:12px;">
+                                                                            Watch Preview
+                                                                        </a>
+                                                                    <% } else if (userIsEnrolled) { %>
+                                                                        <a href="/learn/<%= course.slug %>/<%= lesson.slug %>" class="btn btn-sm btn-outline-success py-0 px-2" style="font-size:12px;">
+                                                                            Watch
+                                                                        </a>
+                                                                    <% } else { %>
+                                                                        <span class="text-muted small" title="Enroll to unlock this lesson">
+                                                                            <i class="bi bi-lock-fill"></i>
+                                                                        </span>
+                                                                    <% } %>
+                                                                </div>
+                                                            </li>
+                                                        <% }); %>
+                                                    </ul>
+                                                </div>
+                                            <% }); %>
+                                        </div>
+                                    </div>
+                                </div>
+                            <% }); %>
+                        </div>
+                    <% } %>
+                </div>
+
+                <!-- 6. Resources Section -->
+                <% if (safeResources.length > 0) { %>
+                    <div class="course-resources-section bg-white p-4 p-md-5 rounded-4 border shadow-sm mb-5">
+                        <h2 class="h4 fw-bold text-dark mb-2">
+                            <i class="bi bi-file-earmark-pdf-fill text-danger me-2"></i>Included Clinical Resources & Tools
+                        </h2>
+                        <p class="text-muted small mb-4">
+                            Enrolled practitioners receive verified downloadable clinical protocols, evaluation forms, and documentation tools.
+                        </p>
+                        <div class="list-group">
+                            <% safeResources.forEach(function(resItem) { %>
+                                <div class="list-group-item list-group-item-action d-flex justify-content-between align-items-center p-3 rounded-3 border mb-2">
+                                    <div class="d-flex align-items-center gap-3">
+                                        <div class="bg-danger-subtle text-danger p-2 rounded-3">
+                                            <i class="bi bi-file-earmark-pdf fs-4"></i>
+                                        </div>
+                                        <div>
+                                            <h6 class="mb-1 fw-bold text-dark"><%= resItem.title %></h6>
+                                            <span class="small text-muted">
+                                                <%= resItem.contentType %> &bull;
+                                                <%= resItem.sizeBytes ? (resItem.sizeBytes / (1024 * 1024)).toFixed(2) + ' MB' : 'Official Document' %>
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <% if (userIsEnrolled) { %>
+                                            <a href="/learn/<%= course.slug %>/resources/<%= resItem.id %>/download" class="btn btn-sm btn-outline-success">
+                                                <i class="bi bi-download me-1"></i> Download
+                                            </a>
+                                        <% } else { %>
+                                            <span class="badge bg-light text-muted border px-2 py-1">
+                                                <i class="bi bi-lock-fill me-1"></i> Included Free With Enrollment
+                                            </span>
+                                        <% } %>
+                                    </div>
+                                </div>
+                            <% }); %>
+                        </div>
+                    </div>
                 <% } %>
+
+                <!-- 7. Conditional Instructor Section (ONLY IF INSTRUCTOR PRESENT) -->
+                <% if (course.instructor) { %>
+                    <div class="course-instructor-section bg-white p-4 p-md-5 rounded-4 border shadow-sm mb-5">
+                        <h2 class="h4 fw-bold text-dark mb-3"><%= cd.instructorHeading || 'Course Instructor' %></h2>
+                        <div class="d-flex align-items-center gap-4 p-3 rounded-4 bg-light-subtle border">
+                            <img
+                                src="<%= course.instructor.photoUrl || cms.brand.defaultInstructorImageUrl || '/assets/images/instructor-placeholder.svg' %>"
+                                alt="<%= course.instructor.name %>"
+                                style="width:80px; height:80px; border-radius:50%; object-fit:cover;"
+                                data-fallback-src="/assets/images/instructor-placeholder.svg">
+                            <div>
+                                <h5 class="mb-1 fw-bold text-dark"><%= course.instructor.name %></h5>
+                                <p class="text-primary small fw-semibold mb-1"><%= course.instructor.title || 'Course Specialist' %></p>
+                                <p class="text-muted small mb-0"><%= course.instructor.bio || '' %></p>
+                            </div>
+                        </div>
+                    </div>
+                <% } %>
+
+                <!-- 8. Conditional FAQ Section (ONLY IF FAQS PRESENT) -->
+                <% if (safeFaqs.length > 0) { %>
+                    <div class="course-faq-section bg-white p-4 p-md-5 rounded-4 border shadow-sm mb-5">
+                        <h2 class="h4 fw-bold text-dark mb-4">Frequently Asked Questions</h2>
+                        <div class="accordion" id="faqAccordion">
+                            <% safeFaqs.forEach(function(faq, faqIdx) { %>
+                                <div class="accordion-item border rounded-3 mb-2 overflow-hidden">
+                                    <h2 class="accordion-header" id="faqHeading-<%= faq.id %>">
+                                        <button class="accordion-button <%= faqIdx === 0 ? '' : 'collapsed' %> bg-light-subtle py-3 px-3 fw-medium text-dark"
+                                                type="button" data-bs-toggle="collapse" data-bs-target="#faqCollapse-<%= faq.id %>"
+                                                aria-expanded="<%= faqIdx === 0 ? 'true' : 'false' %>">
+                                            <%= faq.question %>
+                                        </button>
+                                    </h2>
+                                    <div id="faqCollapse-<%= faq.id %>" class="accordion-collapse collapse <%= faqIdx === 0 ? 'show' : '' %>" data-bs-parent="#faqAccordion">
+                                        <div class="accordion-body text-secondary small" style="line-height:1.7;">
+                                            <%= faq.answer %>
+                                        </div>
+                                    </div>
+                                </div>
+                            <% }); %>
+                        </div>
+                    </div>
+                <% } %>
+
+                <!-- 9. Final Bottom CTA Banner -->
+                <div class="course-final-cta p-4 p-md-5 rounded-4 text-center text-white mb-4" style="background:linear-gradient(135deg, #1b2a4a 0%, #29487d 100%);">
+                    <h3 class="fw-bold mb-2">Ready to Master <%= course.title %>?</h3>
+                    <p class="text-light mb-4" style="max-width:600px; margin:0 auto;">
+                        Start learning with instant access to comprehensive structured video modules, high-definition clinical demonstrations, and downloadable forms.
+                    </p>
+                    <div class="d-inline-block">
+                        <% if (typeof currentUser !== 'undefined' && currentUser && currentUser.role === 'STUDENT') { %>
+                            <% if (userIsEnrolled) { %>
+                                <a href="/learn/<%= course.slug %>" class="btn btn-light btn-lg px-5 py-3 fw-bold text-primary shadow">
+                                    Continue Learning
+                                </a>
+                            <% } else if (freeCourse) { %>
+                                <form method="POST" action="/courses/<%= course.slug %>/enroll-free" class="m-0">
+                                    <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+                                    <button type="submit" class="btn btn-light btn-lg px-5 py-3 fw-bold text-primary shadow">
+                                        <%= cd.freeCta || 'Enroll Free Now' %>
+                                    </button>
+                                </form>
+                            <% } else if (typeof paymentsEnabled !== 'undefined' && paymentsEnabled) { %>
+                                <a href="/checkout/<%= course.slug %>" class="btn btn-light btn-lg px-5 py-3 fw-bold text-primary shadow">
+                                    Enroll Now – <%= formattedPriceLabel %>
+                                </a>
+                            <% } %>
+                        <% } else { %>
+                            <a href="/login?returnTo=<%= encodeURIComponent('/courses/' + course.slug) %>" class="btn btn-light btn-lg px-5 py-3 fw-bold text-primary shadow">
+                                <%= freeCourse ? (cd.loginFreeCta || 'Log in & Enroll Free') : ('Log in to Enroll – ' + formattedPriceLabel) %>
+                            </a>
+                        <% } %>
+                    </div>
+                </div>
 
             </div>
 
+            <!-- Right Sticky Column (Enrollment Card on Desktop) -->
             <div class="col-lg-4">
+                <div class="course-sticky-card sticky-lg-top bg-white p-4 rounded-4 border shadow-sm" style="top:90px; z-index:10;">
 
-                <div class="course-pricing-card">
-
-                    <div class="course-price">
-                        <% if (Number(course.salePrice || course.price) === 0) { %>Free<% } else { %><%= course.currency === 'INR' ? '₹' : course.currency + ' ' %><%= Number(course.salePrice || course.price).toLocaleString('en-IN') %><% } %>
-                        <% if (course.salePrice && Number(course.salePrice || course.price) !== 0) { %>
-                            <del><%= course.currency === 'INR' ? '₹' : course.currency + ' ' %><%= Number(course.price).toLocaleString('en-IN') %></del>
+                    <!-- Pricing Header -->
+                    <div class="mb-3">
+                        <div class="small text-muted text-uppercase fw-semibold mb-1">Registration Tuition</div>
+                        <div class="d-flex align-items-baseline gap-2">
+                            <span class="display-6 fw-bold text-dark">
+                                <%= freeCourse ? 'Free' : formattedPriceLabel %>
+                            </span>
+                            <% if (course.salePrice && Number(course.salePrice || course.price) !== 0) { %>
+                                <del class="text-muted fs-6"><%= course.currency === 'INR' ? '₹' : course.currency + ' ' %><%= Number(course.price).toLocaleString('en-IN') %></del>
+                            <% } %>
+                        </div>
+                        <% if (typeof gstNote !== 'undefined' && gstNote) { %>
+                            <p class="small text-muted mt-1 mb-0"><%= gstNote %></p>
                         <% } %>
                     </div>
-                    <% if (typeof gstNote !== 'undefined' && gstNote) { %>
-                        <p class="small text-muted" style="margin:-12px 0 16px;"><%= gstNote %></p>
-                    <% } %>
 
-                    <% if (typeof currentUser !== 'undefined' && currentUser && currentUser.role === 'STUDENT') { %>
-                        <% if (isEnrolled) { %>
-                            <a href="/learn/<%= course.slug %>" class="auth-submit d-block text-center text-decoration-none">
-                                <%= cd.enrolledCta %>
+                    <!-- Enrollment CTA -->
+                    <div class="mb-4">
+                        <% if (typeof currentUser !== 'undefined' && currentUser && currentUser.role === 'STUDENT') { %>
+                            <% if (userIsEnrolled) { %>
+                                <a href="/learn/<%= course.slug %>" class="btn btn-primary btn-lg w-100 py-3 fw-bold shadow-sm d-flex align-items-center justify-content-center gap-2">
+                                    <i class="bi bi-play-circle-fill fs-5"></i> Continue Learning
+                                </a>
+                            <% } else if (freeCourse) { %>
+                                <form method="POST" action="/courses/<%= course.slug %>/enroll-free" class="m-0">
+                                    <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+                                    <button type="submit" class="btn btn-primary btn-lg w-100 py-3 fw-bold shadow-sm d-flex align-items-center justify-content-center gap-2">
+                                        <i class="bi bi-check-circle-fill fs-5"></i> <%= cd.freeCta || 'Enroll Free' %>
+                                    </button>
+                                </form>
+                            <% } else if (typeof paymentsEnabled !== 'undefined' && paymentsEnabled) { %>
+                                <a href="/checkout/<%= course.slug %>" class="btn btn-primary btn-lg w-100 py-3 fw-bold shadow-sm">
+                                    Buy Course – <%= formattedPriceLabel %>
+                                </a>
+                            <% } else if (hasPending) { %>
+                                <button class="btn btn-secondary btn-lg w-100 py-3 fw-semibold" disabled>
+                                    <i class="bi bi-clock-history me-1"></i> <%= cd.requestedLabel || 'Request Pending' %>
+                                </button>
+                                <p class="small text-muted mt-2 mb-0 text-center"><%= cd.requestedHelp || 'We are reviewing your enrollment.' %></p>
+                            <% } else { %>
+                                <form method="POST" action="/courses/<%= course.slug %>/request-enrollment" class="m-0">
+                                    <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+                                    <button type="submit" class="btn btn-primary btn-lg w-100 py-3 fw-bold shadow-sm">
+                                        <%= cd.requestCta || 'Request Enrollment' %>
+                                    </button>
+                                </form>
+                                <p class="small text-muted mt-2 mb-0 text-center"><%= cd.requestHelp || 'Submit request for course admission.' %></p>
+                            <% } %>
+                        <% } else if (typeof currentUser !== 'undefined' && currentUser && currentUser.role === 'ADMIN') { %>
+                            <a href="/learn/<%= course.slug %>" class="btn btn-dark btn-lg w-100 py-3 fw-semibold">
+                                <i class="bi bi-person-gear me-1"></i> View as Admin
                             </a>
-                        <% } else if (isFree) { %>
-                            <form method="POST" action="/courses/<%= course.slug %>/enroll-free" class="m-0">
-                                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-                                <button type="submit" class="auth-submit d-block w-100 text-center"><%= cd.freeCta %></button>
-                            </form>
-                        <% } else if (typeof paymentsEnabled !== 'undefined' && paymentsEnabled) { %>
-                            <a href="/checkout/<%= course.slug %>" class="auth-submit d-block text-center text-decoration-none">
-                                Buy Course – <%= priceLabel %>
-                            </a>
-                        <% } else if (hasPendingRequest) { %>
-                            <button class="auth-submit d-block w-100 text-center" disabled><%= cd.requestedLabel %></button>
-                            <p class="small text-muted mt-2 mb-0"><%= cd.requestedHelp %></p>
                         <% } else { %>
-                            <form method="POST" action="/courses/<%= course.slug %>/request-enrollment" class="m-0">
-                                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-                                <button type="submit" class="auth-submit d-block w-100 text-center"><%= cd.requestCta %></button>
-                            </form>
-                            <p class="small text-muted mt-2 mb-0"><%= cd.requestHelp %></p>
+                            <a href="/login?returnTo=<%= encodeURIComponent('/courses/' + course.slug) %>" class="btn btn-primary btn-lg w-100 py-3 fw-bold shadow-sm text-center">
+                                <%= freeCourse ? (cd.loginFreeCta || 'Log in to Enroll Free') : ((typeof paymentsEnabled !== 'undefined' && paymentsEnabled) ? 'Log in to Buy – ' + formattedPriceLabel : (cd.loginRequestCta || 'Sign in first')) %>
+                            </a>
                         <% } %>
-                    <% } else if (typeof currentUser !== 'undefined' && currentUser && currentUser.role === 'ADMIN') { %>
-                        <a href="/learn/<%= course.slug %>" class="auth-submit d-block text-center text-decoration-none">
-                            View as Admin
-                        </a>
-                    <% } else { %>
-                        <a href="/login?returnTo=<%= encodeURIComponent('/courses/' + course.slug) %>" class="auth-submit d-block text-center text-decoration-none">
-                            <%= isFree ? cd.loginFreeCta : ((typeof paymentsEnabled !== 'undefined' && paymentsEnabled) ? 'Log in to Buy – ' + priceLabel : cd.loginRequestCta) %>
-                        </a>
-                    <% } %>
+                    </div>
 
-                    <ul class="list-unstyled mb-0 small course-access-bullets">
-                        <li><i class="bi bi-check-circle-fill me-2" style="color:var(--success-color);"></i><%= cd.benefit1 %></li>
-                        <li><i class="bi bi-check-circle-fill me-2" style="color:var(--success-color);"></i><%= cd.benefit2 %></li>
-                        <li><i class="bi bi-check-circle-fill me-2" style="color:var(--success-color);"></i><%= cd.benefit3 %></li>
-                    </ul>
+                    <!-- Verified Benefits List -->
+                    <div class="border-top pt-3">
+                        <div class="small fw-bold text-dark text-uppercase mb-2">This Masterclass Includes:</div>
+                        <ul class="list-unstyled mb-0 small text-secondary d-flex flex-column gap-2">
+                            <% if (cd.benefit1) { %>
+                                <li class="d-flex align-items-center">
+                                    <i class="bi bi-check2 text-success me-2 fs-5"></i>
+                                    <span><%= cd.benefit1 %></span>
+                                </li>
+                            <% } %>
+                            <% if (cd.benefit2) { %>
+                                <li class="d-flex align-items-center">
+                                    <i class="bi bi-check2 text-success me-2 fs-5"></i>
+                                    <span><%= cd.benefit2 %></span>
+                                </li>
+                            <% } %>
+                            <% if (cd.benefit3) { %>
+                                <li class="d-flex align-items-center">
+                                    <i class="bi bi-check2 text-success me-2 fs-5"></i>
+                                    <span><%= cd.benefit3 %></span>
+                                </li>
+                            <% } %>
+                            <li class="d-flex align-items-center">
+                                <i class="bi bi-check2 text-success me-2 fs-5"></i>
+                                <span>Structured Module & Topic Hierarchical Curriculum</span>
+                            </li>
+                            <li class="d-flex align-items-center">
+                                <i class="bi bi-check2 text-success me-2 fs-5"></i>
+                                <span>Downloadable Clinical Case History Forms & Resources</span>
+                            </li>
+                            <li class="d-flex align-items-center">
+                                <i class="bi bi-check2 text-success me-2 fs-5"></i>
+                                <span>Personalized Watch Progress & Resumption</span>
+                            </li>
+                        </ul>
+                    </div>
 
                 </div>
-
             </div>
 
         </div>
 
     </div>
-</section>
+</div>
+
+<!-- Mobile Sticky Bottom CTA Bar (Only visible on small devices) -->
+<div class="d-lg-none fixed-bottom bg-white border-top shadow-lg p-3 mobile-sticky-cta" style="z-index:1030;">
+    <div class="container d-flex justify-content-between align-items-center gap-3">
+        <div>
+            <div class="small text-muted" style="font-size:11px;">Tuition</div>
+            <div class="fw-bold text-dark fs-5"><%= freeCourse ? 'Free' : formattedPriceLabel %></div>
+        </div>
+        <div class="flex-grow-1" style="max-width:240px;">
+            <% if (typeof currentUser !== 'undefined' && currentUser && currentUser.role === 'STUDENT') { %>
+                <% if (userIsEnrolled) { %>
+                    <a href="/learn/<%= course.slug %>" class="btn btn-primary w-100 py-2 fw-semibold" style="min-height:48px; display:flex; align-items:center; justify-content:center;">
+                        <%= cd.enrolledCta || 'Go to Player' %>
+                    </a>
+                <% } else if (freeCourse) { %>
+                    <form method="POST" action="/courses/<%= course.slug %>/enroll-free" class="m-0">
+                        <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+                        <button type="submit" class="btn btn-primary w-100 py-2 fw-semibold" style="min-height:48px;">
+                            <%= cd.freeCta || 'Enroll Free' %>
+                        </button>
+                    </form>
+                <% } else if (typeof paymentsEnabled !== 'undefined' && paymentsEnabled) { %>
+                    <a href="/checkout/<%= course.slug %>" class="btn btn-primary w-100 py-2 fw-semibold" style="min-height:48px; display:flex; align-items:center; justify-content:center;">
+                        Buy Now
+                    </a>
+                <% } %>
+            <% } else { %>
+                <a href="/login?returnTo=<%= encodeURIComponent('/courses/' + course.slug) %>" class="btn btn-primary w-100 py-2 fw-semibold" style="min-height:48px; display:flex; align-items:center; justify-content:center;">
+                    <%= freeCourse ? (cd.loginFreeCta || 'Enroll Free') : 'Buy Now' %>
+                </a>
+            <% } %>
+        </div>
+    </div>
+</div>

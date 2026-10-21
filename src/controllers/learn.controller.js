@@ -1,4 +1,5 @@
 const courseService = require('../services/course.service');
+const curriculumService = require('../services/curriculum.service');
 const { isUserEnrolled } = require('../services/enrollment.service');
 const { computeCourseProgress, getLessonProgressMap } = require('../services/progress.service');
 const { parseVideoEmbed } = require('../lib/video');
@@ -30,21 +31,21 @@ async function getCourseOverview(req, res, next) {
     }
 
     const publishedLessons = course.lessons.filter((l) => l.status === 'PUBLISHED');
-    const lessonIds = publishedLessons.map((l) => l.id);
-
-    const [progress, progressMap] = await Promise.all([
-      isAdmin
-        ? Promise.resolve({ completed: 0, total: publishedLessons.length, percent: 0 })
-        : computeCourseProgress(req.currentUser.id, course.id),
-      isAdmin ? Promise.resolve({}) : getLessonProgressMap(req.currentUser.id, lessonIds),
-    ]);
+    const rawCurriculum = await curriculumService.getPublishedCurriculum(course.id);
+    const { curriculum, progressMap, courseProgress } = await curriculumService.getCurriculumProgress(
+      req.currentUser.id,
+      rawCurriculum
+    );
+    const resources = await curriculumService.listResourcesForCourse(course.id, { publishedOnly: true });
 
     res.render('student/course-overview', {
       pageTitle: `${course.title} | Learning`,
       metaDescription: `Continue learning ${course.title}.`,
       course,
       lessons: publishedLessons,
-      progress,
+      curriculum,
+      resources,
+      progress: courseProgress,
       progressMap,
       isAdmin,
     });
@@ -92,19 +93,28 @@ async function getLessonPage(req, res, next) {
 
     const videoEmbed = parseVideoEmbed(lesson.videoUrl);
 
-    let progressMap = {};
-    let progress = { completed: 0, total: publishedLessons.length, percent: 0 };
-    if (req.currentUser && enrolled && !isAdmin) {
-      const lessonIds = publishedLessons.map((l) => l.id);
-      [progressMap, progress] = await Promise.all([
-        getLessonProgressMap(req.currentUser.id, lessonIds),
-        computeCourseProgress(req.currentUser.id, course.id),
-      ]);
+    const rawCurriculum = await curriculumService.getPublishedCurriculum(course.id);
+    const { curriculum, progressMap, courseProgress } = await curriculumService.getCurriculumProgress(
+      req.currentUser && enrolled && !isAdmin ? req.currentUser.id : null,
+      rawCurriculum
+    );
+    const resources = await curriculumService.listResourcesForCourse(course.id, { publishedOnly: true });
+
+    // Find current module and topic for breadcrumbs
+    let currentModule = null;
+    let currentTopic = null;
+    for (const mod of curriculum) {
+      for (const top of mod.topics || []) {
+        if ((top.lessons || []).some((l) => l.id === lesson.id)) {
+          currentModule = mod;
+          currentTopic = top;
+          break;
+        }
+      }
+      if (currentModule) break;
     }
 
-    // Record (server-side, in the session) when a tracked local-video lesson
-    // page was served. Progress credit for the first save is bounded by real
-    // time since this moment. Kept small: only the most recent lessons.
+    // Record server-side view time for credit clock
     if (req.session && req.currentUser && enrolled && !isAdmin && isSelfHostedVideo(lesson)) {
       const views = req.session.lessonViews || {};
       views[lesson.id] = Date.now();
@@ -122,11 +132,15 @@ async function getLessonPage(req, res, next) {
       course,
       lesson,
       lessons: publishedLessons,
+      curriculum,
+      currentModule,
+      currentTopic,
+      resources,
       videoEmbed,
       previousLesson,
       nextLesson,
       progressMap,
-      progress,
+      progress: courseProgress,
       enrolled,
       isAdmin,
     });
@@ -135,4 +149,38 @@ async function getLessonPage(req, res, next) {
   }
 }
 
-module.exports = { getCourseOverview, getLessonPage };
+async function downloadResource(req, res, next) {
+  try {
+    const resourceId = Number(req.params.resourceId);
+    if (!resourceId) {
+      return res.status(404).render('public/404', { pageTitle: 'Resource Not Found' });
+    }
+
+    if (!req.currentUser) {
+      const returnTo = safeRedirectPath(req.originalUrl, '/');
+      return res.redirect(`/login?returnTo=${encodeURIComponent(returnTo)}`);
+    }
+
+    const signed = await curriculumService.getSignedResourceDownloadUrl(
+      req.currentUser.id,
+      resourceId,
+      req.currentUser.role
+    );
+    return res.redirect(signed.url);
+  } catch (err) {
+    if (err.statusCode === 401) {
+      const returnTo = safeRedirectPath(req.originalUrl, '/');
+      return res.redirect(`/login?returnTo=${encodeURIComponent(returnTo)}`);
+    }
+    if (err.statusCode === 403) {
+      req.flashError(err.message || 'You must be enrolled to download this resource.');
+      return res.redirect(req.params.courseSlug ? `/courses/${req.params.courseSlug}` : '/courses');
+    }
+    if (err.statusCode === 404) {
+      return res.status(404).render('public/404', { pageTitle: 'Resource Not Found' });
+    }
+    return next(err);
+  }
+}
+
+module.exports = { getCourseOverview, getLessonPage, downloadResource };

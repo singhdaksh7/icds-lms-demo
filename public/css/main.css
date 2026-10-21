@@ -2116,3 +2116,35 @@
         @media print {
             header, footer, .floating-help, .pay-actions, .orders-actions { display: none !important; }
         }
+
+        /* --- Curriculum Redesign & Learning Player Styles --- */
+        .curriculum-accordion .accordion-button:focus {
+            box-shadow: none;
+            border-color: var(--border-color);
+        }
+        .curriculum-accordion .accordion-button:not(.collapsed) {
+            background-color: var(--primary-light);
+            color: var(--primary-color);
+        }
+        .curriculum-sidebar-accordion .accordion-button:focus {
+            box-shadow: none;
+        }
+        .curriculum-sidebar-accordion .accordion-button:not(.collapsed) {
+            background-color: var(--primary-light);
+            color: var(--primary-color);
+        }
+        .course-sticky-card {
+            transition: box-shadow 0.2s ease;
+        }
+        @media (max-width: 991.98px) {
+            body.has-mobile-cta {
+                padding-bottom: 78px;
+            }
+            .mobile-sticky-cta {
+                box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.08);
+            }
+            .mobile-sticky-cta .btn {
+                min-height: 48px;
+            }
+        }
+
