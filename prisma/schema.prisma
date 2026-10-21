@@ -185,6 +185,8 @@ model Course {
   instructor Instructor? @relation(fields: [instructorId], references: [id], onDelete: SetNull)
 
   lessons            Lesson[]
+  modules            CourseModule[]
+  resources          CourseResource[]
   enrollments        Enrollment[]
   orderItems         OrderItem[]
   wishlistItems      WishlistItem[]
@@ -201,6 +203,7 @@ model Course {
 model Lesson {
   id              Int          @id @default(autoincrement())
   courseId        Int
+  topicId         Int?
   title           String
   slug            String
   description     String?      @db.Text
@@ -227,10 +230,12 @@ model Lesson {
   updatedAt       DateTime     @updatedAt
 
   course         Course           @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  topic          CourseTopic?     @relation(fields: [topicId], references: [id], onDelete: SetNull)
   lessonProgress LessonProgress[]
 
   @@unique([courseId, slug])
   @@index([courseId])
+  @@index([topicId])
   @@map("lessons")
 }
 
@@ -567,3 +572,68 @@ model RazorpaySetting {
 
   @@map("razorpay_settings")
 }
+
+// ---------------------------------------------------------------------------
+// Course Curriculum Hierarchy (Modules & Topics)
+// ---------------------------------------------------------------------------
+
+model CourseModule {
+  id          Int           @id @default(autoincrement())
+  courseId    Int
+  title       String
+  description String?       @db.Text
+  sortOrder   Int           @default(0)
+  isPublished Boolean       @default(true)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  course Course        @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  topics CourseTopic[]
+
+  @@index([courseId])
+  @@map("course_modules")
+}
+
+model CourseTopic {
+  id          Int              @id @default(autoincrement())
+  moduleId    Int
+  title       String
+  description String?          @db.Text
+  sortOrder   Int              @default(0)
+  isPublished Boolean          @default(true)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  module    CourseModule     @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  lessons   Lesson[]
+  resources CourseResource[]
+
+  @@index([moduleId])
+  @@map("course_topics")
+}
+
+// ---------------------------------------------------------------------------
+// Course Resources
+// ---------------------------------------------------------------------------
+
+model CourseResource {
+  id          Int          @id @default(autoincrement())
+  courseId    Int
+  topicId     Int?
+  title       String
+  objectKey   String       @db.VarChar(500)
+  contentType String       @default("application/pdf")
+  sizeBytes   BigInt?
+  sortOrder   Int          @default(0)
+  isPublished Boolean      @default(true)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  course Course       @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  topic  CourseTopic? @relation(fields: [topicId], references: [id], onDelete: SetNull)
+
+  @@index([courseId])
+  @@index([topicId])
+  @@map("course_resources")
+}
+

@@ -35,9 +35,19 @@ function validateLesson(body) {
     errors.push('Please choose a valid lesson status.');
   }
 
+  let topicId = null;
+  if (body.topicId !== undefined && body.topicId !== null && body.topicId !== '') {
+    const tid = parseInt(body.topicId, 10);
+    if (Number.isInteger(tid) && tid > 0) {
+      topicId = tid;
+    } else {
+      errors.push('Please select a valid topic.');
+    }
+  }
+
   return {
     errors,
-    values: { title, slugInput, description, videoUrl, duration, sortOrder, preview, status },
+    values: { title, slugInput, description, videoUrl, duration, sortOrder, preview, status, topicId },
   };
 }
 

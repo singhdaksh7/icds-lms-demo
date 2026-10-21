@@ -29,9 +29,11 @@ const QUEUE_SIZE = 3; // parts in flight => bounded memory (~PART_SIZE * QUEUE_S
 
 // courses/<courseId>/lessons/<lessonId|new>/<uuid>.<mp4|webm>
 const OBJECT_KEY_RE = /^courses\/\d{1,10}\/lessons\/(?:\d{1,10}|new)\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.(?:mp4|webm)$/;
+// courses/<courseId|slug>/resources/<uuid|filename>.<ext>
+const RESOURCE_KEY_RE = /^courses\/(?:\d{1,10}|[a-z0-9_-]+)\/resources\/[a-zA-Z0-9_.-]+\.(?:pdf|zip|docx?|xlsx?|png|jpe?g)$/i;
 
 function isOwnedObjectKey(key) {
-  return typeof key === 'string' && key.length <= 200 && OBJECT_KEY_RE.test(key);
+  return typeof key === 'string' && key.length <= 200 && (OBJECT_KEY_RE.test(key) || RESOURCE_KEY_RE.test(key));
 }
 
 // Keys are always server-generated; the uploaded filename is never used.
@@ -40,6 +42,12 @@ function buildObjectKey(courseId, lessonId, extension) {
   if (lessonId !== 'new' && (!Number.isInteger(lessonId) || lessonId < 1)) throw new Error('Invalid lesson id.');
   if (extension !== '.mp4' && extension !== '.webm') throw new Error('Unsupported video extension.');
   return `courses/${courseId}/lessons/${lessonId}/${crypto.randomUUID()}${extension}`;
+}
+
+function buildResourceObjectKey(courseId, extension = '.pdf') {
+  if (!Number.isInteger(courseId) || courseId < 1) throw new Error('Invalid course id.');
+  const ext = extension.startsWith('.') ? extension.toLowerCase() : `.${extension.toLowerCase()}`;
+  return `courses/${courseId}/resources/${crypto.randomUUID()}${ext}`;
 }
 
 function endpointFor(config) {
@@ -112,12 +120,16 @@ async function deleteObject(config, key) {
   return true;
 }
 
-async function signedGetUrl(config, key, ttlSeconds = SIGNED_URL_TTL_SECONDS) {
+async function signedGetUrl(config, key, ttlSeconds = SIGNED_URL_TTL_SECONDS, options = {}) {
   if (!isOwnedObjectKey(key)) throw new Error('Invalid object key.');
   const ttl = Math.min(Math.max(Math.floor(ttlSeconds), MIN_TTL_SECONDS), MAX_TTL_SECONDS);
+  const commandParams = { Bucket: config.bucket, Key: key };
+  if (options && options.filename) {
+    commandParams.ResponseContentDisposition = `inline; filename="${options.filename.replace(/"/g, '')}"`;
+  }
   const url = await getSignedUrl(
     getClient(config),
-    new GetObjectCommand({ Bucket: config.bucket, Key: key }),
+    new GetObjectCommand(commandParams),
     { expiresIn: ttl }
   );
   return { url, expiresInSeconds: ttl };
@@ -211,6 +223,7 @@ module.exports = {
   SIGNED_URL_TTL_SECONDS,
   isOwnedObjectKey,
   buildObjectKey,
+  buildResourceObjectKey,
   endpointFor,
   uploadStream,
   headObject,

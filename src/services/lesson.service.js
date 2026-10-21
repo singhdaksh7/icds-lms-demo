@@ -28,10 +28,16 @@ async function slugTakenInCourse(courseId, slug, excludeId) {
   return Boolean(existing && existing.id !== excludeId);
 }
 
+const { validateTopicCourseBinding } = require('./curriculum.service');
+
 async function createLesson(courseId, values) {
   const course = await prisma.course.findUnique({ where: { id: courseId } });
   if (!course) {
     throw new LessonError('Course not found.');
+  }
+
+  if (values.topicId) {
+    await validateTopicCourseBinding(courseId, values.topicId);
   }
 
   const slug = values.slugInput
@@ -43,6 +49,7 @@ async function createLesson(courseId, values) {
   return prisma.lesson.create({
     data: {
       courseId,
+      topicId: values.topicId ? Number(values.topicId) : null,
       title: values.title,
       slug,
       description: values.description || null,
@@ -61,6 +68,12 @@ async function updateLesson(id, values) {
     throw new LessonError('Lesson not found.');
   }
 
+  if (values.topicId !== undefined && values.topicId !== null) {
+    if (values.topicId) {
+      await validateTopicCourseBinding(existing.courseId, values.topicId);
+    }
+  }
+
   let slug = existing.slug;
   if (values.slugInput && values.slugInput !== existing.slug) {
     slug = (await slugTakenInCourse(existing.courseId, values.slugInput, id))
@@ -70,18 +83,23 @@ async function updateLesson(id, values) {
       : values.slugInput;
   }
 
+  const updateData = {
+    title: values.title,
+    slug,
+    description: values.description || null,
+    videoUrl: values.videoUrl || null,
+    duration: values.duration || null,
+    sortOrder: values.sortOrder,
+    preview: values.preview,
+    status: values.status,
+  };
+  if (values.topicId !== undefined) {
+    updateData.topicId = values.topicId ? Number(values.topicId) : null;
+  }
+
   return prisma.lesson.update({
     where: { id },
-    data: {
-      title: values.title,
-      slug,
-      description: values.description || null,
-      videoUrl: values.videoUrl || null,
-      duration: values.duration || null,
-      sortOrder: values.sortOrder,
-      preview: values.preview,
-      status: values.status,
-    },
+    data: updateData,
   });
 }
 
