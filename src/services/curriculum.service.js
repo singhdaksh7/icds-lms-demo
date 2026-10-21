@@ -41,11 +41,12 @@ function formatSecondsToHuman(seconds, fallback = null) {
   return `${seconds} sec`;
 }
 
-function lessonPercent(row) {
+function lessonPercent(row, lessonFallbackDuration = 0) {
   if (!row) return 0;
   if (row.completed) return 100;
-  if (row.durationSeconds > 0 && row.watchedSeconds > 0) {
-    return Math.min(99, Math.round((row.watchedSeconds / row.durationSeconds) * 100));
+  const duration = row.durationSeconds > 0 ? row.durationSeconds : lessonFallbackDuration;
+  if (duration > 0 && row.watchedSeconds > 0) {
+    return Math.min(99, Math.round((row.watchedSeconds / duration) * 100));
   }
   return 0;
 }
@@ -243,7 +244,7 @@ async function getCurriculumProgress(userId, structuredCurriculum) {
         lesson.completed = Boolean(row?.completed);
         lesson.watchedSeconds = row?.watchedSeconds || 0;
         lesson.lastPositionSeconds = row?.lastPositionSeconds || 0;
-        lesson.percent = lessonPercent(row);
+        lesson.percent = lessonPercent(row, lesson.videoDurationSeconds);
 
         if (lesson.completed) topicCompletedCount += 1;
         topicPercentSum += lesson.percent;
@@ -268,10 +269,14 @@ async function getCurriculumProgress(userId, structuredCurriculum) {
   const courseTotal = allLessons.length;
   const courseCompleted = allLessons.filter((l) => l.completed).length;
   const coursePercentSum = allLessons.reduce((acc, l) => acc + (l.percent || 0), 0);
+  let coursePercent = courseTotal > 0 ? Math.round(coursePercentSum / courseTotal) : 0;
+  if (courseCompleted < courseTotal && coursePercent >= 100) {
+    coursePercent = 99;
+  }
   const courseProgress = {
     total: courseTotal,
     completed: courseCompleted,
-    percent: courseTotal > 0 ? Math.round(coursePercentSum / courseTotal) : 0,
+    percent: coursePercent,
   };
 
   return { curriculum: structuredCurriculum, progressMap, courseProgress };

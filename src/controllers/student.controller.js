@@ -1,5 +1,6 @@
 const { listEnrollmentsForUser } = require('../services/enrollment.service');
-const { markLessonComplete, saveLessonProgress, ProgressError } = require('../services/progress.service');
+const { markLessonComplete, saveLessonProgress, computeCourseProgress, ProgressError } = require('../services/progress.service');
+const curriculumService = require('../services/curriculum.service');
 const orderService = require('../services/order.service');
 const { parsePage } = require('../lib/pagination');
 const { prisma } = require('../config/db');
@@ -30,13 +31,23 @@ async function getDashboard(req, res, next) {
     // of its own, and this derives it from existing data with no migration.
     const lastActivityByEnrollmentId = {};
     await Promise.all(enrollments.map(async (enrollment, index) => {
+      // Synchronize with computeCourseProgress to eliminate any stale cached progress
+      const courseProgress = await computeCourseProgress(req.currentUser.id, enrollment.courseId);
+      if (enrollment.progressPercent !== courseProgress.percent) {
+        enrollment.progressPercent = courseProgress.percent;
+        await prisma.enrollment.update({
+          where: { id: enrollment.id },
+          data: { progressPercent: courseProgress.percent },
+        });
+      }
+      enrollment.completedLessons = courseProgress.completed;
+      enrollment.totalLessons = courseProgress.total;
+      enrollment.lessonCount = courseProgress.total;
+
       enrollment.certificateEligible = completionChecks[index].eligible;
       enrollment.certificate = certificateByCourse[enrollment.courseId] || null;
       enrollment.stateLabel = courseStateLabel(enrollment.progressPercent);
       enrollment.buttonLabel = courseButtonLabel(enrollment.progressPercent);
-
-      const lessonCount = await prisma.lesson.count({ where: { courseId: enrollment.courseId, status: 'PUBLISHED' } });
-      enrollment.lessonCount = lessonCount;
 
       const latestProgress = await prisma.lessonProgress.findFirst({
         where: { userId: req.currentUser.id, lesson: { courseId: enrollment.courseId } },
@@ -128,11 +139,37 @@ async function saveProgress(req, res, next) {
       watchedDeltaSeconds,
     }, { viewStartedAtMs });
 
+    // Derive current module and topic stats for hierarchical UI update
+    const lesson = await prisma.lesson.findUnique({ where: { id: lessonId }, select: { courseId: true } });
+    let currentModuleStats = null;
+    let currentTopicStats = null;
+    if (lesson) {
+      const rawCurriculum = await curriculumService.getPublishedCurriculum(lesson.courseId);
+      const { curriculum } = await curriculumService.getCurriculumProgress(
+        req.currentUser.id,
+        rawCurriculum
+      );
+      for (const mod of curriculum) {
+        for (const top of mod.topics || []) {
+          if ((top.lessons || []).some((l) => l.id === lessonId)) {
+            currentModuleStats = { id: mod.id, completed: mod.completedLessons, total: mod.totalLessons, percent: mod.progressPercent };
+            currentTopicStats = { id: top.id, completed: top.completedLessons, total: top.totalLessons, percent: top.progressPercent };
+            break;
+          }
+        }
+        if (currentModuleStats) break;
+      }
+    }
+
     res.json({
       success: true,
       completed: lessonProgress.completed,
       watchedSeconds: lessonProgress.watchedSeconds,
       progressPercent: progress.percent,
+      completedLessons: progress.completed,
+      totalLessons: progress.total,
+      module: currentModuleStats,
+      topic: currentTopicStats,
     });
   } catch (err) {
     if (err instanceof ProgressError) {

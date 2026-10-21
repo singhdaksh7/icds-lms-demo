@@ -54,7 +54,11 @@
                                     <div class="d-flex justify-content-between align-items-center w-100 me-3">
                                         <span><%= mod.title %></span>
                                         <span class="badge bg-white text-muted border small">
-                                            <%= (mod.topics || []).reduce((acc, t) => acc + (t.lessons || []).length, 0) %> Lessons
+                                            <% if (typeof mod.completedLessons !== 'undefined' && typeof mod.totalLessons !== 'undefined') { %>
+                                                <%= mod.completedLessons %>/<%= mod.totalLessons %> Completed
+                                            <% } else { %>
+                                                <%= (mod.topics || []).reduce((acc, t) => acc + (t.lessons || []).length, 0) %> Lessons
+                                            <% } %>
                                         </span>
                                     </div>
                                 </button>
@@ -63,8 +67,13 @@
                                 <div class="accordion-body p-3 bg-white">
                                     <% (mod.topics || []).forEach(function(topic) { %>
                                         <div class="mb-3">
-                                            <div class="small text-muted fw-bold mb-2">
-                                                <i class="bi bi-folder2-open me-1 text-primary"></i> <%= topic.title %>
+                                            <div class="d-flex justify-content-between align-items-center small text-muted fw-bold mb-2">
+                                                <span><i class="bi bi-folder2-open me-1 text-primary"></i> <%= topic.title %></span>
+                                                <% if (typeof topic.completedLessons !== 'undefined' && typeof topic.totalLessons !== 'undefined') { %>
+                                                    <span class="badge bg-light text-muted border" style="font-size:11px;">
+                                                        <%= topic.completedLessons %>/<%= topic.totalLessons %> Completed
+                                                    </span>
+                                                <% } %>
                                             </div>
                                             <div class="list-group">
                                                 <% (topic.lessons || []).forEach(function(lesson) { %>

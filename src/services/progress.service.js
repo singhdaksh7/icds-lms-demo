@@ -92,7 +92,10 @@ function isLessonComplete(alreadyCompleted, watchedSeconds, durationSeconds) {
 // derived — saveLessonProgress below just persists whatever this returns.
 function computeProgressUpdate(existing, { positionSeconds, durationSeconds, watchedDeltaSeconds }, timing) {
   const lastPositionSeconds = clampNonNegativeInt(positionSeconds);
-  const duration = clampNonNegativeInt(durationSeconds);
+  const reportedDuration = clampNonNegativeInt(durationSeconds);
+  const duration = reportedDuration > 0
+    ? reportedDuration
+    : (existing && existing.durationSeconds > 0 ? existing.durationSeconds : (timing && timing.lessonDuration ? timing.lessonDuration : 0));
 
   // With `timing` ({ nowMs, viewStartedAtMs }) the credited delta is bounded
   // by real server time (see computeCreditedDelta). Without it (pure unit
@@ -111,9 +114,10 @@ function computeProgressUpdate(existing, { positionSeconds, durationSeconds, wat
   }
 
   const priorWatched = existing ? existing.watchedSeconds : 0;
+  // Monotonic: watchedSeconds can NEVER decrease, even on seek backward or clock jitter
   const watchedSeconds = duration > 0
-    ? Math.min(priorWatched + delta, duration)
-    : priorWatched + delta;
+    ? Math.max(priorWatched, Math.min(priorWatched + delta, duration))
+    : Math.max(priorWatched, priorWatched + delta);
 
   const wasCompleted = Boolean(existing && existing.completed);
   const completed = isLessonComplete(wasCompleted, watchedSeconds, duration);
@@ -151,7 +155,7 @@ function lessonPercent(row) {
 async function computeCourseProgress(userId, courseId) {
   const lessons = await prisma.lesson.findMany({
     where: { courseId, status: 'PUBLISHED' },
-    select: { id: true },
+    select: { id: true, videoDurationSeconds: true },
   });
 
   if (lessons.length === 0) {
@@ -166,13 +170,17 @@ async function computeCourseProgress(userId, courseId) {
 
   let completed = 0;
   let percentSum = 0;
-  for (const id of lessonIds) {
-    const row = rowByLesson.get(id);
+  for (const l of lessons) {
+    const row = rowByLesson.get(l.id);
     if (row && row.completed) completed += 1;
     percentSum += lessonPercent(row);
   }
 
-  const percent = Math.round(percentSum / lessons.length);
+  let percent = Math.round(percentSum / lessons.length);
+  // Cap at 99% until ALL published lessons in the course are fully completed
+  if (completed < lessons.length && percent >= 100) {
+    percent = 99;
+  }
   return { completed, total: lessons.length, percent };
 }
 
@@ -286,6 +294,7 @@ async function saveLessonProgress(userId, lessonId, { positionSeconds, durationS
     const data = computeProgressUpdate(existing, report, {
       nowMs: options.nowMs ?? Date.now(),
       viewStartedAtMs: options.viewStartedAtMs ?? null,
+      lessonDuration: lesson.videoDurationSeconds,
     });
 
     if (!existing) {
@@ -309,6 +318,19 @@ async function saveLessonProgress(userId, lessonId, { positionSeconds, durationS
   if (!lessonProgress) {
     // Persistent contention: keep what exists, credit nothing.
     lessonProgress = await prisma.lessonProgress.findUnique({ where });
+  }
+
+  if (lesson && !lesson.videoDurationSeconds && lessonProgress && lessonProgress.durationSeconds > 0) {
+    const durSec = lessonProgress.durationSeconds;
+    const m = Math.floor(durSec / 60);
+    const s = durSec % 60;
+    const durStr = m > 0 && s > 0 ? `${m}m ${s}s` : (m > 0 ? `${m} min` : `${s}s`);
+    if (prisma.lesson && typeof prisma.lesson.update === 'function') {
+      await prisma.lesson.update({
+        where: { id: lessonId },
+        data: { videoDurationSeconds: durSec, duration: durStr },
+      }).catch(() => {});
+    }
   }
 
   const progress = await computeCourseProgress(userId, lesson.courseId);

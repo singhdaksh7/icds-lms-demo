@@ -27,6 +27,7 @@
   var progressUrl = video.getAttribute('data-progress-url');
   var csrfToken = video.getAttribute('data-csrf');
   var resumeSeconds = parseInt(video.getAttribute('data-resume-seconds'), 10) || 0;
+  var lessonId = video.getAttribute('data-lesson-id');
 
   var SAVE_INTERVAL_MS = 12000;
   // A little above the save interval's plausible per-tick delta — timeupdate
@@ -35,11 +36,71 @@
   // resuming from background, or a stall/resync, not genuine watching.
   var MAX_PLAUSIBLE_TICK_DELTA = 2;
 
-  var lastSavedAt = 0;
+  var lastSavedAt = Date.now();
   var lastSentPosition = -1;
   var hasResumed = false;
   var lastTickTime = null; // video.currentTime at the previous timeupdate
   var sessionWatchedSeconds = 0; // accumulated legitimate watched time, not yet saved
+
+  function updateProgressUI(data) {
+    if (!data) return;
+
+    if (typeof data.progressPercent === 'number') {
+      var pctElements = document.querySelectorAll('.course-progress-percent-text');
+      pctElements.forEach(function (el) {
+        el.textContent = data.progressPercent;
+      });
+
+      var barElements = document.querySelectorAll('.course-progress-bar');
+      barElements.forEach(function (el) {
+        el.style.width = data.progressPercent + '%';
+        el.setAttribute('aria-valuenow', data.progressPercent);
+      });
+    }
+
+    if (typeof data.completedLessons === 'number' && typeof data.totalLessons === 'number') {
+      var countElements = document.querySelectorAll('.course-progress-count-text');
+      countElements.forEach(function (el) {
+        el.textContent = data.completedLessons + ' of ' + data.totalLessons + ' lessons completed';
+      });
+    }
+
+    if (data.module && data.module.id) {
+      var modBadges = document.querySelectorAll('.module-progress-badge[data-module-id="' + data.module.id + '"]');
+      modBadges.forEach(function (el) {
+        el.textContent = data.module.completed + '/' + data.module.total;
+      });
+    }
+
+    if (data.topic && data.topic.id) {
+      var topBadges = document.querySelectorAll('.topic-progress-badge[data-topic-id="' + data.topic.id + '"]');
+      topBadges.forEach(function (el) {
+        el.textContent = data.topic.completed + '/' + data.topic.total;
+      });
+    }
+
+    if (data.completed) {
+      var lessonLinks = document.querySelectorAll('[data-sidebar-lesson-id="' + lessonId + '"]');
+      lessonLinks.forEach(function (link) {
+        var icon = link.querySelector('i.bi-circle, i.bi-play-circle-fill');
+        if (icon) {
+          icon.className = 'bi bi-check-circle-fill text-success flex-shrink-0';
+        }
+      });
+
+      var headerBadge = document.getElementById('lesson-completion-badge');
+      if (headerBadge) {
+        headerBadge.innerHTML = '<span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2 rounded-pill fs-6">' +
+          '<i class="bi bi-check-circle-fill me-1"></i> Completed' +
+          '</span>';
+      }
+
+      var helpNote = document.getElementById('lesson-completion-note');
+      if (helpNote) {
+        helpNote.innerHTML = '<i class="bi bi-check-all text-success me-1"></i> Completed';
+      }
+    }
+  }
 
   function sendProgress(useBeacon) {
     var position = Math.floor(video.currentTime || 0);
@@ -65,7 +126,16 @@
         headers: { 'Content-Type': 'application/json' },
         body: payload,
         keepalive: true,
-      }).catch(function () {});
+      })
+        .then(function (r) {
+          if (!r.ok) return null;
+          return r.json();
+        })
+        .then(function (data) {
+          if (!data || !data.success) return;
+          updateProgressUI(data);
+        })
+        .catch(function () {});
     }
 
     lastSentPosition = position;
@@ -129,6 +199,10 @@
   });
 
   window.addEventListener('pagehide', function () {
+    sendProgress(true);
+  });
+
+  window.addEventListener('beforeunload', function () {
     sendProgress(true);
   });
 })();

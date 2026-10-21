@@ -60,6 +60,9 @@
                             <div class="progress dashboard-progress">
                                 <div class="progress-bar" role="progressbar" style="width: <%= continueLearning.progressPercent %>%; background: var(--primary-color);"></div>
                             </div>
+                            <div class="small text-muted mt-1" style="font-size:12px;">
+                                <%= continueLearning.completedLessons || 0 %> of <%= continueLearning.lessonCount %> lessons completed
+                            </div>
                         </div>
                         <a href="/learn/<%= clCourse.slug %>" class="auth-submit d-inline-block dashboard-continue-btn text-decoration-none">
                             <%= clStarted ? d.continueHeading : d.startLabel %>
@@ -96,7 +99,7 @@
                                 <h3 class="course-title"><%= course.title %></h3>
 
                                 <div class="small text-muted mb-2">
-                                    <i class="bi bi-play-circle me-1"></i><%= enrollment.lessonCount %> <%= enrollment.lessonCount === 1 ? 'lesson' : 'lessons' %>
+                                    <i class="bi bi-play-circle me-1"></i><%= typeof enrollment.completedLessons !== 'undefined' ? `${enrollment.completedLessons} of ` : '' %><%= enrollment.lessonCount %> <%= enrollment.lessonCount === 1 ? 'lesson' : 'lessons' %><%= typeof enrollment.completedLessons !== 'undefined' ? ' completed' : '' %>
                                 </div>
 
                                 <div class="mb-3">

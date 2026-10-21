@@ -35,7 +35,7 @@
             <!-- Mobile Drawer Button (Visible on mobile & tablet) -->
             <div class="d-lg-none">
                 <button class="btn btn-sm btn-outline-primary fw-semibold" type="button" data-bs-toggle="offcanvas" data-bs-target="#curriculumDrawer" aria-controls="curriculumDrawer">
-                    <i class="bi bi-list-nested me-1"></i> Course Content (<%= typeof progress !== 'undefined' && progress ? progress.percent : 0 %>%)
+                    <i class="bi bi-list-nested me-1"></i> Course Content (<span class="course-progress-percent-text"><%= typeof progress !== 'undefined' && progress ? progress.percent : 0 %></span>%)
                 </button>
             </div>
         </div>
@@ -107,7 +107,7 @@
                             </div>
                             <h1 class="h3 fw-bold text-dark mb-0"><%= lesson.title %></h1>
                         </div>
-                        <div>
+                        <div id="lesson-completion-badge">
                             <% const isLessonDone = typeof progressMap !== 'undefined' && progressMap && progressMap[lesson.id] && progressMap[lesson.id].completed; %>
                             <% if (isLessonDone) { %>
                                 <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2 rounded-pill fs-6">
@@ -130,7 +130,7 @@
 
                     <!-- Completion status message for tracked students -->
                     <% if (typeof enrolled !== 'undefined' && enrolled && (typeof isAdmin === 'undefined' || !isAdmin)) { %>
-                        <div class="mt-3 small text-muted">
+                        <div class="mt-3 small text-muted" id="lesson-completion-note">
                             <% if (isLessonDone) { %>
                                 <i class="bi bi-check-all text-success me-1"></i> <%= ls.completedLabel || 'Completed' %>
                             <% } else { %>
@@ -214,12 +214,12 @@
                         <div class="mb-3 pb-3 border-bottom">
                             <div class="d-flex justify-content-between align-items-center small mb-1">
                                 <span class="fw-bold text-dark"><%= ls.progressLabel || 'Course Progress' %></span>
-                                <span class="badge bg-primary-subtle text-primary fw-semibold"><%= typeof progress !== 'undefined' && progress ? progress.percent : 0 %>%</span>
+                                <span class="badge bg-primary-subtle text-primary fw-semibold"><span class="course-progress-percent-text"><%= typeof progress !== 'undefined' && progress ? progress.percent : 0 %></span>%</span>
                             </div>
                             <div class="progress" style="height:6px; border-radius:6px;">
-                                <div class="progress-bar" role="progressbar" style="width: <%= typeof progress !== 'undefined' && progress ? progress.percent : 0 %>%; background: var(--primary-color);"></div>
+                                <div class="progress-bar course-progress-bar" role="progressbar" style="width: <%= typeof progress !== 'undefined' && progress ? progress.percent : 0 %>%; background: var(--primary-color);"></div>
                             </div>
-                            <div class="small text-muted mt-1" style="font-size:11px;">
+                            <div class="small text-muted mt-1 course-progress-count-text" style="font-size:11px;">
                                 <%= typeof progress !== 'undefined' && progress ? (progress.completed + ' of ' + progress.total + ' lessons completed') : '' %>
                             </div>
                         </div>
@@ -246,6 +246,9 @@
                                             aria-expanded="<%= isModActive ? 'true' : 'false' %>">
                                         <div class="d-flex justify-content-between align-items-center w-100 me-2">
                                             <span><%= mod.title %></span>
+                                            <span class="badge bg-light text-muted border module-progress-badge" data-module-id="<%= mod.id %>" style="font-size:10px;">
+                                                <%= (typeof mod.completedLessons !== 'undefined' ? mod.completedLessons : 0) %>/<%= (typeof mod.totalLessons !== 'undefined' ? mod.totalLessons : (mod.lessons ? mod.lessons.length : 0)) %>
+                                            </span>
                                         </div>
                                     </button>
                                 </h2>
@@ -253,8 +256,11 @@
                                     <div class="accordion-body p-2 bg-white">
                                         <% (mod.topics || []).forEach(function(topic, topicIdx) { %>
                                             <div class="mb-2">
-                                                <div class="small text-muted fw-bold px-2 py-1 bg-light rounded" style="font-size:11px;">
-                                                    <i class="bi bi-folder2-open me-1 text-primary"></i> <%= topic.title %>
+                                                <div class="d-flex justify-content-between align-items-center small text-muted fw-bold px-2 py-1 bg-light rounded" style="font-size:11px;">
+                                                    <span><i class="bi bi-folder2-open me-1 text-primary"></i> <%= topic.title %></span>
+                                                    <span class="badge bg-white text-muted border topic-progress-badge" data-topic-id="<%= topic.id %>" style="font-size:9px;">
+                                                        <%= (typeof topic.completedLessons !== 'undefined' ? topic.completedLessons : 0) %>/<%= (typeof topic.totalLessons !== 'undefined' ? topic.totalLessons : (topic.lessons ? topic.lessons.length : 0)) %>
+                                                    </span>
                                                 </div>
                                                 <div class="list-group list-group-flush mt-1">
                                                     <% (topic.lessons || []).forEach(function(item) { %>
@@ -262,6 +268,7 @@
                                                         <% const isCurrent = item.id === lesson.id; %>
                                                         <% const locked = !item.preview && !(typeof enrolled !== 'undefined' && enrolled) && !(typeof isAdmin !== 'undefined' && isAdmin); %>
                                                         <a href="<%= locked ? '#' : ('/learn/' + course.slug + '/' + item.slug) %>"
+                                                           data-sidebar-lesson-id="<%= item.id %>"
                                                            class="list-group-item list-group-item-action py-2 px-2 rounded-2 border-0 d-flex justify-content-between align-items-center mb-1 <%= isCurrent ? 'bg-primary-subtle text-primary fw-bold' : '' %> <%= locked ? 'disabled text-muted' : '' %>"
                                                            style="font-size:12px;">
                                                             <div class="d-flex align-items-center gap-2 text-truncate">
@@ -313,10 +320,13 @@
             <div class="mb-3 pb-3 border-bottom">
                 <div class="d-flex justify-content-between align-items-center small mb-1">
                     <span class="fw-bold"><%= ls.progressLabel || 'Progress' %></span>
-                    <span class="badge bg-primary text-white"><%= typeof progress !== 'undefined' && progress ? progress.percent : 0 %>%</span>
+                    <span class="badge bg-primary text-white"><span class="course-progress-percent-text"><%= typeof progress !== 'undefined' && progress ? progress.percent : 0 %></span>%</span>
                 </div>
                 <div class="progress" style="height:6px;">
-                    <div class="progress-bar" style="width: <%= typeof progress !== 'undefined' && progress ? progress.percent : 0 %>%; background: var(--primary-color);"></div>
+                    <div class="progress-bar course-progress-bar" style="width: <%= typeof progress !== 'undefined' && progress ? progress.percent : 0 %>%; background: var(--primary-color);"></div>
+                </div>
+                <div class="small text-muted mt-1 course-progress-count-text" style="font-size:11px;">
+                    <%= typeof progress !== 'undefined' && progress ? (progress.completed + ' of ' + progress.total + ' lessons completed') : '' %>
                 </div>
             </div>
         <% } %>
@@ -329,15 +339,23 @@
                         <button class="accordion-button <%= isModActive ? '' : 'collapsed' %> py-2 px-3 bg-light-subtle small fw-bold text-dark"
                                 type="button" data-bs-toggle="collapse" data-bs-target="#mobile-mod-collapse-<%= mod.id %>"
                                 aria-expanded="<%= isModActive ? 'true' : 'false' %>">
-                            <%= mod.title %>
+                            <div class="d-flex justify-content-between align-items-center w-100 me-2">
+                                <span><%= mod.title %></span>
+                                <span class="badge bg-white text-muted border module-progress-badge" data-module-id="<%= mod.id %>" style="font-size:10px;">
+                                    <%= (typeof mod.completedLessons !== 'undefined' ? mod.completedLessons : 0) %>/<%= (typeof mod.totalLessons !== 'undefined' ? mod.totalLessons : (mod.lessons ? mod.lessons.length : 0)) %>
+                                </span>
+                            </div>
                         </button>
                     </h2>
                     <div id="mobile-mod-collapse-<%= mod.id %>" class="accordion-collapse collapse <%= isModActive ? 'show' : '' %>" data-bs-parent="#mobileCurriculumAccordion">
                         <div class="accordion-body p-2 bg-white">
                             <% (mod.topics || []).forEach(function(topic) { %>
                                 <div class="mb-2">
-                                    <div class="small text-muted fw-bold px-2 py-1 bg-light rounded" style="font-size:11px;">
-                                        <%= topic.title %>
+                                    <div class="d-flex justify-content-between align-items-center small text-muted fw-bold px-2 py-1 bg-light rounded" style="font-size:11px;">
+                                        <span><%= topic.title %></span>
+                                        <span class="badge bg-white text-muted border topic-progress-badge" data-topic-id="<%= topic.id %>" style="font-size:9px;">
+                                            <%= (typeof topic.completedLessons !== 'undefined' ? topic.completedLessons : 0) %>/<%= (typeof topic.totalLessons !== 'undefined' ? topic.totalLessons : (topic.lessons ? topic.lessons.length : 0)) %>
+                                        </span>
                                     </div>
                                     <div class="list-group list-group-flush mt-1">
                                         <% (topic.lessons || []).forEach(function(item) { %>
@@ -345,6 +363,7 @@
                                             <% const isCurrent = item.id === lesson.id; %>
                                             <% const locked = !item.preview && !(typeof enrolled !== 'undefined' && enrolled) && !(typeof isAdmin !== 'undefined' && isAdmin); %>
                                             <a href="<%= locked ? '#' : ('/learn/' + course.slug + '/' + item.slug) %>"
+                                               data-sidebar-lesson-id="<%= item.id %>"
                                                class="list-group-item list-group-item-action py-2 px-2 rounded-2 border-0 d-flex justify-content-between align-items-center mb-1 <%= isCurrent ? 'bg-primary-subtle text-primary fw-bold' : '' %>"
                                                style="font-size:13px; min-height:48px;">
                                                 <div class="d-flex align-items-center gap-2 text-truncate">

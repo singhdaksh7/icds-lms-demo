@@ -21,6 +21,7 @@ const fakePrisma = {
   lesson: {
     async findUnique({ where }) { await Promise.resolve(); return clone(db.lessons.find((l) => l.id === where.id)); },
     async findMany({ where }) { return db.lessons.filter((l) => l.courseId === where.courseId && l.status === where.status).map((l) => ({ id: l.id })); },
+    async update({ where, data }) { const l = db.lessons.find((l) => l.id === where.id); if (l) Object.assign(l, data); return clone(l); },
   },
   enrollment: {
     async findUnique() { return db.enrollments[0] ? { ...db.enrollments[0] } : null; },
