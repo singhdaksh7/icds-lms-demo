@@ -1,7 +1,37 @@
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <h1 style="font-size:24px;" class="mb-0"><%= course ? 'Edit Course' : 'New Course' %></h1>
+    <h1 style="font-size:24px;" class="mb-0"><%= course ? 'Edit Course: ' + course.title : 'New Course' %></h1>
     <a href="/admin/courses" class="btn btn-sm btn-outline-secondary">Back to Courses</a>
 </div>
+
+<% if (course) { %>
+    <ul class="nav nav-pills mb-4 gap-2">
+        <li class="nav-item">
+            <a class="nav-link active" href="/admin/courses/<%= course.id %>/edit">
+                <i class="bi bi-info-circle me-1"></i> Details
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="/admin/courses/<%= course.id %>/curriculum">
+                <i class="bi bi-diagram-3 me-1"></i> Curriculum Builder
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="/admin/courses/<%= course.id %>/lessons">
+                <i class="bi bi-collection-play me-1"></i> Lessons
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="/admin/courses/<%= course.id %>/landing-page">
+                <i class="bi bi-layout-text-window-reverse me-1"></i> Landing Page CMS
+            </a>
+        </li>
+        <li class="nav-item ms-auto">
+            <a class="btn btn-sm btn-outline-primary" href="/courses/<%= course.slug %>" target="_blank" rel="noopener noreferrer">
+                <i class="bi bi-box-arrow-up-right me-1"></i> Preview Landing Page
+            </a>
+        </li>
+    </ul>
+<% } %>
 
 <% if (errors && errors.length) { %>
     <div class="alert alert-danger">

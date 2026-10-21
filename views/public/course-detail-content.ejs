@@ -17,9 +17,17 @@ const courseStats = typeof stats !== 'undefined' && stats ? stats : {
 };
 const safeCurriculum = typeof curriculum !== 'undefined' && Array.isArray(curriculum) ? curriculum : [];
 const safeResources = typeof resources !== 'undefined' && Array.isArray(resources) ? resources : [];
-const safeFaqs = typeof faqs !== 'undefined' && Array.isArray(faqs) ? faqs : [];
 const userIsEnrolled = typeof isEnrolled !== 'undefined' && isEnrolled;
 const hasPending = typeof hasPendingRequest !== 'undefined' && hasPendingRequest;
+
+// Landing CMS dynamic content
+const lc = (typeof landing !== 'undefined' && landing && landing.content) ? landing.content : {};
+const heroChipsList = (typeof landing !== 'undefined' && landing && Array.isArray(landing.heroChips)) ? landing.heroChips : [];
+const takeawaysList = (typeof landing !== 'undefined' && landing && Array.isArray(landing.takeaways)) ? landing.takeaways : [];
+const questionsList = (typeof landing !== 'undefined' && landing && Array.isArray(landing.questions)) ? landing.questions : [];
+const audienceForList = (typeof landing !== 'undefined' && landing && Array.isArray(landing.audienceFor)) ? landing.audienceFor : [];
+const audienceNotForList = (typeof landing !== 'undefined' && landing && Array.isArray(landing.audienceNotFor)) ? landing.audienceNotFor : [];
+const courseFaqsList = (typeof landing !== 'undefined' && landing && Array.isArray(landing.faqs)) ? landing.faqs : (typeof faqs !== 'undefined' && Array.isArray(faqs) ? faqs : []);
 %>
 <link rel="stylesheet" href="/css/course-landing.css">
 
@@ -52,39 +60,60 @@ const hasPending = typeof hasPendingRequest !== 'undefined' && hasPendingRequest
             <div class="wrap hero-grid">
                 <div class="hero-copy">
                     <span class="eyebrow rv">
-                        <%= course.category ? course.category.name : 'ICDS' %> &bull; Online Certificate Course
+                        <%= lc.heroEyebrow || (course.category ? course.category.name + ' • Online Certificate Course' : 'Online Certificate Course') %>
                     </span>
                     <h1 class="rv d1">
                         <% 
-                            const words = (course.title || '').trim().split(/\s+/);
-                            let titleLead = course.title;
-                            let titleAccent = '';
-                            if (words.length >= 3) {
-                                titleLead = words.slice(0, 2).join(' ');
-                                titleAccent = words.slice(2).join(' ');
-                            } else if (words.length === 2) {
-                                titleLead = words[0];
-                                titleAccent = words[1];
-                            }
+                            const displayTitle = lc.heroTitleOverride || course.title || '';
+                            if (lc.heroAccentText) {
+                                const accent = lc.heroAccentText;
+                                const lowerTitle = displayTitle.toLowerCase();
+                                const lowerAccent = accent.toLowerCase();
+                                const idx = lowerTitle.indexOf(lowerAccent);
+                                if (idx !== -1) {
+                                    const before = displayTitle.slice(0, idx);
+                                    const matched = displayTitle.slice(idx, idx + accent.length);
+                                    const after = displayTitle.slice(idx + accent.length);
                         %>
-                        <%= titleLead %> <% if (titleAccent) { %><em><%= titleAccent %></em><% } %>
+                                    <%= before %><em><%= matched %></em><%= after %>
+                        <%
+                                } else {
+                        %>
+                                    <%= displayTitle %> <em><%= accent %></em>
+                        <%
+                                }
+                            } else {
+                                const words = displayTitle.trim().split(/\s+/);
+                                let titleLead = displayTitle;
+                                let titleAccent = '';
+                                if (words.length >= 3) {
+                                    titleLead = words.slice(0, 2).join(' ');
+                                    titleAccent = words.slice(2).join(' ');
+                                } else if (words.length === 2) {
+                                    titleLead = words[0];
+                                    titleAccent = words[1];
+                                }
+                        %>
+                                <%= titleLead %> <% if (titleAccent) { %><em><%= titleAccent %></em><% } %>
+                        <% } %>
                     </h1>
 
-                    <p class="lede rv d2">
-                        <%= course.shortDescription || course.description || 'Comprehensive clinical masterclass covering foundational principles, occlusion, case diagnostics, treatment sequencing, and hands-on clinical workflows.' %>
-                    </p>
+                    <% const heroDesc = lc.heroDescription || course.shortDescription || course.description || ''; %>
+                    <% if (heroDesc) { %>
+                        <p class="lede rv d2"><%= heroDesc %></p>
+                    <% } %>
 
-                    <div class="chips rv d2">
-                        <span class="chip">✓ <%= courseStats.totalDurationFormatted || course.duration || 'Self-paced' %></span>
-                        <span class="chip">✓ <%= courseStats.publishedLessonCount %> Structured Videos</span>
-                        <span class="chip">✓ Pre-Recorded</span>
-                        <span class="chip">✓ E-Certificate</span>
-                        <span class="chip">✓ Lifetime Access</span>
-                    </div>
+                    <% if (heroChipsList.length > 0) { %>
+                        <div class="chips rv d2">
+                            <% heroChipsList.forEach(function(chip) { %>
+                                <span class="chip">✓ <%= chip.label %></span>
+                            <% }); %>
+                        </div>
+                    <% } %>
 
                     <div class="price-row rv d3">
                         <div>
-                            <div class="from">Full Lifetime Access</div>
+                            <div class="from"><%= lc.priceSubtitle || 'Full Access' %></div>
                             <div class="price"><%= freeCourse ? 'Free' : formattedPriceLabel %></div>
                         </div>
                         <% if (!freeCourse && course.salePrice && Number(course.salePrice) < Number(course.price)) { %>
@@ -100,10 +129,10 @@ const hasPending = typeof hasPendingRequest !== 'undefined' && hasPendingRequest
                             <% } else if (freeCourse) { %>
                                 <form method="POST" action="/courses/<%= course.slug %>/enroll-free" class="m-0 d-inline-block">
                                     <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
-                                    <button type="submit" class="btn btn-primary"><%= cd.freeCta || 'Enroll Free →' %></button>
+                                    <button type="submit" class="btn btn-primary"><%= lc.finalCtaButtonLabel || cd.freeCta || 'Enroll Free →' %></button>
                                 </form>
                             <% } else if (typeof paymentsEnabled !== 'undefined' && paymentsEnabled) { %>
-                                <a class="btn btn-primary" href="/checkout/<%= course.slug %>">Buy Course – <%= formattedPriceLabel %></a>
+                                <a class="btn btn-primary" href="/checkout/<%= course.slug %>"><%= lc.finalCtaButtonLabel || ('Buy Course – ' + formattedPriceLabel) %></a>
                             <% } else if (hasPending) { %>
                                 <button class="btn btn-secondary" disabled><%= cd.requestedLabel || 'Request Pending' %></button>
                             <% } else { %>
@@ -116,30 +145,35 @@ const hasPending = typeof hasPendingRequest !== 'undefined' && hasPendingRequest
                             <a class="btn btn-primary" href="/learn/<%= course.slug %>">View as Admin →</a>
                         <% } else { %>
                             <a class="btn btn-primary" href="/login?returnTo=<%= encodeURIComponent('/courses/' + course.slug) %>">
-                                <%= freeCourse ? (cd.loginFreeCta || 'Enroll Free →') : ((typeof paymentsEnabled !== 'undefined' && paymentsEnabled) ? 'Buy Course – ' + formattedPriceLabel : (cd.loginRequestCta || 'Sign In to Access →')) %>
+                                <%= freeCourse ? (lc.finalCtaButtonLabel || cd.loginFreeCta || 'Enroll Free →') : ((typeof paymentsEnabled !== 'undefined' && paymentsEnabled) ? 'Buy Course – ' + formattedPriceLabel : (cd.loginRequestCta || 'Sign In to Access →')) %>
                             </a>
                         <% } %>
-                        <a class="btn btn-secondary" href="#curriculum">Explore Curriculum</a>
+                        <% if (lc.secondaryCtaLabel !== '') { %>
+                            <a class="btn btn-secondary" href="<%= lc.secondaryCtaTarget || '#curriculum' %>"><%= lc.secondaryCtaLabel || 'Explore Curriculum' %></a>
+                        <% } %>
                     </div>
                 </div>
 
-                <div class="rv d2">
-                    <div class="video-card">
-                        <div class="portrait">
-                            <img src="<%= course.thumbnailUrl || cms.brand.defaultCourseImageUrl || '/assets/images/course-placeholder.svg' %>"
-                                 alt="<%= course.title %>"
-                                 data-fallback-src="/assets/images/course-placeholder.svg">
-                            <div class="play-overlay">
-                                <a href="#curriculum" class="play-btn" aria-label="Explore curriculum">▶</a>
+                <% if (lc.heroMediaType !== 'NONE') { %>
+                    <div class="rv d2">
+                        <div class="video-card">
+                            <div class="portrait">
+                                <% const heroMediaImg = (lc.heroMediaType === 'IMAGE' && lc.heroMediaUrl) ? lc.heroMediaUrl : (course.thumbnailUrl || cms.brand.defaultCourseImageUrl || '/assets/images/course-placeholder.svg'); %>
+                                <img src="<%= heroMediaImg %>"
+                                     alt="<%= course.title %>"
+                                     data-fallback-src="/assets/images/course-placeholder.svg">
+                                <div class="play-overlay">
+                                    <a href="<%= (lc.heroMediaType === 'VIDEO' && lc.heroMediaUrl) ? lc.heroMediaUrl : '#curriculum' %>" class="play-btn" aria-label="Explore curriculum">▶</a>
+                                </div>
                             </div>
                         </div>
+                        <div class="mentor-strip">
+                            <span><b>Institute of Cosmetology &amp; Dental Sciences</b></span>
+                            <span>•</span>
+                            <span><%= lc.heroMediaCaption || '100% Verified Clinical Curriculum' %></span>
+                        </div>
                     </div>
-                    <div class="mentor-strip">
-                        <span><b>Institute of Cosmetology &amp; Dental Sciences</b></span>
-                        <span>•</span>
-                        <span>100% Verified Clinical Curriculum</span>
-                    </div>
-                </div>
+                <% } %>
             </div>
 
             <!-- Stats Bar -->
@@ -157,250 +191,259 @@ const hasPending = typeof hasPendingRequest !== 'undefined' && hasPendingRequest
                     <span>clinical topics</span>
                 </div>
                 <div class="stat">
-                    <strong>Full</strong>
-                    <span>lifetime access</span>
+                    <strong><%= freeCourse ? 'Free' : (course.currency === 'INR' ? '₹' : course.currency + ' ') + effectivePrice.toLocaleString('en-IN') %></strong>
+                    <span><%= lc.priceSubtitle || 'Full Access' %></span>
                 </div>
             </div>
         </section>
 
         <!-- Course Fundamentals / Context Card -->
-        <section class="seo-intro" aria-labelledby="course-fundamentals-heading">
-            <div class="wrap">
-                <div class="context-card rv">
-                    <span class="eyebrow"><%= course.category ? course.category.name : 'Clinical Fundamentals' %></span>
-                    <h2 id="course-fundamentals-heading"><%= cd.aboutHeading || 'About This Masterclass' %></h2>
-                    <% if (course.description) { %>
+        <% if (lc.aboutEnabled !== false && (lc.aboutBody || course.description)) { %>
+            <section class="seo-intro" aria-labelledby="course-fundamentals-heading">
+                <div class="wrap">
+                    <div class="context-card rv">
+                        <span class="eyebrow"><%= lc.aboutEyebrow || (course.category ? course.category.name : 'Clinical Fundamentals') %></span>
+                        <h2 id="course-fundamentals-heading"><%= lc.aboutHeading || 'About This Masterclass' %></h2>
                         <div style="margin-top:14px; font-size:16px; line-height:1.8; color:var(--muted); white-space:pre-line;">
-                            <%= course.description %>
-                        </div>
-                    <% } else { %>
-                        <p>This masterclass provides a comprehensive, logically sequenced clinical curriculum designed to help practitioners understand diagnosis, treatment sequencing, and hands-on execution with clarity and confidence.</p>
-                    <% } %>
-                </div>
-            </div>
-        </section>
-
-        <!-- Learning Outcomes -->
-        <section>
-            <div class="wrap">
-                <div class="section-head rv">
-                    <span class="eyebrow">Masterclass Learning Outcomes</span>
-                    <h2>What clinicians will learn in this <em>master class</em></h2>
-                    <p>A practical, evidence-based clinical framework designed to help you master treatment planning logically before you attempt complex clinical cases.</p>
-                </div>
-                <div class="grid2">
-                    <div class="card takeaway rv">
-                        <div class="ico">01</div>
-                        <div>
-                            <h3>Foundational Occlusal Philosophy</h3>
-                            <p>Understand the foundational principles of Full Mouth Rehabilitation, tooth wear mechanisms, and core occlusal relationships.</p>
-                        </div>
-                    </div>
-                    <div class="card takeaway rv d1">
-                        <div class="ico">02</div>
-                        <div>
-                            <h3>Tooth Wear &amp; Bite Collapse</h3>
-                            <p>Accurately differentiate bruxers from clenchers, manage severe anterior attrition, and stabilize collapsed vertical dimension.</p>
-                        </div>
-                    </div>
-                    <div class="card takeaway rv">
-                        <div class="ico">03</div>
-                        <div>
-                            <h3>Facebow Records &amp; Protocols</h3>
-                            <p>Master clinical Facebow transfer theory and execute real-world patient demonstration protocols with repeatable precision.</p>
-                        </div>
-                    </div>
-                    <div class="card takeaway rv d1">
-                        <div class="ico">04</div>
-                        <div>
-                            <h3>Articulator Programming &amp; TMJ</h3>
-                            <p>Master semi-adjustable Hanau articulators, zeroing, calibration, programming, condylar guidance, and diagnostic TMJ evaluation.</p>
+                            <%= lc.aboutBody || course.description %>
                         </div>
                     </div>
                 </div>
-            </div>
-        </section>
+            </section>
+        <% } %>
 
-        <!-- Sneak Peek Dark Band -->
-        <section class="sneak">
-            <div class="wrap">
-                <div class="section-head rv">
-                    <span class="eyebrow">A Sneak Peek</span>
-                    <h2>See the learning experience <em>before you enroll</em></h2>
-                    <p>Watch this high-definition clinical preview to experience the depth, clarity, and systematic presentation style of the course.</p>
-                </div>
-                <div class="youtube-shell rv">
-                    <div class="youtube-lite" id="yt-preview">
-                        <img src="<%= course.thumbnailUrl || cms.brand.defaultCourseImageUrl || '/assets/images/course-placeholder.svg' %>"
-                             alt="<%= course.title %> preview"
-                             loading="lazy">
-                        <a href="#curriculum" class="play" aria-label="Explore lessons">▶</a>
+        <!-- Learning Outcomes / Takeaways -->
+        <% if (lc.takeawaysEnabled !== false && takeawaysList.length > 0) { %>
+            <section>
+                <div class="wrap">
+                    <div class="section-head rv">
+                        <span class="eyebrow"><%= lc.takeawaysEyebrow || 'Masterclass Learning Outcomes' %></span>
+                        <h2><%= lc.takeawaysHeading || 'What clinicians will learn in this master class' %></h2>
+                        <% if (lc.takeawaysDescription) { %>
+                            <p><%= lc.takeawaysDescription %></p>
+                        <% } %>
                     </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Clinical Questions Section -->
-        <section>
-            <div class="wrap">
-                <div class="section-head rv">
-                    <span class="eyebrow">Clinical FMR Fundamentals</span>
-                    <h2>Core clinical questions this masterclass <em>helps you answer</em></h2>
-                </div>
-                <div class="question-grid">
-                    <div class="qcard rv"><div class="qnum">01</div>How to systematically assess, plan, and execute an FMR case</div>
-                    <div class="qcard rv d1"><div class="qnum">02</div>What sequential workflow steps to follow from diagnostics to delivery</div>
-                    <div class="qcard rv"><div class="qnum">03</div>How to stabilize, deprogram, and restore a collapsed bite</div>
-                    <div class="qcard rv d1"><div class="qnum">04</div>How to establish and verify the correct vertical dimension (VDO)</div>
-                    <div class="qcard rv"><div class="qnum">05</div>How to capture a precise, verifiable centric relation (CR) record</div>
-                    <div class="qcard rv d1"><div class="qnum">06</div>How to identify and eliminate damaging occlusal interferences</div>
-                    <div class="qcard rv"><div class="qnum">07</div>Why, when, and how to execute a clinical Facebow transfer record</div>
-                    <div class="qcard rv d1"><div class="qnum">08</div>How to zero, calibrate, and program semi-adjustable articulators</div>
-                    <div class="qcard rv"><div class="qnum">09</div>How to ensure long-term structural and biological success of restorative cases</div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Curriculum Section -->
-        <section id="curriculum" class="curriculum">
-            <div class="wrap">
-                <div class="section-head rv">
-                    <span class="eyebrow"><%= cd.curriculumHeading || 'Course Curriculum' %></span>
-                    <h2><%= courseStats.publishedModuleCount %> structured <em>modules for dentists</em></h2>
-                    <p>Learn the essential clinical workflow through structured modules covering occlusal foundations, centric relation, facebow transfer, articulators, vertical dimension, and comprehensive case planning.</p>
-                </div>
-
-                <% if (safeCurriculum.length === 0 && (!course.lessons || course.lessons.length === 0)) { %>
-                    <p class="text-muted"><%= cd.emptyLessons || 'No lessons published yet.' %></p>
-                <% } else { %>
-                    <div class="modules-container">
-                        <% safeCurriculum.forEach(function(mod, modIdx) { 
-                            const modLessons = (mod.topics || []).reduce((acc, t) => acc.concat((t.lessons || []).filter(l => l.status === 'PUBLISHED')), []);
-                            const modTopics = (mod.topics || []).filter(t => (t.lessons || []).some(l => l.status === 'PUBLISHED') || (t.resources || []).length > 0);
-                            if (modLessons.length === 0 && modTopics.length === 0) return;
-                        %>
-                            <div class="module-card rv <%= modIdx === 0 ? 'is-open' : '' %>" id="mod-card-<%= mod.id %>">
-                                <button type="button" class="module-header-btn" data-toggle-module="<%= mod.id %>" aria-expanded="<%= modIdx === 0 ? 'true' : 'false' %>">
-                                    <div class="module-header-left">
-                                        <span class="module-pill">Module <%= modIdx + 1 %></span>
-                                        <span class="module-title"><%= mod.title %></span>
-                                    </div>
-                                    <div class="module-header-right">
-                                        <span class="module-meta">
-                                            <%= modTopics.length %> Topic<%= modTopics.length === 1 ? '' : 's' %> &bull; <%= modLessons.length %> Video<%= modLessons.length === 1 ? '' : 's' %>
-                                        </span>
-                                        <span class="module-chevron">⌄</span>
-                                    </div>
-                                </button>
-                                <div class="module-body" id="mod-body-<%= mod.id %>">
-                                    <% if (mod.description) { %>
-                                        <div class="module-desc"><%= mod.description %></div>
-                                    <% } %>
-
-                                    <% modTopics.forEach(function(topic, topicIdx) { 
-                                        const topicPubLessons = (topic.lessons || []).filter(l => l.status === 'PUBLISHED');
-                                    %>
-                                        <div class="topic-box">
-                                            <div class="topic-box-header">
-                                                <div>
-                                                    <i class="bi bi-folder2-open me-2" style="color:#5d3fd3;"></i>Topic <%= topicIdx + 1 %>: <%= topic.title %>
-                                                </div>
-                                                <span class="lesson-badge">
-                                                    <%= topicPubLessons.length %> Video<%= topicPubLessons.length === 1 ? '' : 's' %>
-                                                </span>
-                                            </div>
-                                            <ul class="lesson-list">
-                                                <% topicPubLessons.forEach(function(lesson) { %>
-                                                    <li class="lesson-row">
-                                                        <div class="lesson-title-area">
-                                                            <span class="lesson-ico"><i class="bi bi-play-circle-fill"></i></span>
-                                                            <span class="lesson-title"><%= lesson.title %></span>
-                                                            <% if (lesson.preview) { %>
-                                                                <span class="lesson-badge">Free Preview</span>
-                                                            <% } %>
-                                                        </div>
-                                                        <div class="lesson-right">
-                                                            <% if (lesson.duration) { %>
-                                                                <span class="lesson-dur"><%= lesson.duration %></span>
-                                                            <% } %>
-                                                            <% if (lesson.preview) { %>
-                                                                <a href="/learn/<%= course.slug %>/<%= lesson.slug %>" class="btn btn-sm btn-secondary" style="min-height:36px; padding:6px 16px; font-size:12.5px;">
-                                                                    Watch Preview
-                                                                </a>
-                                                            <% } else if (userIsEnrolled) { %>
-                                                                <a href="/learn/<%= course.slug %>/<%= lesson.slug %>" class="btn btn-sm btn-secondary" style="min-height:36px; padding:6px 16px; font-size:12.5px; color:#1d9168 !important;">
-                                                                    Watch
-                                                                </a>
-                                                            <% } else { %>
-                                                                <span class="lesson-lock" title="Enroll to unlock this lesson">
-                                                                    <i class="bi bi-lock-fill"></i>
-                                                                </span>
-                                                            <% } %>
-                                                        </div>
-                                                    </li>
-                                                <% }); %>
-                                            </ul>
-                                        </div>
-                                    <% }); %>
+                    <div class="grid2">
+                        <% takeawaysList.forEach(function(item, idx) { %>
+                            <div class="card takeaway rv <%= idx % 2 === 1 ? 'd1' : '' %>">
+                                <div class="ico"><%= item.icon || String(idx + 1).padStart(2, '0') %></div>
+                                <div>
+                                    <h3><%= item.title %></h3>
+                                    <p><%= item.description %></p>
                                 </div>
                             </div>
                         <% }); %>
                     </div>
-                <% } %>
-            </div>
-        </section>
+                </div>
+            </section>
+        <% } %>
 
-        <!-- Certificate Section -->
-        <section>
-            <div class="wrap certificate">
-                <div class="certificate-img rv">
-                    <div class="certificate-mockup">
-                        <div class="certificate-mockup-title">Institute of Cosmetology &amp; Dental Sciences</div>
-                        <div class="certificate-mockup-certifies">Certificate of Clinical Masterclass Completion</div>
-                        <div class="certificate-mockup-course"><%= course.title %></div>
-                        <div class="certificate-mockup-footer">
-                            Official Verifiable Clinical Credential &bull; ICDS Academic Board
+        <!-- Sneak Peek Dark Band (Strictly requires enabled=true) -->
+        <% if (lc.sneakPeekEnabled === true && (lc.sneakPeekMediaUrl || lc.sneakPeekHeading || lc.sneakPeekDescription)) { %>
+            <section class="sneak">
+                <div class="wrap">
+                    <div class="section-head rv">
+                        <span class="eyebrow"><%= lc.sneakPeekEyebrow || 'A Sneak Peek' %></span>
+                        <h2><%= lc.sneakPeekHeading || 'See the learning experience before you enroll' %></h2>
+                        <% if (lc.sneakPeekDescription) { %>
+                            <p><%= lc.sneakPeekDescription %></p>
+                        <% } %>
+                    </div>
+                    <div class="youtube-shell rv">
+                        <div class="youtube-lite" id="yt-preview">
+                            <img src="<%= lc.sneakPeekMediaUrl || course.thumbnailUrl || cms.brand.defaultCourseImageUrl || '/assets/images/course-placeholder.svg' %>"
+                                 alt="<%= course.title %> preview"
+                                 loading="lazy">
+                            <a href="<%= lc.sneakPeekMediaUrl || '#curriculum' %>" class="play" aria-label="Explore lessons">▶</a>
                         </div>
                     </div>
                 </div>
-                <div class="certificate-copy rv d1">
-                    <span class="eyebrow">E-Certificate</span>
-                    <h2>Recognize your progress in <em><%= course.title %></em></h2>
-                    <p>Upon completion of all video lessons and clinical evaluations, you will receive an official verifiable digital Certificate of Completion recognizing your mastery and commitment to advancing clinical patient care.</p>
-                    <p class="certificate-note">Certificate issued digitally after verified curriculum completion.</p>
+            </section>
+        <% } %>
+
+        <!-- Clinical Questions Section -->
+        <% if (lc.questionsEnabled !== false && questionsList.length > 0) { %>
+            <section>
+                <div class="wrap">
+                    <div class="section-head rv">
+                        <span class="eyebrow"><%= lc.questionsEyebrow || 'Clinical Fundamentals' %></span>
+                        <h2><%= lc.questionsHeading || 'Core clinical questions this masterclass helps you answer' %></h2>
+                    </div>
+                    <div class="question-grid">
+                        <% questionsList.forEach(function(q, qIdx) { %>
+                            <div class="qcard rv <%= qIdx % 2 === 1 ? 'd1' : '' %>">
+                                <div class="qnum"><%= String(qIdx + 1).padStart(2, '0') %></div>
+                                <%= q.question %>
+                            </div>
+                        <% }); %>
+                    </div>
                 </div>
-            </div>
-        </section>
+            </section>
+        <% } %>
+
+        <!-- Curriculum Section -->
+        <% if (lc.curriculumEnabled !== false) { %>
+            <section id="curriculum" class="curriculum">
+                <div class="wrap">
+                    <div class="section-head rv">
+                        <span class="eyebrow"><%= lc.curriculumEyebrow || cd.curriculumHeading || 'Course Curriculum' %></span>
+                        <h2><%= lc.curriculumHeading || (courseStats.publishedModuleCount + ' structured modules for dentists') %></h2>
+                        <% if (lc.curriculumIntro) { %>
+                            <p><%= lc.curriculumIntro %></p>
+                        <% } %>
+                    </div>
+
+                    <% if (safeCurriculum.length === 0 && (!course.lessons || course.lessons.length === 0)) { %>
+                        <p class="text-muted"><%= cd.emptyLessons || 'No lessons published yet.' %></p>
+                    <% } else { %>
+                        <div class="modules-container">
+                            <% safeCurriculum.forEach(function(mod, modIdx) { 
+                                const modLessons = (mod.topics || []).reduce((acc, t) => acc.concat((t.lessons || []).filter(l => l.status === 'PUBLISHED')), []);
+                                const modTopics = (mod.topics || []).filter(t => (t.lessons || []).some(l => l.status === 'PUBLISHED') || (t.resources || []).length > 0);
+                                if (modLessons.length === 0 && modTopics.length === 0) return;
+                                const isDefaultOpen = (lc.curriculumDefaultExpanded !== false) && modIdx === 0;
+                            %>
+                                <div class="module-card rv <%= isDefaultOpen ? 'is-open' : '' %>" id="mod-card-<%= mod.id %>">
+                                    <button type="button" class="module-header-btn" data-toggle-module="<%= mod.id %>" aria-expanded="<%= isDefaultOpen ? 'true' : 'false' %>">
+                                        <div class="module-header-left">
+                                            <span class="module-pill">Module <%= modIdx + 1 %></span>
+                                            <span class="module-title"><%= mod.title %></span>
+                                        </div>
+                                        <div class="module-header-right">
+                                            <span class="module-meta">
+                                                <%= modTopics.length %> Topic<%= modTopics.length === 1 ? '' : 's' %> &bull; <%= modLessons.length %> Video<%= modLessons.length === 1 ? '' : 's' %>
+                                            </span>
+                                            <span class="module-chevron">⌄</span>
+                                        </div>
+                                    </button>
+                                    <div class="module-body" id="mod-body-<%= mod.id %>">
+                                        <% if (mod.description) { %>
+                                            <div class="module-desc"><%= mod.description %></div>
+                                        <% } %>
+
+                                        <% modTopics.forEach(function(topic, topicIdx) { 
+                                            const topicPubLessons = (topic.lessons || []).filter(l => l.status === 'PUBLISHED');
+                                        %>
+                                            <div class="topic-box">
+                                                <div class="topic-box-header">
+                                                    <div>
+                                                        <i class="bi bi-folder2-open me-2" style="color:#5d3fd3;"></i>Topic <%= topicIdx + 1 %>: <%= topic.title %>
+                                                    </div>
+                                                    <span class="lesson-badge">
+                                                        <%= topicPubLessons.length %> Video<%= topicPubLessons.length === 1 ? '' : 's' %>
+                                                    </span>
+                                                </div>
+                                                <ul class="lesson-list">
+                                                    <% topicPubLessons.forEach(function(lesson) { %>
+                                                        <li class="lesson-row">
+                                                            <div class="lesson-title-area">
+                                                                <span class="lesson-ico"><i class="bi bi-play-circle-fill"></i></span>
+                                                                <span class="lesson-title"><%= lesson.title %></span>
+                                                                <% if (lc.showPreviewBadge !== false && lesson.preview) { %>
+                                                                    <span class="lesson-badge">Free Preview</span>
+                                                                <% } %>
+                                                            </div>
+                                                            <div class="lesson-right">
+                                                                <% if (lc.showLessonDuration !== false && lesson.duration) { %>
+                                                                    <span class="lesson-dur"><%= lesson.duration %></span>
+                                                                <% } %>
+                                                                <% if (lesson.preview) { %>
+                                                                    <a href="/learn/<%= course.slug %>/<%= lesson.slug %>" class="btn btn-sm btn-secondary" style="min-height:36px; padding:6px 16px; font-size:12.5px;">
+                                                                        Watch Preview
+                                                                    </a>
+                                                                <% } else if (userIsEnrolled) { %>
+                                                                    <a href="/learn/<%= course.slug %>/<%= lesson.slug %>" class="btn btn-sm btn-secondary" style="min-height:36px; padding:6px 16px; font-size:12.5px; color:#1d9168 !important;">
+                                                                        Watch
+                                                                    </a>
+                                                                <% } else if (lc.showLockIcon !== false) { %>
+                                                                    <span class="lesson-lock" title="Enroll to unlock this lesson">
+                                                                        <i class="bi bi-lock-fill"></i>
+                                                                    </span>
+                                                                <% } %>
+                                                            </div>
+                                                        </li>
+                                                    <% }); %>
+                                                </ul>
+                                            </div>
+                                        <% }); %>
+                                    </div>
+                                </div>
+                            <% }); %>
+                        </div>
+                    <% } %>
+                </div>
+            </section>
+        <% } %>
+
+        <!-- Certificate Section (Critical: OFF by default, rendered ONLY if certificateSectionEnabled === true) -->
+        <% if (lc.certificateSectionEnabled === true) { %>
+            <section>
+                <div class="wrap certificate">
+                    <div class="certificate-img rv">
+                        <div class="certificate-mockup">
+                            <div class="certificate-mockup-title">Institute of Cosmetology &amp; Dental Sciences</div>
+                            <div class="certificate-mockup-certifies">Certificate of Clinical Masterclass Completion</div>
+                            <div class="certificate-mockup-course"><%= course.title %></div>
+                            <div class="certificate-mockup-footer">
+                                Official Verifiable Clinical Credential &bull; ICDS Academic Board
+                            </div>
+                        </div>
+                    </div>
+                    <div class="certificate-copy rv d1">
+                        <span class="eyebrow"><%= lc.certificateEyebrow || 'E-Certificate' %></span>
+                        <h2><%= lc.certificateHeading || ('Recognize your progress in ' + course.title) %></h2>
+                        <p><%= lc.certificateBody || 'Upon completion of all video lessons and clinical evaluations, you will receive an official verifiable digital Certificate of Completion recognizing your mastery and commitment to advancing clinical patient care.' %></p>
+                        <% if (lc.certificateNote) { %>
+                            <p class="certificate-note"><%= lc.certificateNote %></p>
+                        <% } %>
+                    </div>
+                </div>
+            </section>
+        <% } %>
 
         <!-- Candidate Profile / Audience Section -->
-        <section class="audience">
-            <div class="wrap">
-                <div class="section-head rv">
-                    <span class="eyebrow">Candidate Profile</span>
-                    <h2>Is this online Master Class <em>right for you?</em></h2>
-                </div>
-                <div class="grid2">
-                    <div class="card yes rv">
-                        <h3>Good fit for</h3>
-                        <ul class="checklist">
-                            <li><%= cd.benefit1 || 'Ambitious dentists aiming to excel in functional and restorative dentistry' %></li>
-                            <li><%= cd.benefit2 || 'Clinicians seeking stronger mastery and predictable occlusal outcomes' %></li>
-                            <li><%= cd.benefit3 || 'Dental professionals dedicated to disciplined clinical protocols' %></li>
-                            <li>Dentists who prioritize long-term patient function, comfort, and stability</li>
-                        </ul>
+        <% const hasAudience = (lc.audienceEnabled !== false) && (audienceForList.length > 0 || audienceNotForList.length > 0 || (typeof cd !== 'undefined' && cd && (cd.benefit1 || cd.benefit2 || cd.benefit3))); %>
+        <% if (hasAudience) { %>
+            <section class="audience">
+                <div class="wrap">
+                    <div class="section-head rv">
+                        <span class="eyebrow"><%= lc.audienceEyebrow || 'Candidate Profile' %></span>
+                        <h2><%= lc.audienceHeading || 'Is this online Master Class right for you?' %></h2>
                     </div>
-                    <div class="card no rv d1">
-                        <h3>Probably not for</h3>
-                        <ul class="checklist">
-                            <li>Those unwilling to invest effort in learning foundational occlusion principles</li>
-                            <li>Dentists completely content with intuitive or non-standardized restorative guesswork</li>
-                            <li>Clinicians resistant to systematic clinical documentation and articulator programming</li>
-                            <li>Anyone seeking superficial cosmetic quick-fixes without functional stability</li>
-                        </ul>
+                    <div class="grid2">
+                        <% if (audienceForList.length > 0) { %>
+                            <div class="card yes rv">
+                                <h3><%= lc.audienceForHeading || 'Good fit for' %></h3>
+                                <ul class="checklist">
+                                    <% audienceForList.forEach(function(item) { %>
+                                        <li><%= item.title %></li>
+                                    <% }); %>
+                                </ul>
+                            </div>
+                        <% } else if (typeof cd !== 'undefined' && cd && (cd.benefit1 || cd.benefit2 || cd.benefit3)) { %>
+                            <div class="card yes rv">
+                                <h3><%= lc.audienceForHeading || 'Good fit for' %></h3>
+                                <ul class="checklist">
+                                    <% if (cd.benefit1) { %><li><%= cd.benefit1 %></li><% } %>
+                                    <% if (cd.benefit2) { %><li><%= cd.benefit2 %></li><% } %>
+                                    <% if (cd.benefit3) { %><li><%= cd.benefit3 %></li><% } %>
+                                </ul>
+                            </div>
+                        <% } %>
+                        <% if (audienceNotForList.length > 0) { %>
+                            <div class="card no rv d1">
+                                <h3><%= lc.audienceNotForHeading || 'Probably not for' %></h3>
+                                <ul class="checklist">
+                                    <% audienceNotForList.forEach(function(item) { %>
+                                        <li><%= item.title %></li>
+                                    <% }); %>
+                                </ul>
+                            </div>
+                        <% } %>
                     </div>
                 </div>
-            </div>
-        </section>
+            </section>
+        <% } %>
 
         <!-- Clinical Resources Section -->
         <% if (safeResources.length > 0) { %>
@@ -465,15 +508,15 @@ const hasPending = typeof hasPendingRequest !== 'undefined' && hasPendingRequest
         <% } %>
 
         <!-- FAQ Section -->
-        <% if (safeFaqs.length > 0) { %>
+        <% if (lc.faqEnabled !== false && courseFaqsList.length > 0) { %>
             <section>
                 <div class="wrap">
                     <div class="section-head rv">
-                        <span class="eyebrow">Questions &amp; Answers</span>
-                        <h2>Frequently asked <em>course questions</em></h2>
+                        <span class="eyebrow"><%= lc.faqEyebrow || 'Questions & Answers' %></span>
+                        <h2><%= lc.faqHeading || 'Frequently asked course questions' %></h2>
                     </div>
                     <div class="faq">
-                        <% safeFaqs.forEach(function(faq, faqIdx) { %>
+                        <% courseFaqsList.forEach(function(faq, faqIdx) { %>
                             <details class="rv" <%= faqIdx === 0 ? 'open' : '' %>>
                                 <summary><%= faq.question %><span class="pm">+</span></summary>
                                 <div class="faq-a">
@@ -487,73 +530,79 @@ const hasPending = typeof hasPendingRequest !== 'undefined' && hasPendingRequest
         <% } %>
 
         <!-- Final CTA Banner -->
-        <section>
-            <div class="wrap">
-                <div class="final-card rv">
-                    <span class="eyebrow">Start Learning Today</span>
-                    <h2 style="margin-top:16px;">Enroll in <em><%= course.title %></em></h2>
-                    <p style="max-width:700px; margin:16px auto 0; font-size:17px;">
-                        Immediate online access to all <%= courseStats.publishedLessonCount %> structured video lessons, clinical demonstrations, and downloadable forms.
-                    </p>
-                    <div class="price-row">
-                        <div>
-                            <div class="from">Full Lifetime Access</div>
-                            <div class="price"><%= freeCourse ? 'Free' : formattedPriceLabel %></div>
+        <% if (lc.finalCtaEnabled !== false) { %>
+            <section>
+                <div class="wrap">
+                    <div class="final-card rv">
+                        <span class="eyebrow"><%= lc.finalCtaEyebrow || 'Start Learning Today' %></span>
+                        <h2 style="margin-top:16px;"><%= lc.finalCtaHeading || ('Enroll in ' + course.title) %></h2>
+                        <% if (lc.finalCtaBody) { %>
+                            <p style="max-width:700px; margin:16px auto 0; font-size:17px;"><%= lc.finalCtaBody %></p>
+                        <% } %>
+                        <div class="price-row">
+                            <div>
+                                <div class="from"><%= lc.priceSubtitle || 'Full Access' %></div>
+                                <div class="price"><%= freeCourse ? 'Free' : formattedPriceLabel %></div>
+                            </div>
                         </div>
-                    </div>
-                    <div class="actions">
-                        <% if (typeof currentUser !== 'undefined' && currentUser && currentUser.role === 'STUDENT') { %>
-                            <% if (userIsEnrolled) { %>
-                                <a class="btn btn-primary" href="/learn/<%= course.slug %>">Continue Learning →</a>
-                            <% } else if (freeCourse) { %>
-                                <form method="POST" action="/courses/<%= course.slug %>/enroll-free" class="m-0">
-                                    <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
-                                    <button type="submit" class="btn btn-primary"><%= cd.freeCta || 'Enroll Free →' %></button>
-                                </form>
-                            <% } else if (typeof paymentsEnabled !== 'undefined' && paymentsEnabled) { %>
-                                <a class="btn btn-primary" href="/checkout/<%= course.slug %>">Buy Course – <%= formattedPriceLabel %></a>
+                        <div class="actions">
+                            <% if (typeof currentUser !== 'undefined' && currentUser && currentUser.role === 'STUDENT') { %>
+                                <% if (userIsEnrolled) { %>
+                                    <a class="btn btn-primary" href="/learn/<%= course.slug %>">Continue Learning →</a>
+                                <% } else if (freeCourse) { %>
+                                    <form method="POST" action="/courses/<%= course.slug %>/enroll-free" class="m-0">
+                                        <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+                                        <button type="submit" class="btn btn-primary"><%= lc.finalCtaButtonLabel || cd.freeCta || 'Enroll Free →' %></button>
+                                    </form>
+                                <% } else if (typeof paymentsEnabled !== 'undefined' && paymentsEnabled) { %>
+                                    <a class="btn btn-primary" href="/checkout/<%= course.slug %>"><%= lc.finalCtaButtonLabel || ('Buy Course – ' + formattedPriceLabel) %></a>
+                                <% } %>
+                            <% } else { %>
+                                <a class="btn btn-primary" href="/login?returnTo=<%= encodeURIComponent('/courses/' + course.slug) %>">
+                                    <%= freeCourse ? (lc.finalCtaButtonLabel || cd.loginFreeCta || 'Enroll Free →') : (lc.finalCtaButtonLabel || ('Enroll Now – ' + formattedPriceLabel)) %>
+                                </a>
                             <% } %>
-                        <% } else { %>
-                            <a class="btn btn-primary" href="/login?returnTo=<%= encodeURIComponent('/courses/' + course.slug) %>">
-                                <%= freeCourse ? (cd.loginFreeCta || 'Enroll Free →') : ('Enroll Now – ' + formattedPriceLabel) %>
-                            </a>
+                        </div>
+                        <% if (lc.finalCtaBadgeText) { %>
+                            <div>
+                                <span class="plan-badge"><%= lc.finalCtaBadgeText %></span>
+                            </div>
                         <% } %>
                     </div>
-                    <div>
-                        <span class="plan-badge">✓ 100% Free · Lifetime Access · Verifiable Certificate</span>
-                    </div>
                 </div>
-            </div>
-        </section>
+            </section>
+        <% } %>
     </main>
 
     <!-- Floating Sticky Bottom CTA Bar -->
-    <div class="floating" id="course-floating-bar">
-        <div class="floating-inner">
-            <div class="floating-copy">
-                <strong><%= course.title %></strong>
-                <span>Full Lifetime Access &bull; <%= freeCourse ? 'Free' : formattedPriceLabel %></span>
-            </div>
-            <div>
-                <% if (typeof currentUser !== 'undefined' && currentUser && currentUser.role === 'STUDENT') { %>
-                    <% if (userIsEnrolled) { %>
-                        <a class="btn btn-primary" href="/learn/<%= course.slug %>">Continue Learning →</a>
-                    <% } else if (freeCourse) { %>
-                        <form method="POST" action="/courses/<%= course.slug %>/enroll-free" class="m-0">
-                            <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
-                            <button type="submit" class="btn btn-primary"><%= cd.freeCta || 'Enroll Free →' %></button>
-                        </form>
-                    <% } else if (typeof paymentsEnabled !== 'undefined' && paymentsEnabled) { %>
-                        <a class="btn btn-primary" href="/checkout/<%= course.slug %>">Buy Course – <%= formattedPriceLabel %></a>
+    <% if (lc.stickyCtaEnabled !== false) { %>
+        <div class="floating" id="course-floating-bar">
+            <div class="floating-inner">
+                <div class="floating-copy">
+                    <strong><%= course.title %></strong>
+                    <span><% if (lc.stickyCtaText) { %><%= lc.stickyCtaText %> &bull; <% } %><%= freeCourse ? 'Free' : formattedPriceLabel %></span>
+                </div>
+                <div>
+                    <% if (typeof currentUser !== 'undefined' && currentUser && currentUser.role === 'STUDENT') { %>
+                        <% if (userIsEnrolled) { %>
+                            <a class="btn btn-primary" href="/learn/<%= course.slug %>">Continue Learning →</a>
+                        <% } else if (freeCourse) { %>
+                            <form method="POST" action="/courses/<%= course.slug %>/enroll-free" class="m-0">
+                                <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+                                <button type="submit" class="btn btn-primary"><%= lc.stickyCtaButtonLabel || cd.freeCta || 'Enroll Free →' %></button>
+                            </form>
+                        <% } else if (typeof paymentsEnabled !== 'undefined' && paymentsEnabled) { %>
+                            <a class="btn btn-primary" href="/checkout/<%= course.slug %>"><%= lc.stickyCtaButtonLabel || ('Buy Course – ' + formattedPriceLabel) %></a>
+                        <% } %>
+                    <% } else { %>
+                        <a class="btn btn-primary" href="/login?returnTo=<%= encodeURIComponent('/courses/' + course.slug) %>">
+                            <%= freeCourse ? (lc.stickyCtaButtonLabel || cd.loginFreeCta || 'Enroll Free →') : (lc.stickyCtaButtonLabel || ('Enroll Now – ' + formattedPriceLabel)) %>
+                        </a>
                     <% } %>
-                <% } else { %>
-                    <a class="btn btn-primary" href="/login?returnTo=<%= encodeURIComponent('/courses/' + course.slug) %>">
-                        <%= freeCourse ? (cd.loginFreeCta || 'Enroll Free →') : ('Enroll Now – ' + formattedPriceLabel) %>
-                    </a>
-                <% } %>
+                </div>
             </div>
         </div>
-    </div>
+    <% } %>
 </div>
 
 <script nonce="<%= typeof cspNonce !== 'undefined' ? cspNonce : '' %>">

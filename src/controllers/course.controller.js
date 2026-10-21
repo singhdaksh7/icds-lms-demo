@@ -7,6 +7,7 @@ const { parsePage } = require('../lib/pagination');
 const { getCoursePurchasePrice } = require('../lib/pricing');
 const { LEVELS } = require('../validators/course.validator');
 const site = require('../config/site');
+const courseLandingService = require('../services/courseLanding.service');
 const { buildSeo, pageSeoText, absoluteUrl, PUBLIC_ROBOTS } = require('../lib/seo');
 
 async function listCourses(req, res, next) {
@@ -108,11 +109,12 @@ async function getCourseDetail(req, res, next) {
 
     const price = getCoursePurchasePrice(course);
     const curriculumService = require('../services/curriculum.service');
-    const [curriculum, stats, resources, faqs] = await Promise.all([
+    const [curriculum, stats, resources, globalFaqs, landing] = await Promise.all([
       curriculumService.getPublishedCurriculum(course.id),
       curriculumService.getPublicCourseStats(course.id),
       curriculumService.listResourcesForCourse(course.id, { publishedOnly: true }),
       prisma.faq.findMany({ where: { isActive: true }, orderBy: { sortOrder: 'asc' }, take: 6 }),
+      courseLandingService.getPublicLandingData(course.id),
     ]);
 
     const jsonLd = {
@@ -143,7 +145,8 @@ async function getCourseDetail(req, res, next) {
       curriculum,
       stats,
       resources,
-      faqs,
+      faqs: (landing && landing.faqs) ? landing.faqs : [],
+      landing,
       isEnrolled,
       hasPendingRequest,
       isFree,

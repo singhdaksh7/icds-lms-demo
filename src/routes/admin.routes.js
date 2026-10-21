@@ -36,6 +36,7 @@ const videoStorageController = require('../controllers/admin/videoStorage.contro
 const r2UploadController = require('../controllers/admin/r2Upload.controller');
 
 const curriculumController = require('../controllers/admin/curriculum.controller');
+const courseLandingController = require('../controllers/admin/courseLanding.controller');
 
 // Every route in this file is admin-only — enforced once here rather than
 // repeated per-route, so it's impossible to accidentally add an
@@ -52,9 +53,38 @@ function requireNumericId(req, res, next, value) {
   }
   return next();
 }
-['id', 'courseId', 'lessonId', 'moduleId', 'topicId', 'resourceId'].forEach((name) => router.param(name, requireNumericId));
+['id', 'courseId', 'lessonId', 'moduleId', 'topicId', 'resourceId', 'chipId', 'takeawayId', 'questionId', 'itemId', 'faqId'].forEach((name) => router.param(name, requireNumericId));
 
 router.get('/', dashboardController.getDashboard);
+
+// --- Course Landing Page / Marketing Content CMS --------------------------
+router.get('/courses/:courseId/landing-page', courseLandingController.getLandingEditor);
+router.post('/courses/:courseId/landing-page/settings', doubleCsrfProtection, courseLandingController.saveSettings);
+
+router.post('/courses/:courseId/landing-page/chips', doubleCsrfProtection, courseLandingController.createChip);
+router.post('/courses/:courseId/landing-page/chips/:chipId/edit', doubleCsrfProtection, courseLandingController.updateChip);
+router.post('/courses/:courseId/landing-page/chips/:chipId/delete', doubleCsrfProtection, courseLandingController.deleteChip);
+router.post('/courses/:courseId/landing-page/chips/:chipId/move', doubleCsrfProtection, courseLandingController.moveChip);
+
+router.post('/courses/:courseId/landing-page/takeaways', doubleCsrfProtection, courseLandingController.createTakeaway);
+router.post('/courses/:courseId/landing-page/takeaways/:takeawayId/edit', doubleCsrfProtection, courseLandingController.updateTakeaway);
+router.post('/courses/:courseId/landing-page/takeaways/:takeawayId/delete', doubleCsrfProtection, courseLandingController.deleteTakeaway);
+router.post('/courses/:courseId/landing-page/takeaways/:takeawayId/move', doubleCsrfProtection, courseLandingController.moveTakeaway);
+
+router.post('/courses/:courseId/landing-page/questions', doubleCsrfProtection, courseLandingController.createQuestion);
+router.post('/courses/:courseId/landing-page/questions/:questionId/edit', doubleCsrfProtection, courseLandingController.updateQuestion);
+router.post('/courses/:courseId/landing-page/questions/:questionId/delete', doubleCsrfProtection, courseLandingController.deleteQuestion);
+router.post('/courses/:courseId/landing-page/questions/:questionId/move', doubleCsrfProtection, courseLandingController.moveQuestion);
+
+router.post('/courses/:courseId/landing-page/audience', doubleCsrfProtection, courseLandingController.createAudienceItem);
+router.post('/courses/:courseId/landing-page/audience/:itemId/edit', doubleCsrfProtection, courseLandingController.updateAudienceItem);
+router.post('/courses/:courseId/landing-page/audience/:itemId/delete', doubleCsrfProtection, courseLandingController.deleteAudienceItem);
+router.post('/courses/:courseId/landing-page/audience/:itemId/move', doubleCsrfProtection, courseLandingController.moveAudienceItem);
+
+router.post('/courses/:courseId/landing-page/faqs', doubleCsrfProtection, courseLandingController.createFaq);
+router.post('/courses/:courseId/landing-page/faqs/:faqId/edit', doubleCsrfProtection, courseLandingController.updateFaq);
+router.post('/courses/:courseId/landing-page/faqs/:faqId/delete', doubleCsrfProtection, courseLandingController.deleteFaq);
+router.post('/courses/:courseId/landing-page/faqs/:faqId/move', doubleCsrfProtection, courseLandingController.moveFaq);
 
 // --- Curriculum Builder (Modules, Topics, Reorder, Resources) --------------
 router.get('/courses/:courseId/curriculum', curriculumController.getCurriculumBuilder);

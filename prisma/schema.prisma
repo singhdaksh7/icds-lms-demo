@@ -193,6 +193,12 @@ model Course {
   reviews            Review[]
   certificates       Certificate[]
   enrollmentRequests EnrollmentRequest[]
+  landingContent     CourseLandingContent?
+  heroChips          CourseHeroChip[]
+  takeaways          CourseTakeaway[]
+  questions          CourseQuestion[]
+  audienceItems      CourseAudienceItem[]
+  faqs               CourseFaq[]
 
   @@index([categoryId])
   @@index([instructorId])
@@ -635,5 +641,181 @@ model CourseResource {
   @@index([courseId])
   @@index([topicId])
   @@map("course_resources")
+}
+
+// ---------------------------------------------------------------------------
+// Course Landing Page CMS & Dynamic Marketing Content
+// ---------------------------------------------------------------------------
+
+model CourseLandingContent {
+  id                         Int      @id @default(autoincrement())
+  courseId                   Int      @unique
+  
+  // Hero settings
+  heroEyebrow                String?  @db.VarChar(255)
+  heroTitleOverride          String?  @db.VarChar(255)
+  heroAccentText             String?  @db.VarChar(255)
+  heroDescription            String?  @db.Text
+  heroMediaType              String?  @default("THUMBNAIL") @db.VarChar(50)
+  heroMediaUrl               String?  @db.VarChar(500)
+  heroMediaCaption           String?  @db.VarChar(255)
+  secondaryCtaLabel          String?  @default("Explore Curriculum") @db.VarChar(100)
+  secondaryCtaTarget         String?  @default("#curriculum") @db.VarChar(255)
+  priceSubtitle              String?  @db.VarChar(100)
+
+  // About / Context section
+  aboutEnabled               Boolean  @default(true)
+  aboutEyebrow               String?  @db.VarChar(100)
+  aboutHeading               String?  @db.VarChar(255)
+  aboutBody                  String?  @db.Text
+
+  // Takeaways section
+  takeawaysEnabled           Boolean  @default(true)
+  takeawaysEyebrow           String?  @db.VarChar(100)
+  takeawaysHeading           String?  @db.VarChar(255)
+  takeawaysDescription       String?  @db.Text
+
+  // Sneak Peek dark band
+  sneakPeekEnabled           Boolean  @default(true)
+  sneakPeekEyebrow           String?  @db.VarChar(100)
+  sneakPeekHeading           String?  @db.VarChar(255)
+  sneakPeekDescription       String?  @db.Text
+  sneakPeekMediaUrl           String?  @db.VarChar(500)
+
+  // Clinical Questions
+  questionsEnabled           Boolean  @default(true)
+  questionsEyebrow           String?  @db.VarChar(100)
+  questionsHeading           String?  @db.VarChar(255)
+
+  // Curriculum display settings
+  curriculumEnabled          Boolean  @default(true)
+  curriculumEyebrow          String?  @db.VarChar(100)
+  curriculumHeading          String?  @db.VarChar(255)
+  curriculumIntro            String?  @db.Text
+  curriculumDefaultExpanded  Boolean  @default(true)
+  showLessonDuration         Boolean  @default(true)
+  showLockIcon               Boolean  @default(true)
+  showPreviewBadge           Boolean  @default(true)
+
+  // Certificate section (OFF by default!)
+  certificateSectionEnabled  Boolean  @default(false)
+  certificateEyebrow         String?  @default("E-Certificate") @db.VarChar(100)
+  certificateHeading         String?  @db.VarChar(255)
+  certificateBody            String?  @db.Text
+  certificateNote            String?  @db.VarChar(255)
+
+  // Target audience section
+  audienceEnabled            Boolean  @default(true)
+  audienceEyebrow            String?  @db.VarChar(100)
+  audienceHeading            String?  @db.VarChar(255)
+  audienceForHeading         String?  @default("Good fit for") @db.VarChar(100)
+  audienceNotForHeading      String?  @default("Probably not for") @db.VarChar(100)
+
+  // FAQ section
+  faqEnabled                 Boolean  @default(true)
+  faqEyebrow                 String?  @default("Questions & Answers") @db.VarChar(100)
+  faqHeading                 String?  @default("Frequently asked course questions") @db.VarChar(255)
+
+  // Final CTA card
+  finalCtaEnabled            Boolean  @default(true)
+  finalCtaEyebrow            String?  @default("Start Learning Today") @db.VarChar(100)
+  finalCtaHeading            String?  @db.VarChar(255)
+  finalCtaBody               String?  @db.Text
+  finalCtaButtonLabel        String?  @db.VarChar(100)
+  finalCtaBadgeText          String?  @db.VarChar(255)
+
+  // Sticky bottom conversion bar
+  stickyCtaEnabled           Boolean  @default(true)
+  stickyCtaText              String?  @db.VarChar(255)
+  stickyCtaButtonLabel       String?  @db.VarChar(100)
+
+  createdAt                  DateTime @default(now())
+  updatedAt                  DateTime @updatedAt
+
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@index([courseId])
+  @@map("course_landing_contents")
+}
+
+model CourseHeroChip {
+  id          Int      @id @default(autoincrement())
+  courseId    Int
+  label       String   @db.VarChar(100)
+  sortOrder   Int      @default(0)
+  isPublished Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@index([courseId, sortOrder])
+  @@map("course_hero_chips")
+}
+
+model CourseTakeaway {
+  id          Int      @id @default(autoincrement())
+  courseId    Int
+  title       String   @db.VarChar(200)
+  description String   @db.Text
+  icon        String?  @db.VarChar(50)
+  sortOrder   Int      @default(0)
+  isPublished Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@index([courseId, sortOrder])
+  @@map("course_takeaways")
+}
+
+model CourseQuestion {
+  id          Int      @id @default(autoincrement())
+  courseId    Int
+  question    String   @db.VarChar(300)
+  description String?  @db.Text
+  sortOrder   Int      @default(0)
+  isPublished Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@index([courseId, sortOrder])
+  @@map("course_questions")
+}
+
+model CourseAudienceItem {
+  id          Int      @id @default(autoincrement())
+  courseId    Int
+  type        String   @db.VarChar(20)
+  title       String   @db.VarChar(300)
+  description String?  @db.Text
+  sortOrder   Int      @default(0)
+  isPublished Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@index([courseId, type, sortOrder])
+  @@map("course_audience_items")
+}
+
+model CourseFaq {
+  id          Int      @id @default(autoincrement())
+  courseId    Int
+  question    String   @db.VarChar(300)
+  answer      String   @db.Text
+  sortOrder   Int      @default(0)
+  isPublished Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@index([courseId, sortOrder])
+  @@map("course_faqs")
 }
 

@@ -1,0 +1,1269 @@
+<div class="mb-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-1">
+            <li class="breadcrumb-item"><a href="/admin/courses" class="text-decoration-none">Courses</a></li>
+            <li class="breadcrumb-item"><a href="/admin/courses/<%= course.id %>/edit" class="text-decoration-none"><%= course.title %></a></li>
+            <li class="breadcrumb-item active" aria-current="page">Landing Page CMS</li>
+        </ol>
+    </nav>
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+        <div>
+            <h1 style="font-size:24px;" class="mb-1 d-flex align-items-center gap-2">
+                Landing Page CMS: <%= course.title %>
+                <span class="badge bg-<%= course.status === 'PUBLISHED' ? 'success' : (course.status === 'DRAFT' ? 'secondary' : 'dark') %>" style="font-size:12px;">
+                    <%= course.status %>
+                </span>
+            </h1>
+            <div class="small text-muted">
+                Configure every marketing block, card, and section on the public course landing page.
+            </div>
+        </div>
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+            <a href="/courses/<%= course.slug %>" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-primary">
+                <i class="bi bi-box-arrow-up-right me-1"></i> Preview Landing Page
+            </a>
+            <a href="/admin/courses/<%= course.id %>/curriculum" class="btn btn-sm btn-outline-secondary">
+                <i class="bi bi-diagram-3 me-1"></i> Curriculum Builder
+            </a>
+            <a href="/admin/courses/<%= course.id %>/edit" class="btn btn-sm btn-outline-secondary">
+                <i class="bi bi-gear me-1"></i> Course Settings
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Course Navigation Bar -->
+<ul class="nav nav-pills mb-4 gap-2">
+    <li class="nav-item">
+        <a class="nav-link" href="/admin/courses/<%= course.id %>/edit">
+            <i class="bi bi-info-circle me-1"></i> Details
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="/admin/courses/<%= course.id %>/curriculum">
+            <i class="bi bi-diagram-3 me-1"></i> Curriculum Builder
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="/admin/courses/<%= course.id %>/lessons">
+            <i class="bi bi-collection-play me-1"></i> Lessons
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link active" href="/admin/courses/<%= course.id %>/landing-page">
+            <i class="bi bi-layout-text-window-reverse me-1"></i> Landing Page CMS
+        </a>
+    </li>
+</ul>
+
+<!-- CMS Tabs Navigation -->
+<ul class="nav nav-tabs mb-4 flex-wrap" id="landingTabList" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link <%= activeTab === 'hero' ? 'active' : '' %>" id="tab-hero-nav" data-bs-toggle="tab" data-bs-target="#tab-hero" type="button" role="tab">
+            <i class="bi bi-image me-1"></i> Hero
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link <%= activeTab === 'chips' ? 'active' : '' %>" id="tab-chips-nav" data-bs-toggle="tab" data-bs-target="#tab-chips" type="button" role="tab">
+            <i class="bi bi-tags me-1"></i> Chips / Highlights (<%= heroChips.length %>)
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link <%= activeTab === 'about' ? 'active' : '' %>" id="tab-about-nav" data-bs-toggle="tab" data-bs-target="#tab-about" type="button" role="tab">
+            <i class="bi bi-file-text me-1"></i> About
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link <%= activeTab === 'takeaways' ? 'active' : '' %>" id="tab-takeaways-nav" data-bs-toggle="tab" data-bs-target="#tab-takeaways" type="button" role="tab">
+            <i class="bi bi-check2-circle me-1"></i> Takeaways (<%= takeaways.length %>)
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link <%= activeTab === 'sneak' ? 'active' : '' %>" id="tab-sneak-nav" data-bs-toggle="tab" data-bs-target="#tab-sneak" type="button" role="tab">
+            <i class="bi bi-play-circle me-1"></i> Sneak Peek
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link <%= activeTab === 'questions' ? 'active' : '' %>" id="tab-questions-nav" data-bs-toggle="tab" data-bs-target="#tab-questions" type="button" role="tab">
+            <i class="bi bi-patch-question me-1"></i> Questions (<%= questions.length %>)
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link <%= activeTab === 'curriculum' ? 'active' : '' %>" id="tab-curriculum-nav" data-bs-toggle="tab" data-bs-target="#tab-curriculum" type="button" role="tab">
+            <i class="bi bi-diagram-3 me-1"></i> Curriculum
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link <%= activeTab === 'certificate' ? 'active' : '' %>" id="tab-certificate-nav" data-bs-toggle="tab" data-bs-target="#tab-certificate" type="button" role="tab">
+            <i class="bi bi-award me-1"></i> Certificate
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link <%= activeTab === 'audience' ? 'active' : '' %>" id="tab-audience-nav" data-bs-toggle="tab" data-bs-target="#tab-audience" type="button" role="tab">
+            <i class="bi bi-people me-1"></i> Audience (<%= audienceItems.length %>)
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link <%= activeTab === 'faqs' ? 'active' : '' %>" id="tab-faqs-nav" data-bs-toggle="tab" data-bs-target="#tab-faqs" type="button" role="tab">
+            <i class="bi bi-question-circle me-1"></i> FAQs (<%= faqs.length %>)
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link <%= activeTab === 'final-cta' ? 'active' : '' %>" id="tab-final-cta-nav" data-bs-toggle="tab" data-bs-target="#tab-final-cta" type="button" role="tab">
+            <i class="bi bi-megaphone me-1"></i> Final CTA
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link <%= activeTab === 'sticky-cta' ? 'active' : '' %>" id="tab-sticky-cta-nav" data-bs-toggle="tab" data-bs-target="#tab-sticky-cta" type="button" role="tab">
+            <i class="bi bi-pin-angle me-1"></i> Sticky Bar
+        </button>
+    </li>
+</ul>
+
+<!-- Tabs Content -->
+<div class="tab-content" id="landingTabContent">
+
+    <!-- 1. HERO TAB -->
+    <div class="tab-pane fade <%= activeTab === 'hero' ? 'show active' : '' %>" id="tab-hero" role="tabpanel">
+        <div class="admin-card">
+            <form method="POST" action="/admin/courses/<%= course.id %>/landing-page/settings">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <input type="hidden" name="currentTab" value="hero">
+
+                <h5 class="mb-3 text-primary"><i class="bi bi-image me-2"></i>Hero Section Settings</h5>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Hero Eyebrow / Category Tagline</label>
+                        <input type="text" name="heroEyebrow" class="form-control form-control-custom" value="<%= landingContent.heroEyebrow || '' %>" placeholder="<%= course.category ? course.category.name + ' • Online Certificate Course' : 'ICDS • Online Certificate Course' %>">
+                        <div class="form-text">Small subtitle badge shown right above the main title.</div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Title Override (optional)</label>
+                        <input type="text" name="heroTitleOverride" class="form-control form-control-custom" value="<%= landingContent.heroTitleOverride || '' %>" placeholder="<%= course.title %>">
+                        <div class="form-text">Defaults to course title: "<%= course.title %>"</div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Hero Accent Phrase / Word</label>
+                        <input type="text" name="heroAccentText" class="form-control form-control-custom" value="<%= landingContent.heroAccentText || '' %>" placeholder="e.g. Master Class or Hands-on Protocol">
+                        <div class="form-text">Highlighted in elegant italic serif style in the headline.</div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Price Subtitle / Access Tagline</label>
+                        <input type="text" name="priceSubtitle" class="form-control form-control-custom" value="<%= landingContent.priceSubtitle || 'Full Lifetime Access' %>">
+                        <div class="form-text">e.g. "Full Lifetime Access" or "Annual Subscription"</div>
+                    </div>
+
+                    <div class="col-12">
+                        <label class="form-label small fw-semibold">Hero Short Description (Lede)</label>
+                        <textarea name="heroDescription" class="form-control form-control-custom" rows="3" placeholder="<%= course.shortDescription || course.description || '' %>"><%= landingContent.heroDescription || '' %></textarea>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label class="form-label small fw-semibold">Hero Media Type</label>
+                        <select name="heroMediaType" class="form-select form-control-custom">
+                            <option value="THUMBNAIL" <%= landingContent.heroMediaType === 'THUMBNAIL' ? 'selected' : '' %>>Course Thumbnail</option>
+                            <option value="IMAGE" <%= landingContent.heroMediaType === 'IMAGE' ? 'selected' : '' %>>Custom Image URL</option>
+                            <option value="VIDEO" <%= landingContent.heroMediaType === 'VIDEO' ? 'selected' : '' %>>Video Preview URL</option>
+                            <option value="NONE" <%= landingContent.heroMediaType === 'NONE' ? 'selected' : '' %>>No Media Column</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-8">
+                        <label class="form-label small fw-semibold">Hero Media URL (if custom image or video)</label>
+                        <input type="text" name="heroMediaUrl" class="form-control form-control-custom" value="<%= landingContent.heroMediaUrl || '' %>" placeholder="https://...">
+                    </div>
+
+                    <div class="col-12">
+                        <label class="form-label small fw-semibold">Hero Media Strip Caption</label>
+                        <input type="text" name="heroMediaCaption" class="form-control form-control-custom" value="<%= landingContent.heroMediaCaption || '100% Verified Clinical Curriculum' %>">
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Secondary CTA Label</label>
+                        <input type="text" name="secondaryCtaLabel" class="form-control form-control-custom" value="<%= landingContent.secondaryCtaLabel || 'Explore Curriculum' %>">
+                        <div class="form-text">Leave blank to omit secondary button.</div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Secondary CTA Target Anchor or URL</label>
+                        <input type="text" name="secondaryCtaTarget" class="form-control form-control-custom" value="<%= landingContent.secondaryCtaTarget || '#curriculum' %>">
+                    </div>
+                </div>
+
+                <div class="mt-4 pt-3 border-top">
+                    <button type="submit" class="btn btn-primary px-4">
+                        <i class="bi bi-save me-1"></i> Save Hero Settings
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 2. HIGHLIGHTS / CHIPS TAB -->
+    <div class="tab-pane fade <%= activeTab === 'chips' ? 'show active' : '' %>" id="tab-chips" role="tabpanel">
+        <div class="admin-card mb-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="mb-0 text-primary"><i class="bi bi-tags me-2"></i>Hero Highlight Chips</h5>
+                <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#createChipModal">
+                    <i class="bi bi-plus-lg me-1"></i> Add Chip
+                </button>
+            </div>
+            <p class="small text-muted mb-4">
+                Pill badges rendered under the hero paragraph (e.g. "Self-Paced Learning", "Structured Videos", "Private Streaming"). If 0 active chips exist, the chips row is hidden.
+            </p>
+
+            <% if (heroChips.length === 0) { %>
+                <div class="alert alert-secondary mb-0">No highlight chips added yet. Click "Add Chip" above.</div>
+            <% } else { %>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width:60px;">Order</th>
+                                <th>Chip Text / Label</th>
+                                <th style="width:120px;">Status</th>
+                                <th style="width:160px;" class="text-end">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% heroChips.forEach(function(chip, idx) { %>
+                                <tr>
+                                    <td>
+                                        <span class="badge bg-light text-dark border"><%= idx + 1 %></span>
+                                    </td>
+                                    <td>
+                                        <span class="badge rounded-pill bg-primary-subtle text-primary border px-3 py-2 fs-6">
+                                            ✓ <%= chip.label %>
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-<%= chip.isPublished ? 'success' : 'secondary' %>">
+                                            <%= chip.isPublished ? 'Active' : 'Hidden' %>
+                                        </span>
+                                    </td>
+                                    <td class="text-end">
+                                        <div class="d-inline-flex gap-1 align-items-center">
+                                            <form method="POST" action="/admin/courses/<%= course.id %>/landing-page/chips/<%= chip.id %>/move" class="d-inline m-0">
+                                                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                                <input type="hidden" name="direction" value="up">
+                                                <button type="submit" class="btn btn-sm btn-outline-secondary py-0 px-2" <%= idx === 0 ? 'disabled' : '' %> title="Move Up">↑</button>
+                                            </form>
+                                            <form method="POST" action="/admin/courses/<%= course.id %>/landing-page/chips/<%= chip.id %>/move" class="d-inline m-0">
+                                                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                                <input type="hidden" name="direction" value="down">
+                                                <button type="submit" class="btn btn-sm btn-outline-secondary py-0 px-2" <%= idx === heroChips.length - 1 ? 'disabled' : '' %> title="Move Down">↓</button>
+                                            </form>
+                                            <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2" data-bs-toggle="modal" data-bs-target="#editChipModal-<%= chip.id %>">
+                                                Edit
+                                            </button>
+                                            <form method="POST" action="/admin/courses/<%= course.id %>/landing-page/chips/<%= chip.id %>/delete" class="d-inline m-0" data-confirm="Delete chip '<%= chip.label %>'?">
+                                                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                                <button type="submit" class="btn btn-sm btn-outline-danger py-0 px-2">Delete</button>
+                                            </form>
+                                        </div>
+
+                                        <!-- Edit Modal -->
+                                        <div class="modal fade text-start" id="editChipModal-<%= chip.id %>" tabindex="-1">
+                                            <div class="modal-dialog">
+                                                <div class="modal-content">
+                                                    <form method="POST" action="/admin/courses/<%= course.id %>/landing-page/chips/<%= chip.id %>/edit">
+                                                        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                                        <div class="modal-header">
+                                                            <h5 class="modal-title">Edit Highlight Chip</h5>
+                                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                        </div>
+                                                        <div class="modal-body">
+                                                            <div class="mb-3">
+                                                                <label class="form-label small fw-semibold">Chip Label</label>
+                                                                <input type="text" name="label" class="form-control" value="<%= chip.label %>" required maxlength="100">
+                                                            </div>
+                                                            <div class="form-check">
+                                                                <input class="form-check-input" type="checkbox" name="isPublished" id="chipPub-<%= chip.id %>" <%= chip.isPublished ? 'checked' : '' %>>
+                                                                <label class="form-check-label" for="chipPub-<%= chip.id %>">Published (Visible on landing page)</label>
+                                                            </div>
+                                                        </div>
+                                                        <div class="modal-footer">
+                                                            <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                                            <button type="submit" class="btn btn-sm btn-primary">Save Changes</button>
+                                                        </div>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            <% }); %>
+                        </tbody>
+                    </table>
+                </div>
+            <% } %>
+        </div>
+
+        <!-- Create Chip Modal -->
+        <div class="modal fade" id="createChipModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <form method="POST" action="/admin/courses/<%= course.id %>/landing-page/chips">
+                        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Add Highlight Chip</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label class="form-label small fw-semibold">Chip Label</label>
+                                <input type="text" name="label" class="form-control" placeholder="e.g. Structured Video Lessons" required maxlength="100">
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="isPublished" id="createChipPub" checked>
+                                <label class="form-check-label" for="createChipPub">Published (Visible on landing page)</label>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-sm btn-primary">Add Chip</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. ABOUT TAB -->
+    <div class="tab-pane fade <%= activeTab === 'about' ? 'show active' : '' %>" id="tab-about" role="tabpanel">
+        <div class="admin-card">
+            <form method="POST" action="/admin/courses/<%= course.id %>/landing-page/settings">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <input type="hidden" name="currentTab" value="about">
+
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="mb-0 text-primary"><i class="bi bi-file-text me-2"></i>About / Fundamentals Section</h5>
+                    <div class="form-check form-switch fs-5">
+                        <input class="form-check-input" type="checkbox" name="aboutEnabled" id="aboutEnabled" <%= landingContent.aboutEnabled !== false ? 'checked' : '' %>>
+                        <label class="form-check-label fs-6 fw-semibold" for="aboutEnabled">Section Enabled</label>
+                    </div>
+                </div>
+                <p class="small text-muted mb-4">
+                    The highlighted clinical introduction card directly below the hero stats bar.
+                </p>
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Section Eyebrow</label>
+                        <input type="text" name="aboutEyebrow" class="form-control form-control-custom" value="<%= landingContent.aboutEyebrow || '' %>" placeholder="Clinical Fundamentals">
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Section Heading</label>
+                        <input type="text" name="aboutHeading" class="form-control form-control-custom" value="<%= landingContent.aboutHeading || 'About This Masterclass' %>">
+                    </div>
+
+                    <div class="col-12">
+                        <label class="form-label small fw-semibold">Body Content</label>
+                        <textarea name="aboutBody" class="form-control form-control-custom" rows="6" placeholder="<%= course.description || '' %>"><%= landingContent.aboutBody || '' %></textarea>
+                        <div class="form-text">Plain text with multiline paragraphs. Defaults to the course description if blank.</div>
+                    </div>
+                </div>
+
+                <div class="mt-4 pt-3 border-top">
+                    <button type="submit" class="btn btn-primary px-4">
+                        <i class="bi bi-save me-1"></i> Save About Settings
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 4. KEY TAKEAWAYS TAB -->
+    <div class="tab-pane fade <%= activeTab === 'takeaways' ? 'show active' : '' %>" id="tab-takeaways" role="tabpanel">
+        <div class="admin-card mb-4">
+            <form method="POST" action="/admin/courses/<%= course.id %>/landing-page/settings" class="mb-4 pb-3 border-bottom">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <input type="hidden" name="currentTab" value="takeaways">
+
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="mb-0 text-primary"><i class="bi bi-check2-circle me-2"></i>Learning Outcomes / Takeaways Settings</h5>
+                    <div class="form-check form-switch fs-5">
+                        <input class="form-check-input" type="checkbox" name="takeawaysEnabled" id="takeawaysEnabled" <%= landingContent.takeawaysEnabled !== false ? 'checked' : '' %>>
+                        <label class="form-check-label fs-6 fw-semibold" for="takeawaysEnabled">Section Enabled</label>
+                    </div>
+                </div>
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Eyebrow</label>
+                        <input type="text" name="takeawaysEyebrow" class="form-control form-control-custom" value="<%= landingContent.takeawaysEyebrow || 'Masterclass Learning Outcomes' %>">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Section Heading</label>
+                        <input type="text" name="takeawaysHeading" class="form-control form-control-custom" value="<%= landingContent.takeawaysHeading || 'What clinicians will learn in this master class' %>">
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label small fw-semibold">Short Intro Description</label>
+                        <textarea name="takeawaysDescription" class="form-control form-control-custom" rows="2"><%= landingContent.takeawaysDescription || '' %></textarea>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <button type="submit" class="btn btn-sm btn-outline-primary">Save Section Header</button>
+                </div>
+            </form>
+
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h6 class="mb-0 fw-bold">Takeaway Cards (<%= takeaways.length %>)</h6>
+                <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#createTakeawayModal">
+                    <i class="bi bi-plus-lg me-1"></i> Add Takeaway Card
+                </button>
+            </div>
+
+            <% if (takeaways.length === 0) { %>
+                <div class="alert alert-secondary mb-0">No takeaway cards yet. Section will stay hidden until at least 1 published takeaway card is added.</div>
+            <% } else { %>
+                <div class="row g-3">
+                    <% takeaways.forEach(function(item, idx) { %>
+                        <div class="col-md-6">
+                            <div class="card h-100 p-3 border">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <span class="badge bg-primary fs-6"><%= item.icon || String(idx + 1).padStart(2, '0') %></span>
+                                        <h6 class="mb-0 fw-bold"><%= item.title %></h6>
+                                    </div>
+                                    <span class="badge bg-<%= item.isPublished ? 'success' : 'secondary' %>">
+                                        <%= item.isPublished ? 'Published' : 'Hidden' %>
+                                    </span>
+                                </div>
+                                <p class="small text-muted flex-grow-1 mb-3"><%= item.description %></p>
+                                <div class="d-flex justify-content-between align-items-center pt-2 border-top">
+                                    <div class="d-flex gap-1">
+                                        <form method="POST" action="/admin/courses/<%= course.id %>/landing-page/takeaways/<%= item.id %>/move" class="d-inline m-0">
+                                            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                            <input type="hidden" name="direction" value="up">
+                                            <button type="submit" class="btn btn-sm btn-outline-secondary py-0 px-2" <%= idx === 0 ? 'disabled' : '' %>>↑</button>
+                                        </form>
+                                        <form method="POST" action="/admin/courses/<%= course.id %>/landing-page/takeaways/<%= item.id %>/move" class="d-inline m-0">
+                                            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                            <input type="hidden" name="direction" value="down">
+                                            <button type="submit" class="btn btn-sm btn-outline-secondary py-0 px-2" <%= idx === takeaways.length - 1 ? 'disabled' : '' %>>↓</button>
+                                        </form>
+                                    </div>
+                                    <div class="d-flex gap-1">
+                                        <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2" data-bs-toggle="modal" data-bs-target="#editTakeawayModal-<%= item.id %>">Edit</button>
+                                        <form method="POST" action="/admin/courses/<%= course.id %>/landing-page/takeaways/<%= item.id %>/delete" class="d-inline m-0" data-confirm="Delete takeaway card '<%= item.title %>'?">
+                                            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger py-0 px-2">Delete</button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Edit Takeaway Modal -->
+                        <div class="modal fade" id="editTakeawayModal-<%= item.id %>" tabindex="-1">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <form method="POST" action="/admin/courses/<%= course.id %>/landing-page/takeaways/<%= item.id %>/edit">
+                                        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title">Edit Takeaway Card</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <div class="mb-3">
+                                                <label class="form-label small fw-semibold">Card Title</label>
+                                                <input type="text" name="title" class="form-control" value="<%= item.title %>" required maxlength="200">
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label small fw-semibold">Card Description</label>
+                                                <textarea name="description" class="form-control" rows="3" required><%= item.description %></textarea>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label small fw-semibold">Badge / Number Label (e.g. 01, 02)</label>
+                                                <input type="text" name="icon" class="form-control" value="<%= item.icon || '' %>" placeholder="<%= String(idx + 1).padStart(2, '0') %>">
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" name="isPublished" id="editTakeawayPub-<%= item.id %>" <%= item.isPublished ? 'checked' : '' %>>
+                                                <label class="form-check-label" for="editTakeawayPub-<%= item.id %>">Published (Visible)</label>
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                            <button type="submit" class="btn btn-sm btn-primary">Save Changes</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    <% }); %>
+                </div>
+            <% } %>
+        </div>
+
+        <!-- Create Takeaway Modal -->
+        <div class="modal fade" id="createTakeawayModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <form method="POST" action="/admin/courses/<%= course.id %>/landing-page/takeaways">
+                        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Add Takeaway Card</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label class="form-label small fw-semibold">Card Title</label>
+                                <input type="text" name="title" class="form-control" placeholder="e.g. Foundational Occlusal Philosophy" required maxlength="200">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small fw-semibold">Card Description</label>
+                                <textarea name="description" class="form-control" rows="3" placeholder="Explain the key outcome or skill..." required></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small fw-semibold">Badge / Number Label (optional)</label>
+                                <input type="text" name="icon" class="form-control" placeholder="<%= String(takeaways.length + 1).padStart(2, '0') %>">
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="isPublished" id="createTakeawayPub" checked>
+                                <label class="form-check-label" for="createTakeawayPub">Published (Visible)</label>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-sm btn-primary">Add Takeaway</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 5. SNEAK PEEK TAB -->
+    <div class="tab-pane fade <%= activeTab === 'sneak' ? 'show active' : '' %>" id="tab-sneak" role="tabpanel">
+        <div class="admin-card">
+            <form method="POST" action="/admin/courses/<%= course.id %>/landing-page/settings">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <input type="hidden" name="currentTab" value="sneak">
+
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="mb-0 text-primary"><i class="bi bi-play-circle me-2"></i>Sneak Peek / Video Preview Band</h5>
+                    <div class="form-check form-switch fs-5">
+                        <input class="form-check-input" type="checkbox" name="sneakPeekEnabled" id="sneakPeekEnabled" <%= landingContent.sneakPeekEnabled ? 'checked' : '' %>>
+                        <label class="form-check-label fs-6 fw-semibold" for="sneakPeekEnabled">Section Enabled</label>
+                    </div>
+                </div>
+                <p class="small text-muted mb-4">
+                    The dark cinematic band previewing the video streaming experience. Note: Keep unchecked to disable for courses without video preview assets.
+                </p>
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Section Eyebrow</label>
+                        <input type="text" name="sneakPeekEyebrow" class="form-control form-control-custom" value="<%= landingContent.sneakPeekEyebrow || 'A Sneak Peek' %>">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Section Heading</label>
+                        <input type="text" name="sneakPeekHeading" class="form-control form-control-custom" value="<%= landingContent.sneakPeekHeading || 'See the learning experience before you enroll' %>">
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label small fw-semibold">Description</label>
+                        <textarea name="sneakPeekDescription" class="form-control form-control-custom" rows="3"><%= landingContent.sneakPeekDescription || '' %></textarea>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label small fw-semibold">Preview Media / Poster / Video URL (optional)</label>
+                        <input type="text" name="sneakPeekMediaUrl" class="form-control form-control-custom" value="<%= landingContent.sneakPeekMediaUrl || '' %>" placeholder="Defaults to course thumbnail if blank">
+                    </div>
+                </div>
+
+                <div class="mt-4 pt-3 border-top">
+                    <button type="submit" class="btn btn-primary px-4">
+                        <i class="bi bi-save me-1"></i> Save Sneak Peek Settings
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 6. CLINICAL QUESTIONS TAB -->
+    <div class="tab-pane fade <%= activeTab === 'questions' ? 'show active' : '' %>" id="tab-questions" role="tabpanel">
+        <div class="admin-card mb-4">
+            <form method="POST" action="/admin/courses/<%= course.id %>/landing-page/settings" class="mb-4 pb-3 border-bottom">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <input type="hidden" name="currentTab" value="questions">
+
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="mb-0 text-primary"><i class="bi bi-patch-question me-2"></i>Clinical Questions Settings</h5>
+                    <div class="form-check form-switch fs-5">
+                        <input class="form-check-input" type="checkbox" name="questionsEnabled" id="questionsEnabled" <%= landingContent.questionsEnabled !== false ? 'checked' : '' %>>
+                        <label class="form-check-label fs-6 fw-semibold" for="questionsEnabled">Section Enabled</label>
+                    </div>
+                </div>
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Section Eyebrow</label>
+                        <input type="text" name="questionsEyebrow" class="form-control form-control-custom" value="<%= landingContent.questionsEyebrow || 'Clinical Fundamentals' %>">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Section Heading</label>
+                        <input type="text" name="questionsHeading" class="form-control form-control-custom" value="<%= landingContent.questionsHeading || 'Core clinical questions this masterclass helps you answer' %>">
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <button type="submit" class="btn btn-sm btn-outline-primary">Save Section Header</button>
+                </div>
+            </form>
+
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h6 class="mb-0 fw-bold">Questions List (<%= questions.length %>)</h6>
+                <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#createQuestionModal">
+                    <i class="bi bi-plus-lg me-1"></i> Add Question
+                </button>
+            </div>
+
+            <% if (questions.length === 0) { %>
+                <div class="alert alert-secondary mb-0">No questions added yet. Section remains hidden if 0 published questions exist.</div>
+            <% } else { %>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width:60px;">#</th>
+                                <th>Clinical Question</th>
+                                <th style="width:120px;">Status</th>
+                                <th style="width:160px;" class="text-end">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% questions.forEach(function(q, idx) { %>
+                                <tr>
+                                    <td>
+                                        <span class="badge bg-light text-dark border"><%= String(idx + 1).padStart(2, '0') %></span>
+                                    </td>
+                                    <td class="fw-medium"><%= q.question %></td>
+                                    <td>
+                                        <span class="badge bg-<%= q.isPublished ? 'success' : 'secondary' %>">
+                                            <%= q.isPublished ? 'Published' : 'Hidden' %>
+                                        </span>
+                                    </td>
+                                    <td class="text-end">
+                                        <div class="d-inline-flex gap-1">
+                                            <form method="POST" action="/admin/courses/<%= course.id %>/landing-page/questions/<%= q.id %>/move" class="d-inline m-0">
+                                                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                                <input type="hidden" name="direction" value="up">
+                                                <button type="submit" class="btn btn-sm btn-outline-secondary py-0 px-2" <%= idx === 0 ? 'disabled' : '' %>>↑</button>
+                                            </form>
+                                            <form method="POST" action="/admin/courses/<%= course.id %>/landing-page/questions/<%= q.id %>/move" class="d-inline m-0">
+                                                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                                <input type="hidden" name="direction" value="down">
+                                                <button type="submit" class="btn btn-sm btn-outline-secondary py-0 px-2" <%= idx === questions.length - 1 ? 'disabled' : '' %>>↓</button>
+                                            </form>
+                                            <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2" data-bs-toggle="modal" data-bs-target="#editQuestionModal-<%= q.id %>">Edit</button>
+                                            <form method="POST" action="/admin/courses/<%= course.id %>/landing-page/questions/<%= q.id %>/delete" class="d-inline m-0" data-confirm="Delete question '<%= q.question %>'?">
+                                                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                                <button type="submit" class="btn btn-sm btn-outline-danger py-0 px-2">Delete</button>
+                                            </form>
+                                        </div>
+
+                                        <!-- Edit Question Modal -->
+                                        <div class="modal fade text-start" id="editQuestionModal-<%= q.id %>" tabindex="-1">
+                                            <div class="modal-dialog">
+                                                <div class="modal-content">
+                                                    <form method="POST" action="/admin/courses/<%= course.id %>/landing-page/questions/<%= q.id %>/edit">
+                                                        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                                        <div class="modal-header">
+                                                            <h5 class="modal-title">Edit Clinical Question</h5>
+                                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                        </div>
+                                                        <div class="modal-body">
+                                                            <div class="mb-3">
+                                                                <label class="form-label small fw-semibold">Question</label>
+                                                                <textarea name="question" class="form-control" rows="3" required maxlength="300"><%= q.question %></textarea>
+                                                            </div>
+                                                            <div class="form-check">
+                                                                <input class="form-check-input" type="checkbox" name="isPublished" id="editQPub-<%= q.id %>" <%= q.isPublished ? 'checked' : '' %>>
+                                                                <label class="form-check-label" for="editQPub-<%= q.id %>">Published (Visible)</label>
+                                                            </div>
+                                                        </div>
+                                                        <div class="modal-footer">
+                                                            <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                                            <button type="submit" class="btn btn-sm btn-primary">Save Changes</button>
+                                                        </div>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            <% }); %>
+                        </tbody>
+                    </table>
+                </div>
+            <% } %>
+        </div>
+
+        <!-- Create Question Modal -->
+        <div class="modal fade" id="createQuestionModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <form method="POST" action="/admin/courses/<%= course.id %>/landing-page/questions">
+                        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Add Clinical Question</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label class="form-label small fw-semibold">Question</label>
+                                <textarea name="question" class="form-control" rows="3" placeholder="e.g. How to stabilize, deprogram, and restore a collapsed bite" required maxlength="300"></textarea>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="isPublished" id="createQPub" checked>
+                                <label class="form-check-label" for="createQPub">Published (Visible)</label>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-sm btn-primary">Add Question</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 7. CURRICULUM DISPLAY SETTINGS TAB -->
+    <div class="tab-pane fade <%= activeTab === 'curriculum' ? 'show active' : '' %>" id="tab-curriculum" role="tabpanel">
+        <div class="admin-card">
+            <form method="POST" action="/admin/courses/<%= course.id %>/landing-page/settings">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <input type="hidden" name="currentTab" value="curriculum">
+
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="mb-0 text-primary"><i class="bi bi-diagram-3 me-2"></i>Curriculum Display Options</h5>
+                    <div class="form-check form-switch fs-5">
+                        <input class="form-check-input" type="checkbox" name="curriculumEnabled" id="curriculumEnabled" <%= landingContent.curriculumEnabled !== false ? 'checked' : '' %>>
+                        <label class="form-check-label fs-6 fw-semibold" for="curriculumEnabled">Section Enabled</label>
+                    </div>
+                </div>
+                <div class="alert alert-info py-2 small">
+                    <i class="bi bi-info-circle me-1"></i> The underlying modules, topics, and lessons are managed directly in the <a href="/admin/courses/<%= course.id %>/curriculum" class="alert-link">Curriculum Builder</a>. This section controls the public presentation.
+                </div>
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Curriculum Eyebrow</label>
+                        <input type="text" name="curriculumEyebrow" class="form-control form-control-custom" value="<%= landingContent.curriculumEyebrow || 'Course Curriculum' %>">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Curriculum Section Heading</label>
+                        <input type="text" name="curriculumHeading" class="form-control form-control-custom" value="<%= landingContent.curriculumHeading || '' %>" placeholder="e.g. 4 structured modules for dentists">
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label small fw-semibold">Curriculum Intro Paragraph</label>
+                        <textarea name="curriculumIntro" class="form-control form-control-custom" rows="3"><%= landingContent.curriculumIntro || '' %></textarea>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="form-check mt-2">
+                            <input class="form-check-input" type="checkbox" name="curriculumDefaultExpanded" id="curriculumDefaultExpanded" <%= landingContent.curriculumDefaultExpanded !== false ? 'checked' : '' %>>
+                            <label class="form-check-label fw-semibold" for="curriculumDefaultExpanded">
+                                Expand first module accordion by default
+                            </label>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-check mt-2">
+                            <input class="form-check-input" type="checkbox" name="showLessonDuration" id="showLessonDuration" <%= landingContent.showLessonDuration !== false ? 'checked' : '' %>>
+                            <label class="form-check-label fw-semibold" for="showLessonDuration">
+                                Display video duration tags
+                            </label>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="showLockIcon" id="showLockIcon" <%= landingContent.showLockIcon !== false ? 'checked' : '' %>>
+                            <label class="form-check-label fw-semibold" for="showLockIcon">
+                                Display lock icon for unenrolled students
+                            </label>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="showPreviewBadge" id="showPreviewBadge" <%= landingContent.showPreviewBadge !== false ? 'checked' : '' %>>
+                            <label class="form-check-label fw-semibold" for="showPreviewBadge">
+                                Display "Free Preview" pill on preview lessons
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-4 pt-3 border-top">
+                    <button type="submit" class="btn btn-primary px-4">
+                        <i class="bi bi-save me-1"></i> Save Curriculum Display Settings
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 8. CERTIFICATE TAB (CRITICAL: OFF BY DEFAULT) -->
+    <div class="tab-pane fade <%= activeTab === 'certificate' ? 'show active' : '' %>" id="tab-certificate" role="tabpanel">
+        <div class="admin-card">
+            <form method="POST" action="/admin/courses/<%= course.id %>/landing-page/settings">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <input type="hidden" name="currentTab" value="certificate">
+
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="mb-0 text-primary"><i class="bi bi-award me-2"></i>Certificate Marketing Section</h5>
+                    <div class="form-check form-switch fs-5">
+                        <input class="form-check-input" type="checkbox" name="certificateSectionEnabled" id="certificateSectionEnabled" <%= landingContent.certificateSectionEnabled ? 'checked' : '' %>>
+                        <label class="form-check-label fs-6 fw-semibold text-danger" for="certificateSectionEnabled">Enable Certificate Marketing Section</label>
+                    </div>
+                </div>
+                <div class="alert alert-warning py-2 small">
+                    <i class="bi bi-shield-exclamation me-1"></i> <strong>Important Compliance Rule:</strong> By default this section is strictly OFF. Only turn it on when the client or course deliberately grants verifiable certificates upon completion.
+                </div>
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Certificate Eyebrow</label>
+                        <input type="text" name="certificateEyebrow" class="form-control form-control-custom" value="<%= landingContent.certificateEyebrow || 'E-Certificate' %>">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Certificate Heading</label>
+                        <input type="text" name="certificateHeading" class="form-control form-control-custom" value="<%= landingContent.certificateHeading || '' %>" placeholder="Recognize your progress in <%= course.title %>">
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label small fw-semibold">Certificate Body Copy</label>
+                        <textarea name="certificateBody" class="form-control form-control-custom" rows="4"><%= landingContent.certificateBody || '' %></textarea>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label small fw-semibold">Footer Note</label>
+                        <input type="text" name="certificateNote" class="form-control form-control-custom" value="<%= landingContent.certificateNote || 'Certificate issued digitally after verified curriculum completion.' %>">
+                    </div>
+                </div>
+
+                <div class="mt-4 pt-3 border-top">
+                    <button type="submit" class="btn btn-primary px-4">
+                        <i class="bi bi-save me-1"></i> Save Certificate Settings
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 9. TARGET AUDIENCE TAB -->
+    <div class="tab-pane fade <%= activeTab === 'audience' ? 'show active' : '' %>" id="tab-audience" role="tabpanel">
+        <div class="admin-card mb-4">
+            <form method="POST" action="/admin/courses/<%= course.id %>/landing-page/settings" class="mb-4 pb-3 border-bottom">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <input type="hidden" name="currentTab" value="audience">
+
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="mb-0 text-primary"><i class="bi bi-people me-2"></i>Candidate Profile / Audience Settings</h5>
+                    <div class="form-check form-switch fs-5">
+                        <input class="form-check-input" type="checkbox" name="audienceEnabled" id="audienceEnabled" <%= landingContent.audienceEnabled !== false ? 'checked' : '' %>>
+                        <label class="form-check-label fs-6 fw-semibold" for="audienceEnabled">Section Enabled</label>
+                    </div>
+                </div>
+
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label small fw-semibold">Section Eyebrow</label>
+                        <input type="text" name="audienceEyebrow" class="form-control form-control-custom" value="<%= landingContent.audienceEyebrow || 'Candidate Profile' %>">
+                    </div>
+                    <div class="col-md-8">
+                        <label class="form-label small fw-semibold">Section Heading</label>
+                        <input type="text" name="audienceHeading" class="form-control form-control-custom" value="<%= landingContent.audienceHeading || 'Is this online Master Class right for you?' %>">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Left Column Title ("Best For")</label>
+                        <input type="text" name="audienceForHeading" class="form-control form-control-custom" value="<%= landingContent.audienceForHeading || 'Good fit for' %>">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Right Column Title ("Not For")</label>
+                        <input type="text" name="audienceNotForHeading" class="form-control form-control-custom" value="<%= landingContent.audienceNotForHeading || 'Probably not for' %>">
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <button type="submit" class="btn btn-sm btn-outline-primary">Save Audience Headers</button>
+                </div>
+            </form>
+
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h6 class="mb-0 fw-bold">Audience Checklist Items (<%= audienceItems.length %>)</h6>
+                <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#createAudienceModal">
+                    <i class="bi bi-plus-lg me-1"></i> Add Checklist Item
+                </button>
+            </div>
+
+            <div class="row g-4">
+                <!-- FOR Column -->
+                <div class="col-md-6">
+                    <div class="border rounded p-3 h-100 bg-light-subtle">
+                        <h6 class="fw-bold text-success mb-3"><i class="bi bi-check-circle me-1"></i> <%= landingContent.audienceForHeading || 'Good fit for' %></h6>
+                        <% const forItems = audienceItems.filter(i => i.type === 'FOR'); %>
+                        <% if (forItems.length === 0) { %>
+                            <div class="text-muted small">No items added yet.</div>
+                        <% } else { %>
+                            <ul class="list-group list-group-flush bg-transparent">
+                                <% forItems.forEach(function(item, idx) { %>
+                                    <li class="list-group-item bg-transparent d-flex justify-content-between align-items-center px-0">
+                                        <div class="me-2">
+                                            <span class="small fw-medium"><%= item.title %></span>
+                                            <% if (!item.isPublished) { %>
+                                                <span class="badge bg-secondary ms-1">Hidden</span>
+                                            <% } %>
+                                        </div>
+                                        <div class="d-flex gap-1">
+                                            <form method="POST" action="/admin/courses/<%= course.id %>/landing-page/audience/<%= item.id %>/move" class="d-inline m-0">
+                                                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                                <input type="hidden" name="direction" value="up">
+                                                <button type="submit" class="btn btn-sm btn-outline-secondary py-0 px-2" <%= idx === 0 ? 'disabled' : '' %>>↑</button>
+                                            </form>
+                                            <form method="POST" action="/admin/courses/<%= course.id %>/landing-page/audience/<%= item.id %>/move" class="d-inline m-0">
+                                                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                                <input type="hidden" name="direction" value="down">
+                                                <button type="submit" class="btn btn-sm btn-outline-secondary py-0 px-2" <%= idx === forItems.length - 1 ? 'disabled' : '' %>>↓</button>
+                                            </form>
+                                            <form method="POST" action="/admin/courses/<%= course.id %>/landing-page/audience/<%= item.id %>/delete" class="d-inline m-0" data-confirm="Delete item?">
+                                                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                                <button type="submit" class="btn btn-sm btn-outline-danger py-0 px-2">×</button>
+                                            </form>
+                                        </div>
+                                    </li>
+                                <% }); %>
+                            </ul>
+                        <% } %>
+                    </div>
+                </div>
+
+                <!-- NOT FOR Column -->
+                <div class="col-md-6">
+                    <div class="border rounded p-3 h-100 bg-light-subtle">
+                        <h6 class="fw-bold text-danger mb-3"><i class="bi bi-x-circle me-1"></i> <%= landingContent.audienceNotForHeading || 'Probably not for' %></h6>
+                        <% const notForItems = audienceItems.filter(i => i.type === 'NOT_FOR'); %>
+                        <% if (notForItems.length === 0) { %>
+                            <div class="text-muted small">No items added yet.</div>
+                        <% } else { %>
+                            <ul class="list-group list-group-flush bg-transparent">
+                                <% notForItems.forEach(function(item, idx) { %>
+                                    <li class="list-group-item bg-transparent d-flex justify-content-between align-items-center px-0">
+                                        <div class="me-2">
+                                            <span class="small fw-medium"><%= item.title %></span>
+                                            <% if (!item.isPublished) { %>
+                                                <span class="badge bg-secondary ms-1">Hidden</span>
+                                            <% } %>
+                                        </div>
+                                        <div class="d-flex gap-1">
+                                            <form method="POST" action="/admin/courses/<%= course.id %>/landing-page/audience/<%= item.id %>/move" class="d-inline m-0">
+                                                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                                <input type="hidden" name="direction" value="up">
+                                                <button type="submit" class="btn btn-sm btn-outline-secondary py-0 px-2" <%= idx === 0 ? 'disabled' : '' %>>↑</button>
+                                            </form>
+                                            <form method="POST" action="/admin/courses/<%= course.id %>/landing-page/audience/<%= item.id %>/move" class="d-inline m-0">
+                                                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                                <input type="hidden" name="direction" value="down">
+                                                <button type="submit" class="btn btn-sm btn-outline-secondary py-0 px-2" <%= idx === notForItems.length - 1 ? 'disabled' : '' %>>↓</button>
+                                            </form>
+                                            <form method="POST" action="/admin/courses/<%= course.id %>/landing-page/audience/<%= item.id %>/delete" class="d-inline m-0" data-confirm="Delete item?">
+                                                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                                <button type="submit" class="btn btn-sm btn-outline-danger py-0 px-2">×</button>
+                                            </form>
+                                        </div>
+                                    </li>
+                                <% }); %>
+                            </ul>
+                        <% } %>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Create Audience Item Modal -->
+        <div class="modal fade" id="createAudienceModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <form method="POST" action="/admin/courses/<%= course.id %>/landing-page/audience">
+                        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Add Candidate Profile Item</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label class="form-label small fw-semibold">Target Column</label>
+                                <select name="type" class="form-select" required>
+                                    <option value="FOR">Good fit for (Left Column)</option>
+                                    <option value="NOT_FOR">Probably not for (Right Column)</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small fw-semibold">Bullet Item Text</label>
+                                <textarea name="title" class="form-control" rows="2" placeholder="e.g. Ambitious dentists aiming to excel in functional and restorative dentistry" required maxlength="300"></textarea>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="isPublished" id="createAudPub" checked>
+                                <label class="form-check-label" for="createAudPub">Published (Visible)</label>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-sm btn-primary">Add Item</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 10. FAQs TAB -->
+    <div class="tab-pane fade <%= activeTab === 'faqs' ? 'show active' : '' %>" id="tab-faqs" role="tabpanel">
+        <div class="admin-card mb-4">
+            <form method="POST" action="/admin/courses/<%= course.id %>/landing-page/settings" class="mb-4 pb-3 border-bottom">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <input type="hidden" name="currentTab" value="faqs">
+
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="mb-0 text-primary"><i class="bi bi-question-circle me-2"></i>Course-Specific FAQ Settings</h5>
+                    <div class="form-check form-switch fs-5">
+                        <input class="form-check-input" type="checkbox" name="faqEnabled" id="faqEnabled" <%= landingContent.faqEnabled !== false ? 'checked' : '' %>>
+                        <label class="form-check-label fs-6 fw-semibold" for="faqEnabled">Section Enabled</label>
+                    </div>
+                </div>
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">FAQ Eyebrow</label>
+                        <input type="text" name="faqEyebrow" class="form-control form-control-custom" value="<%= landingContent.faqEyebrow || 'Questions & Answers' %>">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">FAQ Heading</label>
+                        <input type="text" name="faqHeading" class="form-control form-control-custom" value="<%= landingContent.faqHeading || 'Frequently asked course questions' %>">
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <button type="submit" class="btn btn-sm btn-outline-primary">Save FAQ Headers</button>
+                </div>
+            </form>
+
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h6 class="mb-0 fw-bold">Course FAQs (<%= faqs.length %>)</h6>
+                <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#createFaqModal">
+                    <i class="bi bi-plus-lg me-1"></i> Add FAQ Question
+                </button>
+            </div>
+
+            <% if (faqs.length === 0) { %>
+                <div class="alert alert-secondary mb-0">No course-specific FAQs added yet. If zero FAQs exist, the FAQ section remains hidden.</div>
+            <% } else { %>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width:60px;">#</th>
+                                <th>Question &amp; Answer</th>
+                                <th style="width:120px;">Status</th>
+                                <th style="width:160px;" class="text-end">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% faqs.forEach(function(faq, idx) { %>
+                                <tr>
+                                    <td>
+                                        <span class="badge bg-light text-dark border"><%= idx + 1 %></span>
+                                    </td>
+                                    <td>
+                                        <div class="fw-bold mb-1"><%= faq.question %></div>
+                                        <div class="small text-muted text-truncate" style="max-width:500px;"><%= faq.answer %></div>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-<%= faq.isPublished ? 'success' : 'secondary' %>">
+                                            <%= faq.isPublished ? 'Published' : 'Hidden' %>
+                                        </span>
+                                    </td>
+                                    <td class="text-end">
+                                        <div class="d-inline-flex gap-1">
+                                            <form method="POST" action="/admin/courses/<%= course.id %>/landing-page/faqs/<%= faq.id %>/move" class="d-inline m-0">
+                                                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                                <input type="hidden" name="direction" value="up">
+                                                <button type="submit" class="btn btn-sm btn-outline-secondary py-0 px-2" <%= idx === 0 ? 'disabled' : '' %>>↑</button>
+                                            </form>
+                                            <form method="POST" action="/admin/courses/<%= course.id %>/landing-page/faqs/<%= faq.id %>/move" class="d-inline m-0">
+                                                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                                <input type="hidden" name="direction" value="down">
+                                                <button type="submit" class="btn btn-sm btn-outline-secondary py-0 px-2" <%= idx === faqs.length - 1 ? 'disabled' : '' %>>↓</button>
+                                            </form>
+                                            <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2" data-bs-toggle="modal" data-bs-target="#editFaqModal-<%= faq.id %>">Edit</button>
+                                            <form method="POST" action="/admin/courses/<%= course.id %>/landing-page/faqs/<%= faq.id %>/delete" class="d-inline m-0" data-confirm="Delete FAQ '<%= faq.question %>'?">
+                                                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                                <button type="submit" class="btn btn-sm btn-outline-danger py-0 px-2">Delete</button>
+                                            </form>
+                                        </div>
+
+                                        <!-- Edit FAQ Modal -->
+                                        <div class="modal fade text-start" id="editFaqModal-<%= faq.id %>" tabindex="-1">
+                                            <div class="modal-dialog">
+                                                <div class="modal-content">
+                                                    <form method="POST" action="/admin/courses/<%= course.id %>/landing-page/faqs/<%= faq.id %>/edit">
+                                                        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                                        <div class="modal-header">
+                                                            <h5 class="modal-title">Edit Course FAQ</h5>
+                                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                        </div>
+                                                        <div class="modal-body">
+                                                            <div class="mb-3">
+                                                                <label class="form-label small fw-semibold">Question</label>
+                                                                <input type="text" name="question" class="form-control" value="<%= faq.question %>" required maxlength="300">
+                                                            </div>
+                                                            <div class="mb-3">
+                                                                <label class="form-label small fw-semibold">Answer</label>
+                                                                <textarea name="answer" class="form-control" rows="4" required><%= faq.answer %></textarea>
+                                                            </div>
+                                                            <div class="form-check">
+                                                                <input class="form-check-input" type="checkbox" name="isPublished" id="editFaqPub-<%= faq.id %>" <%= faq.isPublished ? 'checked' : '' %>>
+                                                                <label class="form-check-label" for="editFaqPub-<%= faq.id %>">Published (Visible)</label>
+                                                            </div>
+                                                        </div>
+                                                        <div class="modal-footer">
+                                                            <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                                            <button type="submit" class="btn btn-sm btn-primary">Save Changes</button>
+                                                        </div>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            <% }); %>
+                        </tbody>
+                    </table>
+                </div>
+            <% } %>
+        </div>
+
+        <!-- Create FAQ Modal -->
+        <div class="modal fade" id="createFaqModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <form method="POST" action="/admin/courses/<%= course.id %>/landing-page/faqs">
+                        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Add Course FAQ</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label class="form-label small fw-semibold">Question</label>
+                                <input type="text" name="question" class="form-control" placeholder="e.g. Will I get lifetime access to clinical videos?" required maxlength="300">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small fw-semibold">Answer</label>
+                                <textarea name="answer" class="form-control" rows="4" placeholder="Enter clear, helpful answer..." required></textarea>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="isPublished" id="createFaqPub" checked>
+                                <label class="form-check-label" for="createFaqPub">Published (Visible)</label>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-sm btn-primary">Add FAQ</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 11. FINAL CTA TAB -->
+    <div class="tab-pane fade <%= activeTab === 'final-cta' ? 'show active' : '' %>" id="tab-final-cta" role="tabpanel">
+        <div class="admin-card">
+            <form method="POST" action="/admin/courses/<%= course.id %>/landing-page/settings">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <input type="hidden" name="currentTab" value="final-cta">
+
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="mb-0 text-primary"><i class="bi bi-megaphone me-2"></i>Final Conversion CTA Banner</h5>
+                    <div class="form-check form-switch fs-5">
+                        <input class="form-check-input" type="checkbox" name="finalCtaEnabled" id="finalCtaEnabled" <%= landingContent.finalCtaEnabled !== false ? 'checked' : '' %>>
+                        <label class="form-check-label fs-6 fw-semibold" for="finalCtaEnabled">Section Enabled</label>
+                    </div>
+                </div>
+                <p class="small text-muted mb-4">
+                    The large branded card at the bottom of the course page before the footer. Pricing, payment flow, and enrollment actions remain business-driven.
+                </p>
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Card Eyebrow</label>
+                        <input type="text" name="finalCtaEyebrow" class="form-control form-control-custom" value="<%= landingContent.finalCtaEyebrow || 'Start Learning Today' %>">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Heading Override (optional)</label>
+                        <input type="text" name="finalCtaHeading" class="form-control form-control-custom" value="<%= landingContent.finalCtaHeading || '' %>" placeholder="Enroll in <%= course.title %>">
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label small fw-semibold">Body Copy</label>
+                        <textarea name="finalCtaBody" class="form-control form-control-custom" rows="3"><%= landingContent.finalCtaBody || '' %></textarea>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Custom Button Label (optional)</label>
+                        <input type="text" name="finalCtaButtonLabel" class="form-control form-control-custom" value="<%= landingContent.finalCtaButtonLabel || '' %>" placeholder="e.g. Enroll Free → or Buy Course">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Bottom Badge / Guarantees</label>
+                        <input type="text" name="finalCtaBadgeText" class="form-control form-control-custom" value="<%= landingContent.finalCtaBadgeText || '✓ 100% Free · Full Access' %>">
+                    </div>
+                </div>
+
+                <div class="mt-4 pt-3 border-top">
+                    <button type="submit" class="btn btn-primary px-4">
+                        <i class="bi bi-save me-1"></i> Save Final CTA Settings
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 12. STICKY CTA TAB -->
+    <div class="tab-pane fade <%= activeTab === 'sticky-cta' ? 'show active' : '' %>" id="tab-sticky-cta" role="tabpanel">
+        <div class="admin-card">
+            <form method="POST" action="/admin/courses/<%= course.id %>/landing-page/settings">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <input type="hidden" name="currentTab" value="sticky-cta">
+
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="mb-0 text-primary"><i class="bi bi-pin-angle me-2"></i>Floating Bottom Bar Settings</h5>
+                    <div class="form-check form-switch fs-5">
+                        <input class="form-check-input" type="checkbox" name="stickyCtaEnabled" id="stickyCtaEnabled" <%= landingContent.stickyCtaEnabled !== false ? 'checked' : '' %>>
+                        <label class="form-check-label fs-6 fw-semibold" for="stickyCtaEnabled">Sticky Bar Enabled</label>
+                    </div>
+                </div>
+                <p class="small text-muted mb-4">
+                    The floating conversion bar anchored to the bottom of the viewport as the visitor scrolls down. Pricing is calculated directly from the course.
+                </p>
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Secondary / Tagline Text</label>
+                        <input type="text" name="stickyCtaText" class="form-control form-control-custom" value="<%= landingContent.stickyCtaText || 'Full Lifetime Access' %>">
+                        <div class="form-text">Shown next to the price (e.g. "Full Lifetime Access" or "Immediate Streaming").</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Custom Button Label (optional)</label>
+                        <input type="text" name="stickyCtaButtonLabel" class="form-control form-control-custom" value="<%= landingContent.stickyCtaButtonLabel || '' %>" placeholder="Defaults to business flow action">
+                    </div>
+                </div>
+
+                <div class="mt-4 pt-3 border-top">
+                    <button type="submit" class="btn btn-primary px-4">
+                        <i class="bi bi-save me-1"></i> Save Sticky Bar Settings
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+</div>
