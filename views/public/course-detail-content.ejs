@@ -558,6 +558,23 @@ const hasPending = typeof hasPendingRequest !== 'undefined' && hasPendingRequest
 
 <script nonce="<%= typeof cspNonce !== 'undefined' ? cspNonce : '' %>">
 document.addEventListener('DOMContentLoaded', function() {
+    var page = document.querySelector('.course-landing-page');
+    if (page && 'IntersectionObserver' in window) {
+        page.classList.add('has-io');
+        var io = new IntersectionObserver(function(entries) {
+            entries.forEach(function(e) {
+                if (e.isIntersecting) {
+                    e.target.classList.add('in');
+                    io.unobserve(e.target);
+                }
+            });
+        }, { threshold: 0.05, rootMargin: '0px 0px 40px 0px' });
+
+        document.querySelectorAll('.course-landing-page .rv').forEach(function(el) {
+            io.observe(el);
+        });
+    }
+
     // Accordion toggle delegation
     document.addEventListener('click', function(e) {
         var btn = e.target.closest('[data-toggle-module]');
@@ -571,24 +588,20 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Scroll reveal observer
-    if ('IntersectionObserver' in window) {
-        var io = new IntersectionObserver(function(entries) {
-            entries.forEach(function(e) {
-                if (e.isIntersecting) {
-                    e.target.classList.add('in');
-                    io.unobserve(e.target);
-                }
-            });
-        }, { threshold: 0.08, rootMargin: '0px 0px -30px 0px' });
-
-        document.querySelectorAll('.course-landing-page .rv').forEach(function(el) {
-            io.observe(el);
-        });
-    } else {
-        document.querySelectorAll('.course-landing-page .rv').forEach(function(el) {
-            el.classList.add('in');
-        });
+    // Floating sticky bottom bar visibility on scroll
+    var floatingBar = document.getElementById('course-floating-bar');
+    var hero = document.querySelector('.hero');
+    if (floatingBar && hero) {
+        var checkScroll = function() {
+            var rect = hero.getBoundingClientRect();
+            if (rect.bottom < 120) {
+                floatingBar.classList.add('is-visible');
+            } else {
+                floatingBar.classList.remove('is-visible');
+            }
+        };
+        window.addEventListener('scroll', checkScroll, { passive: true });
+        checkScroll();
     }
 });
 </script>
