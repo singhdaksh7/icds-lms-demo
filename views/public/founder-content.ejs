@@ -174,7 +174,7 @@
 </main>
 
 <% if (vm.sections.includes('FAQ')) { %>
-<script>
+<script nonce="<%= typeof cspNonce !== 'undefined' ? cspNonce : '' %>">
 (function () {
     document.querySelectorAll('.fp-faq-q').forEach(function (btn) {
         btn.addEventListener('click', function () {
