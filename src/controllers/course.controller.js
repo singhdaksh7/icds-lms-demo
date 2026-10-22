@@ -117,7 +117,11 @@ async function getCourseDetail(req, res, next) {
       prisma.faq.findMany({ where: { isActive: true }, orderBy: { sortOrder: 'asc' }, take: 6 }),
       courseLandingService.getPublicLandingData(course.id, { includeDemo: demoShowcase }),
     ]);
-    if (landing) landing.demoShowcase = demoShowcase;
+    if (landing) {
+      landing.demoShowcase = demoShowcase;
+      // Client-demo showcase: present demo testimonials without the demo marking (counts/ratings already exclude them).
+      if (demoShowcase && Array.isArray(landing.testimonials)) landing.testimonials = landing.testimonials.map((t) => ({ ...t, isDemo: false }));
+    }
 
     const jsonLd = {
       '@context': 'https://schema.org',

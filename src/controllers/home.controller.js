@@ -51,7 +51,10 @@ async function getHomePage(req, res, next) {
       reviews,
       banners,
       homeReviewSettings,
-      homeReviews: homeReviewSettings.enabled ? homeReviews : [],
+      // Client-demo showcase (non-admin): present demo rows without the demo marking. Never counted anywhere.
+      homeReviews: homeReviewSettings.enabled
+        ? (isAdmin && req.query.previewDemo === '1' ? homeReviews : homeReviews.map((r) => ({ ...r, isDemo: false })))
+        : [],
       homeReviewsPreviewDemo: includeDemo,
       stats,
       faqs,
