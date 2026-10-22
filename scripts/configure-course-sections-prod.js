@@ -20,25 +20,59 @@ async function main() {
       data: {
         name: 'Dr. Tanu Raghav',
         slug: 'dr-tanu-raghav',
-        designation: 'Course Director & Clinical Mentor',
-        organization: 'Institute of Cosmetology & Dental Sciences',
-        shortBio: 'Specialist in full mouth rehabilitation, occlusal diagnosis, and clinical prosthodontic workflows.',
+        designation: 'Founder, ICDS',
+        organization: 'Institute of Comprehensive Dental Studies / Institute of Cosmetology and Dental Sciences',
+        qualificationSummary: 'BDS, MDS Prosthodontist, FFA (USA)',
+        experienceLabel: '10+ Years Experience',
+        shortBio: 'Prosthodontist, Implantologist, and Founder of ICDS with over a decade of clinical practice and mentorship across advanced dentistry.',
+        bio: `Dr. Tanu Raghav is a Prosthodontist and Implantologist with over a decade of experience in dentistry. She completed her BDS in Ghaziabad in 2014 and later pursued her MDS in Prosthodontics and Implantology from Subharti Dental College.\n\nShe has also completed further fellowship training in clinical cosmetology through FFA (USA) and in micropigmentation.\n\nDr. Tanu Raghav has contributed to dental research through several articles published in national and international journals. Alongside her academic interests, she has been actively involved in private clinical practice for the past 10 years.\n\nShe is the Founder and Director of ICDS — the Institute of Comprehensive Dental Studies / Institute of Cosmetology and Dental Sciences — where she focuses on training and mentoring dental professionals.\n\nOver the last two years, she has trained more than 50 doctors across various areas of dentistry, helping them strengthen their clinical knowledge and practical skills.\n\nWith her clinical experience, academic contributions, and commitment to professional education, Dr. Tanu Raghav continues to contribute to the development of dental professionals through both clinical practice and training.`,
         status: 'ACTIVE',
       },
     });
     console.log('Created instructor:', instructor.id, instructor.name);
   } else {
     console.log('Found existing instructor:', instructor.id, instructor.name);
-    // Ensure designation, organization, and shortBio are populated if null
     instructor = await prisma.instructor.update({
       where: { id: instructor.id },
       data: {
-        designation: instructor.designation || 'Course Director & Clinical Mentor',
-        organization: instructor.organization || 'Institute of Cosmetology & Dental Sciences',
-        shortBio: instructor.shortBio || 'Specialist in full mouth rehabilitation, occlusal diagnosis, and clinical prosthodontic workflows.',
+        designation: 'Founder, ICDS',
+        organization: 'Institute of Comprehensive Dental Studies / Institute of Cosmetology and Dental Sciences',
+        qualificationSummary: 'BDS, MDS Prosthodontist, FFA (USA)',
+        experienceLabel: '10+ Years Experience',
+        shortBio: 'Prosthodontist, Implantologist, and Founder of ICDS with over a decade of clinical practice and mentorship across advanced dentistry.',
+        bio: `Dr. Tanu Raghav is a Prosthodontist and Implantologist with over a decade of experience in dentistry. She completed her BDS in Ghaziabad in 2014 and later pursued her MDS in Prosthodontics and Implantology from Subharti Dental College.\n\nShe has also completed further fellowship training in clinical cosmetology through FFA (USA) and in micropigmentation.\n\nDr. Tanu Raghav has contributed to dental research through several articles published in national and international journals. Alongside her academic interests, she has been actively involved in private clinical practice for the past 10 years.\n\nShe is the Founder and Director of ICDS — the Institute of Comprehensive Dental Studies / Institute of Cosmetology and Dental Sciences — where she focuses on training and mentoring dental professionals.\n\nOver the last two years, she has trained more than 50 doctors across various areas of dentistry, helping them strengthen their clinical knowledge and practical skills.\n\nWith her clinical experience, academic contributions, and commitment to professional education, Dr. Tanu Raghav continues to contribute to the development of dental professionals through both clinical practice and training.`,
+        practiceName: null,
+        practiceLocation: null,
+        mentorQuote: null,
         status: 'ACTIVE',
       },
     });
+  }
+
+  // Seed verified credentials if empty
+  const existingCreds = await prisma.instructorCredential.findMany({
+    where: { instructorId: instructor.id },
+  });
+  if (existingCreds.length === 0) {
+    const verifiedCreds = [
+      { title: 'BDS (Ghaziabad, 2014)', sortOrder: 10, icon: 'bi-mortarboard-fill' },
+      { title: 'MDS in Prosthodontics & Implantology (Subharti Dental College)', sortOrder: 20, icon: 'bi-award-fill' },
+      { title: 'Fellowship in Clinical Cosmetology, FFA (USA) & Micropigmentation', sortOrder: 30, icon: 'bi-patch-check-fill' },
+      { title: '10+ Years in Private Clinical Practice & Dental Research', sortOrder: 40, icon: 'bi-briefcase-fill' },
+      { title: 'Founder & Director, ICDS (Mentored 50+ Doctors)', sortOrder: 50, icon: 'bi-people-fill' },
+    ];
+    for (const c of verifiedCreds) {
+      await prisma.instructorCredential.create({
+        data: {
+          instructorId: instructor.id,
+          title: c.title,
+          icon: c.icon,
+          sortOrder: c.sortOrder,
+          isPublished: true,
+        },
+      });
+    }
+    console.log(`Seeded ${verifiedCreds.length} verified instructor credentials.`);
   }
 
   // 2. Locate Course: Advanced FMR Master Class
