@@ -23,7 +23,7 @@ async function main() {
         designation: 'Course Director & Clinical Mentor',
         organization: 'Institute of Cosmetology & Dental Sciences',
         shortBio: 'Specialist in full mouth rehabilitation, occlusal diagnosis, and clinical prosthodontic workflows.',
-        isActive: true,
+        status: 'ACTIVE',
       },
     });
     console.log('Created instructor:', instructor.id, instructor.name);
@@ -36,7 +36,7 @@ async function main() {
         designation: instructor.designation || 'Course Director & Clinical Mentor',
         organization: instructor.organization || 'Institute of Cosmetology & Dental Sciences',
         shortBio: instructor.shortBio || 'Specialist in full mouth rehabilitation, occlusal diagnosis, and clinical prosthodontic workflows.',
-        isActive: true,
+        status: 'ACTIVE',
       },
     });
   }
