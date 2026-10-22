@@ -5,7 +5,7 @@
 }
 
 /* ---------- Banner carousel ---------- */
-.home-banner-section { padding: 18px 0 0; background: #fff; }
+.home-banner-section { padding: 0; background: #fff; }
 .home-banner-wrap { /* width/padding come from Bootstrap .container so edges align with the hero below */ }
 .home-banner {
   position: relative; overflow: hidden; border-radius: 22px;
@@ -75,7 +75,7 @@
   .home-banner-arrow { display: inline-flex; }
 }
 @media (min-width: 992px) {
-  .home-banner-section { padding-top: 22px; }
+  .home-banner-section { padding-top: 0; }
   .home-banner { height: 400px; border-radius: 26px; }
   .home-banner-copy { padding: 44px 90px 50px 60px; }
   .home-banner-desc { font-size: 16px; }

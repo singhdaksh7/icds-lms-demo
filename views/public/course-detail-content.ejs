@@ -34,7 +34,8 @@ const whyRegisterGetList = (typeof landing !== 'undefined' && landing && Array.i
 const highlightsList = (typeof landing !== 'undefined' && landing && Array.isArray(landing.highlights)) ? landing.highlights : [];
 const inPreviewMode = Boolean((typeof isPreview !== 'undefined' && isPreview) || (typeof isPreviewMode !== 'undefined' && isPreviewMode));
 const rawTestimonialsList = (typeof landing !== 'undefined' && landing && Array.isArray(landing.testimonials)) ? landing.testimonials : [];
-const testimonialsList = inPreviewMode ? rawTestimonialsList : rawTestimonialsList.filter(t => !t.isDemo);
+const demoShowcase = Boolean(typeof landing !== 'undefined' && landing && landing.demoShowcase === true);
+const testimonialsList = (inPreviewMode || demoShowcase) ? rawTestimonialsList : rawTestimonialsList.filter(t => !t.isDemo);
 const accessPlansList = (typeof landing !== 'undefined' && landing && Array.isArray(landing.accessPlans)) ? landing.accessPlans : [];
 const comparisonColumnsList = (typeof landing !== 'undefined' && landing && Array.isArray(landing.comparisonColumns)) ? landing.comparisonColumns : [];
 const accessStepsList = (typeof landing !== 'undefined' && landing && Array.isArray(landing.accessSteps)) ? landing.accessSteps : [];
@@ -684,7 +685,7 @@ const effectiveAccessSubtitle = defaultAccessPlan ? defaultAccessPlan.label : (l
                             <% if (lc.reviewsIntro) { %>
                                 <p><%= lc.reviewsIntro %></p>
                             <% } %>
-                            <% if (inPreviewMode && testimonialsList.some(r => r.isDemo)) { %>
+                            <% if ((inPreviewMode || demoShowcase) && testimonialsList.some(r => r.isDemo)) { %>
                                 <div class="mt-2">
                                     <span class="badge" style="background:#fef3c7; color:#92400e; border:1px solid #fde68a; font-size:12px; padding:5px 12px; border-radius:6px; font-weight:700;">
                                         <i class="bi bi-flask me-1"></i> TESTIMONIAL PREVIEW &mdash; Demo reviews for layout &amp; responsive QA (Visible in Admin Preview Only)

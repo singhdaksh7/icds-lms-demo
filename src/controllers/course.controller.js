@@ -109,13 +109,15 @@ async function getCourseDetail(req, res, next) {
 
     const price = getCoursePurchasePrice(course);
     const curriculumService = require('../services/curriculum.service');
+    const demoShowcase = await require('../services/homeReviews.service').isDemoShowcaseEnabled();
     const [curriculum, stats, resources, globalFaqs, landing] = await Promise.all([
       curriculumService.getPublishedCurriculum(course.id),
       curriculumService.getPublicCourseStats(course.id),
       curriculumService.listResourcesForCourse(course.id, { publishedOnly: true }),
       prisma.faq.findMany({ where: { isActive: true }, orderBy: { sortOrder: 'asc' }, take: 6 }),
-      courseLandingService.getPublicLandingData(course.id, { includeDemo: await require('../services/homeReviews.service').isDemoShowcaseEnabled() }),
+      courseLandingService.getPublicLandingData(course.id, { includeDemo: demoShowcase }),
     ]);
+    if (landing) landing.demoShowcase = demoShowcase;
 
     const jsonLd = {
       '@context': 'https://schema.org',
