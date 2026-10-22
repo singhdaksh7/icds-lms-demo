@@ -53,12 +53,13 @@ function requireNumericId(req, res, next, value) {
   }
   return next();
 }
-['id', 'courseId', 'lessonId', 'moduleId', 'topicId', 'resourceId', 'chipId', 'takeawayId', 'questionId', 'itemId', 'faqId'].forEach((name) => router.param(name, requireNumericId));
+['id', 'courseId', 'lessonId', 'moduleId', 'topicId', 'resourceId', 'chipId', 'takeawayId', 'questionId', 'itemId', 'faqId', 'highlightId', 'testimonialId', 'planId', 'statId', 'columnId', 'stepId', 'sectionId'].forEach((name) => router.param(name, requireNumericId));
 
 router.get('/', dashboardController.getDashboard);
 
 // --- Course Landing Page / Marketing Content CMS --------------------------
 router.get('/courses/:courseId/landing-page', courseLandingController.getLandingEditor);
+router.get('/courses/:courseId/landing-page/preview', courseLandingController.previewLanding);
 router.post('/courses/:courseId/landing-page/settings', doubleCsrfProtection, courseLandingController.saveSettings);
 
 router.post('/courses/:courseId/landing-page/chips', doubleCsrfProtection, courseLandingController.createChip);
@@ -100,6 +101,34 @@ router.post('/courses/:courseId/landing-page/reviews', doubleCsrfProtection, cou
 router.post('/courses/:courseId/landing-page/reviews/:testimonialId/edit', doubleCsrfProtection, courseLandingController.updateTestimonial);
 router.post('/courses/:courseId/landing-page/reviews/:testimonialId/delete', doubleCsrfProtection, courseLandingController.deleteTestimonial);
 router.post('/courses/:courseId/landing-page/reviews/:testimonialId/move', doubleCsrfProtection, courseLandingController.moveTestimonial);
+
+router.post('/courses/:courseId/landing-page/access-plans', doubleCsrfProtection, courseLandingController.createAccessPlan);
+router.post('/courses/:courseId/landing-page/access-plans/:planId/edit', doubleCsrfProtection, courseLandingController.updateAccessPlan);
+router.post('/courses/:courseId/landing-page/access-plans/:planId/delete', doubleCsrfProtection, courseLandingController.deleteAccessPlan);
+router.post('/courses/:courseId/landing-page/access-plans/:planId/move', doubleCsrfProtection, courseLandingController.moveAccessPlan);
+
+router.post('/courses/:courseId/landing-page/stats', doubleCsrfProtection, courseLandingController.createStat);
+router.post('/courses/:courseId/landing-page/stats/:statId/edit', doubleCsrfProtection, courseLandingController.updateStat);
+router.post('/courses/:courseId/landing-page/stats/:statId/delete', doubleCsrfProtection, courseLandingController.deleteStat);
+router.post('/courses/:courseId/landing-page/stats/:statId/move', doubleCsrfProtection, courseLandingController.moveStat);
+
+router.post('/courses/:courseId/landing-page/comparison-columns', doubleCsrfProtection, courseLandingController.createComparisonColumn);
+router.post('/courses/:courseId/landing-page/comparison-columns/:columnId/edit', doubleCsrfProtection, courseLandingController.updateComparisonColumn);
+router.post('/courses/:courseId/landing-page/comparison-columns/:columnId/delete', doubleCsrfProtection, courseLandingController.deleteComparisonColumn);
+router.post('/courses/:courseId/landing-page/comparison-columns/:columnId/move', doubleCsrfProtection, courseLandingController.moveComparisonColumn);
+
+router.post('/courses/:courseId/landing-page/comparison-columns/:columnId/items', doubleCsrfProtection, courseLandingController.createComparisonItem);
+router.post('/courses/:courseId/landing-page/comparison-items/:itemId/edit', doubleCsrfProtection, courseLandingController.updateComparisonItem);
+router.post('/courses/:courseId/landing-page/comparison-items/:itemId/delete', doubleCsrfProtection, courseLandingController.deleteComparisonItem);
+router.post('/courses/:courseId/landing-page/comparison-items/:itemId/move', doubleCsrfProtection, courseLandingController.moveComparisonItem);
+
+router.post('/courses/:courseId/landing-page/access-steps', doubleCsrfProtection, courseLandingController.createAccessStep);
+router.post('/courses/:courseId/landing-page/access-steps/:stepId/edit', doubleCsrfProtection, courseLandingController.updateAccessStep);
+router.post('/courses/:courseId/landing-page/access-steps/:stepId/delete', doubleCsrfProtection, courseLandingController.deleteAccessStep);
+router.post('/courses/:courseId/landing-page/access-steps/:stepId/move', doubleCsrfProtection, courseLandingController.moveAccessStep);
+
+router.post('/courses/:courseId/landing-page/sections/:sectionId/toggle', doubleCsrfProtection, courseLandingController.toggleSection);
+router.post('/courses/:courseId/landing-page/sections/:sectionId/move', doubleCsrfProtection, courseLandingController.moveSection);
 
 // --- Curriculum Builder (Modules, Topics, Reorder, Resources) --------------
 router.get('/courses/:courseId/curriculum', curriculumController.getCurriculumBuilder);

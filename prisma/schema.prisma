@@ -228,6 +228,11 @@ model Course {
   whyRegisterItems   CourseWhyRegisterItem[]
   courseHighlights   CourseHighlight[]
   testimonials       CourseTestimonial[]
+  accessPlans        CourseAccessPlan[]
+  courseStats        CourseStat[]
+  comparisonColumns  CourseComparisonColumn[]
+  accessSteps        CourseAccessStep[]
+  landingSections    CourseLandingSection[]
 
   @@index([categoryId])
   @@index([instructorId])
@@ -681,6 +686,7 @@ model CourseLandingContent {
   courseId                   Int      @unique
   
   // Hero settings
+  heroEnabled                Boolean  @default(true)
   heroEyebrow                String?  @db.VarChar(255)
   heroTitleOverride          String?  @db.VarChar(255)
   heroAccentText             String?  @db.VarChar(255)
@@ -688,6 +694,7 @@ model CourseLandingContent {
   heroMediaType              String?  @default("THUMBNAIL") @db.VarChar(50)
   heroMediaUrl               String?  @db.VarChar(500)
   heroMediaCaption           String?  @db.VarChar(255)
+  heroPrimaryCtaLabel        String?  @db.VarChar(100)
   secondaryCtaLabel          String?  @default("Explore Curriculum") @db.VarChar(100)
   secondaryCtaTarget         String?  @default("#curriculum") @db.VarChar(255)
   priceSubtitle              String?  @db.VarChar(100)
@@ -725,6 +732,9 @@ model CourseLandingContent {
   showLessonDuration         Boolean  @default(true)
   showLockIcon               Boolean  @default(true)
   showPreviewBadge           Boolean  @default(true)
+  curriculumShowSessionCount Boolean  @default(true)
+  curriculumShowTotalDuration Boolean @default(true)
+  curriculumShowResourceCount Boolean @default(true)
 
   // Certificate section (OFF by default!)
   certificateSectionEnabled  Boolean  @default(false)
@@ -752,6 +762,9 @@ model CourseLandingContent {
   finalCtaBody               String?  @db.Text
   finalCtaButtonLabel        String?  @db.VarChar(100)
   finalCtaBadgeText          String?  @db.VarChar(255)
+  finalCtaLine1              String?  @db.VarChar(255)
+  finalCtaLine2              String?  @db.VarChar(255)
+  finalCtaLine3              String?  @db.VarChar(255)
 
   // Sticky bottom conversion bar
   stickyCtaEnabled           Boolean  @default(true)
@@ -773,8 +786,37 @@ model CourseLandingContent {
 
   // Highlights section
   highlightsEnabled          Boolean  @default(true)
+  highlightsEyebrow          String?  @default("Course Highlights") @db.VarChar(100)
   highlightsHeading          String?  @default("Course Highlights") @db.VarChar(255)
   highlightsDescription      String?  @db.Text
+
+  // Purchase Card / Access Box
+  purchaseCardEnabled        Boolean  @default(true)
+  purchaseCardEyebrow        String?  @db.VarChar(100)
+  purchaseCardHeading        String?  @db.VarChar(255)
+  purchaseCardDescription    String?  @db.Text
+  purchaseCardButtonLabel    String?  @db.VarChar(100)
+
+  // Comparison section
+  comparisonEnabled          Boolean  @default(false)
+  comparisonEyebrow          String?  @db.VarChar(100)
+  comparisonHeading          String?  @db.VarChar(255)
+  comparisonDescription      String?  @db.Text
+
+  // How will you get access section
+  accessSectionEnabled       Boolean  @default(false)
+  accessEyebrow              String?  @db.VarChar(100)
+  accessHeading              String?  @db.VarChar(255)
+  accessDescription          String?  @db.Text
+  accessMediaType            String?  @default("NONE") @db.VarChar(20) // "VIDEO", "IMAGE", "NONE"
+  accessMediaUrl             String?  @db.VarChar(500)
+  accessStepsEnabled         Boolean  @default(true)
+
+  // Social Proof section
+  socialProofEnabled         Boolean  @default(false)
+  socialProofMode            String?  @default("AUTO") @db.VarChar(20) // "AUTO", "MANUAL"
+  socialProofValue           String?  @db.VarChar(100)
+  socialProofLabel           String?  @db.VarChar(255)
 
   // Reviews / Testimonials section (DISABLED by default!)
   reviewsEnabled             Boolean  @default(false)
@@ -932,4 +974,109 @@ model CourseFaq {
   @@index([courseId, sortOrder])
   @@map("course_faqs")
 }
+
+model CourseAccessPlan {
+  id           Int      @id @default(autoincrement())
+  courseId     Int
+  label        String   @db.VarChar(100)
+  durationDays Int?
+  price        Decimal? @db.Decimal(10, 2)
+  salePrice    Decimal? @db.Decimal(10, 2)
+  isDefault    Boolean  @default(false)
+  isPublished  Boolean  @default(true)
+  sortOrder    Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@index([courseId, sortOrder])
+  @@map("course_access_plans")
+}
+
+model CourseStat {
+  id          Int      @id @default(autoincrement())
+  courseId    Int
+  icon        String?  @db.VarChar(50)
+  value       String?  @db.VarChar(100)
+  label       String   @db.VarChar(100)
+  statType    String   @default("MANUAL") @db.VarChar(50)
+  sortOrder   Int      @default(0)
+  isPublished Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@index([courseId, sortOrder])
+  @@map("course_stats")
+}
+
+model CourseComparisonColumn {
+  id            Int      @id @default(autoincrement())
+  courseId      Int
+  title         String   @db.VarChar(200)
+  subtitle      String?  @db.VarChar(200)
+  badgeText     String?  @db.VarChar(100)
+  isRecommended Boolean  @default(false)
+  sortOrder     Int      @default(0)
+  isPublished   Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  course Course                 @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  items  CourseComparisonItem[]
+
+  @@index([courseId, sortOrder])
+  @@map("course_comparison_columns")
+}
+
+model CourseComparisonItem {
+  id          Int      @id @default(autoincrement())
+  columnId    Int
+  text        String   @db.VarChar(300)
+  sortOrder   Int      @default(0)
+  isPublished Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  column CourseComparisonColumn @relation(fields: [columnId], references: [id], onDelete: Cascade)
+
+  @@index([columnId, sortOrder])
+  @@map("course_comparison_items")
+}
+
+model CourseAccessStep {
+  id          Int      @id @default(autoincrement())
+  courseId    Int
+  title       String   @db.VarChar(300)
+  description String?  @db.Text
+  icon        String?  @db.VarChar(50)
+  sortOrder   Int      @default(0)
+  isPublished Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@index([courseId, sortOrder])
+  @@map("course_access_steps")
+}
+
+model CourseLandingSection {
+  id         Int      @id @default(autoincrement())
+  courseId   Int
+  sectionKey String   @db.VarChar(50)
+  sortOrder  Int      @default(0)
+  isEnabled  Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@unique([courseId, sectionKey])
+  @@index([courseId, sortOrder])
+  @@map("course_landing_sections")
+}
+
 

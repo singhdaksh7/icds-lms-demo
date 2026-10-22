@@ -171,6 +171,7 @@ test('deleteFaq rejects when FAQ belongs to another course', async () => {
 // --- 4. Repeatable Item Reordering (Move Up / Down) ---
 
 test('moveHeroChip correctly swaps adjacent chips', async () => {
+  const origFindUnique = prisma.courseHeroChip.findUnique;
   const origFindMany = prisma.courseHeroChip.findMany;
   const origUpdate = prisma.courseHeroChip.update;
 
@@ -180,6 +181,7 @@ test('moveHeroChip correctly swaps adjacent chips', async () => {
     { id: 3, courseId: 10, sortOrder: 3 },
   ];
 
+  prisma.courseHeroChip.findUnique = async ({ where }) => mockChips.find(c => c.id === where.id);
   prisma.courseHeroChip.findMany = async () => [...mockChips];
 
   const updates = [];
@@ -197,12 +199,14 @@ test('moveHeroChip correctly swaps adjacent chips', async () => {
       { id: 1, sortOrder: 2 },
     ]);
   } finally {
+    prisma.courseHeroChip.findUnique = origFindUnique;
     prisma.courseHeroChip.findMany = origFindMany;
     prisma.courseHeroChip.update = origUpdate;
   }
 });
 
 test('moveTakeaway correctly moves card down', async () => {
+  const origFindUnique = prisma.courseTakeaway.findUnique;
   const origFindMany = prisma.courseTakeaway.findMany;
   const origUpdate = prisma.courseTakeaway.update;
 
@@ -211,6 +215,7 @@ test('moveTakeaway correctly moves card down', async () => {
     { id: 20, courseId: 10, sortOrder: 2 },
   ];
 
+  prisma.courseTakeaway.findUnique = async ({ where }) => mockTakeaways.find(t => t.id === where.id);
   prisma.courseTakeaway.findMany = async () => [...mockTakeaways];
 
   const updates = [];
@@ -228,6 +233,7 @@ test('moveTakeaway correctly moves card down', async () => {
       { id: 20, sortOrder: 1 },
     ]);
   } finally {
+    prisma.courseTakeaway.findUnique = origFindUnique;
     prisma.courseTakeaway.findMany = origFindMany;
     prisma.courseTakeaway.update = origUpdate;
   }
