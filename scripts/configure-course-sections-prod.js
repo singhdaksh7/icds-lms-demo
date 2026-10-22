@@ -64,14 +64,16 @@ async function main() {
     resourceCount: fmrCourse.resources.length,
   });
 
-  // Assign Dr. Tanu Raghav as Course Instructor
+  // Assign Dr. Tanu Raghav as Course Instructor & ensure FMR is Free
   await prisma.course.update({
     where: { id: fmrCourse.id },
     data: {
       instructorId: instructor.id,
+      price: 0,
+      salePrice: null,
     },
   });
-  console.log(`Assigned course ${fmrCourse.id} to instructor ${instructor.id} (${instructor.name})`);
+  console.log(`Assigned course ${fmrCourse.id} to instructor ${instructor.id} (${instructor.name}) and ensured price is Free (0)`);
 
   // 3. Configure Course Landing Content
   const landing = await prisma.courseLandingContent.upsert({
@@ -264,16 +266,25 @@ async function main() {
       instructor: true,
       landingContent: true,
       whyRegisterItems: true,
-      highlights: true,
+      courseHighlights: true,
       testimonials: true,
+      lessons: true,
+      resources: true,
     },
   });
 
+  const pubLessons = verifyFmr.lessons.filter(l => l.status === 'PUBLISHED');
+  const draftLessons = verifyFmr.lessons.filter(l => l.status === 'DRAFT');
+
   console.log('\n--- VERIFICATION SUMMARY ---');
-  console.log('Course:', verifyFmr.title, `(ID: ${verifyFmr.id}, Price: ${verifyFmr.price})`);
+  console.log('Course:', verifyFmr.title, `(ID: ${verifyFmr.id}, Price: ${verifyFmr.price === 0 ? 'Free (0)' : verifyFmr.price})`);
+  console.log('Published Lessons:', pubLessons.length);
+  console.log('Draft Lessons:', draftLessons.length);
+  console.log('Resources:', verifyFmr.resources.length);
   console.log('Assigned Instructor:', verifyFmr.instructor ? verifyFmr.instructor.name : 'NONE');
+  console.log('Instructor Designation:', verifyFmr.instructor ? verifyFmr.instructor.designation : 'NONE');
   console.log('Why Register Enabled:', verifyFmr.landingContent?.whyRegisterEnabled, `(${verifyFmr.whyRegisterItems.length} items)`);
-  console.log('Highlights Enabled:', verifyFmr.landingContent?.highlightsEnabled, `(${verifyFmr.highlights.length} items)`);
+  console.log('Highlights Enabled:', verifyFmr.landingContent?.highlightsEnabled, `(${verifyFmr.courseHighlights.length} items)`);
   console.log('Reviews Enabled:', verifyFmr.landingContent?.reviewsEnabled, `(${verifyFmr.testimonials.length} reviews - strictly disabled)`);
   console.log('Mentor Section Enabled:', verifyFmr.landingContent?.mentorSectionEnabled);
 }
