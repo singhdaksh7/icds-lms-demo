@@ -157,12 +157,19 @@ model Instructor {
   email                String?
   linkedinUrl          String?                @db.VarChar(500)
   instagramUrl         String?                @db.VarChar(500)
+  // Founder/About page: the instructor flagged isFounder is the source of
+  // truth for name/title/bio/photo/credentials.
+  isFounder            Boolean                @default(false)
+  qualificationsLine   String?                @db.VarChar(500)
+  founderIntro         String?                @db.Text
   status               EntityStatus           @default(ACTIVE)
   createdAt            DateTime               @default(now())
   updatedAt            DateTime               @updatedAt
 
-  courses     Course[]
-  credentials InstructorCredential[]
+  courses          Course[]
+  credentials      InstructorCredential[]
+  founderTimeline  FounderTimelineEntry[]
+  founderResearch  FounderResearchItem[]
 
   @@map("instructors")
 }
@@ -886,6 +893,10 @@ model CourseTestimonial {
   sortOrder           Int      @default(0)
   isPublished         Boolean  @default(true)
   isDemo              Boolean  @default(false)
+  // Homepage reviews: real = isPublished && !isDemo. featuredOnHome picks rows
+  // for sourceMode FEATURED; homeSortOrder orders them on the homepage.
+  featuredOnHome      Boolean  @default(false)
+  homeSortOrder       Int      @default(0)
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
 
@@ -893,6 +904,7 @@ model CourseTestimonial {
 
   @@index([courseId, sortOrder])
   @@index([courseId, isPublished, isDemo])
+  @@index([featuredOnHome, isPublished, isDemo, homeSortOrder])
   @@map("course_testimonials")
 }
 
@@ -1082,3 +1094,132 @@ model CourseLandingSection {
 }
 
 
+
+// ---------------------------------------------------------------------------
+// Home banners (hero slider on the public homepage)
+// ---------------------------------------------------------------------------
+model HomeBanner {
+  id                 Int       @id @default(autoincrement())
+  title              String?   @db.VarChar(255)
+  subtitle           String?   @db.VarChar(500)
+  description        String?   @db.Text
+  imageUrl           String    @db.VarChar(500)
+  mobileImageUrl     String?   @db.VarChar(500)
+  ctaLabel           String?   @db.VarChar(100)
+  ctaUrl             String?   @db.VarChar(500)
+  secondaryCtaLabel  String?   @db.VarChar(100)
+  secondaryCtaUrl    String?   @db.VarChar(500)
+  overlayEnabled     Boolean   @default(true)
+  sortOrder          Int       @default(0)
+  isActive           Boolean   @default(true)
+  startAt            DateTime?
+  endAt              DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  @@index([isActive, sortOrder])
+  @@map("home_banners")
+}
+
+// ---------------------------------------------------------------------------
+// Founder / About page. Name, title, bio, photo and credentials come from the
+// Instructor row with isFounder = true.
+//
+// SiteSetting keys (key/value table, JSON or plain strings in `value`):
+//   homeReviews.enabled      "true"/"false"
+//   homeReviews.heading      string
+//   homeReviews.subheading   string
+//   homeReviews.sourceMode   "FEATURED" | "ALL_APPROVED"
+//   founder.sections.order   JSON array of section keys
+//   founder.sections.hidden  JSON array of hidden section keys
+// ---------------------------------------------------------------------------
+model FounderQualification {
+  id          Int      @id @default(autoincrement())
+  title       String   @db.VarChar(300)
+  subtitle    String?  @db.VarChar(500)
+  sortOrder   Int      @default(0)
+  isPublished Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([isPublished, sortOrder])
+  @@map("founder_qualifications")
+}
+
+model FounderTimelineEntry {
+  id           Int      @id @default(autoincrement())
+  instructorId Int
+  yearLabel    String   @db.VarChar(100)
+  title        String   @db.VarChar(300)
+  description  String?  @db.Text
+  sortOrder    Int      @default(0)
+  isPublished  Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  instructor Instructor @relation(fields: [instructorId], references: [id], onDelete: Cascade)
+
+  @@index([instructorId, sortOrder])
+  @@map("founder_timeline_entries")
+}
+
+model FounderInitiative {
+  id          Int      @id @default(autoincrement())
+  title       String   @db.VarChar(300)
+  description String   @db.Text
+  imageUrl    String?  @db.VarChar(500)
+  iconKey     String?  @db.VarChar(50)
+  ctaLabel    String?  @db.VarChar(100)
+  ctaUrl      String?  @db.VarChar(500)
+  sortOrder   Int      @default(0)
+  isPublished Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([isPublished, sortOrder])
+  @@map("founder_initiatives")
+}
+
+model FounderStat {
+  id          Int      @id @default(autoincrement())
+  valueText   String   @db.VarChar(50)
+  label       String   @db.VarChar(200)
+  sortOrder   Int      @default(0)
+  isPublished Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([isPublished, sortOrder])
+  @@map("founder_stats")
+}
+
+model FounderFaq {
+  id          Int      @id @default(autoincrement())
+  question    String   @db.VarChar(500)
+  answer      String   @db.Text
+  sortOrder   Int      @default(0)
+  isPublished Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([isPublished, sortOrder])
+  @@map("founder_faqs")
+}
+
+// kind: JOURNAL_NATIONAL | JOURNAL_INTERNATIONAL | TEACHING | TRAINING
+model FounderResearchItem {
+  id           Int      @id @default(autoincrement())
+  instructorId Int
+  title        String   @db.VarChar(500)
+  description  String?  @db.Text
+  kind         String   @db.VarChar(50)
+  sortOrder    Int      @default(0)
+  isPublished  Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  instructor Instructor @relation(fields: [instructorId], references: [id], onDelete: Cascade)
+
+  @@index([instructorId, kind, sortOrder])
+  @@map("founder_research_items")
+}
