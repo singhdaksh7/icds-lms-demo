@@ -340,9 +340,19 @@ function resolveCourseStats(dbStats, context = {}) {
 /**
  * Fetch public landing data for rendering views/public/course-detail.ejs
  */
-async function getPublicLandingData(courseId, courseStatsContext = {}) {
+async function getPublicLandingData(courseId, courseStatsContext = {}, options = {}) {
   const numericCourseId = parseInt(courseId, 10);
   if (!numericCourseId) return null;
+
+  const resolvedOptions = (courseStatsContext && typeof courseStatsContext.includeDemo !== 'undefined')
+    ? courseStatsContext
+    : (options || {});
+  const includeDemo = Boolean(resolvedOptions && resolvedOptions.includeDemo);
+  const testimonialWhere = {
+    courseId: numericCourseId,
+    isPublished: true,
+    ...(includeDemo ? {} : { isDemo: false }),
+  };
 
   const [
     landingContent,
@@ -359,6 +369,7 @@ async function getPublicLandingData(courseId, courseStatsContext = {}) {
     comparisonColumns,
     accessSteps,
     rawLandingSections,
+    realReviewsAggregate,
   ] = await Promise.all([
     prisma.courseLandingContent.findUnique({
       where: { courseId: numericCourseId },
@@ -392,7 +403,7 @@ async function getPublicLandingData(courseId, courseStatsContext = {}) {
       orderBy: { sortOrder: 'asc' },
     }),
     prisma.courseTestimonial.findMany({
-      where: { courseId: numericCourseId, isPublished: true },
+      where: testimonialWhere,
       orderBy: { sortOrder: 'asc' },
     }),
     prisma.courseAccessPlan.findMany({
@@ -421,10 +432,33 @@ async function getPublicLandingData(courseId, courseStatsContext = {}) {
       where: { courseId: numericCourseId },
       orderBy: { sortOrder: 'asc' },
     }),
+    prisma.courseTestimonial.aggregate({
+      where: { courseId: numericCourseId, isPublished: true, isDemo: false },
+      _count: { id: true },
+      _avg: { rating: true },
+    }),
   ]);
 
+  const realReviewCount = (realReviewsAggregate && realReviewsAggregate._count) ? realReviewsAggregate._count.id : 0;
+  const realAverageRating = (realReviewsAggregate && realReviewsAggregate._avg && realReviewsAggregate._avg.rating) ? realReviewsAggregate._avg.rating : 0;
+
+  // Real review count strictly powers stats and social proof (never contaminated by demo reviews)
+  const resolvedContext = {
+    ...courseStatsContext,
+    reviewCount: realReviewCount,
+  };
+
+  // If social proof is AUTO mode, require genuine published reviews
+  if (landingContent && landingContent.socialProofMode === 'AUTO') {
+    if (realReviewCount === 0) {
+      landingContent.socialProofEnabled = false;
+    } else {
+      landingContent.socialProofValue = `${realReviewCount}+ Genuine Reviews`;
+    }
+  }
+
   // Dynamic Auto Stat values
-  const courseStats = resolveCourseStats(rawCourseStats, courseStatsContext);
+  const courseStats = resolveCourseStats(rawCourseStats, resolvedContext);
 
   // Resolved section order: use DB order if exists, otherwise default 16-section flow
   let landingSections = [];
@@ -448,6 +482,8 @@ async function getPublicLandingData(courseId, courseStatsContext = {}) {
     whyRegisterGet: whyRegisterItems.filter((item) => item.type === 'GET'),
     highlights,
     testimonials,
+    realReviewCount,
+    realAverageRating,
     accessPlans,
     courseStats,
     comparisonColumns,
@@ -946,7 +982,7 @@ async function moveHighlight(courseId, highlightId, direction) {
 // 8. Reviews / Testimonials
 // ============================================================================
 
-async function addTestimonial(courseId, { reviewerName, reviewerDesignation, reviewerLocation, quote, rating = 5, avatarUrl, initials, sortOrder = 0, isPublished = true }) {
+async function addTestimonial(courseId, { reviewerName, reviewerDesignation, reviewerLocation, quote, rating = 5, avatarUrl, initials, sortOrder = 0, isPublished = true, isDemo = false }) {
   if (!reviewerName || !String(reviewerName).trim()) throw new CourseLandingError('Reviewer name is required');
   if (!quote || !String(quote).trim()) throw new CourseLandingError('Testimonial quote is required');
   const count = await prisma.courseTestimonial.count({ where: { courseId } });
@@ -966,11 +1002,12 @@ async function addTestimonial(courseId, { reviewerName, reviewerDesignation, rev
       initials: fallbackInitials || null,
       sortOrder: Number(sortOrder) || count * 10 + 10,
       isPublished: cleanBoolValue(isPublished),
+      isDemo: cleanBoolValue(isDemo),
     },
   });
 }
 
-async function updateTestimonial(courseId, testimonialId, { reviewerName, reviewerDesignation, reviewerLocation, quote, rating, avatarUrl, initials, isPublished }) {
+async function updateTestimonial(courseId, testimonialId, { reviewerName, reviewerDesignation, reviewerLocation, quote, rating, avatarUrl, initials, isPublished, isDemo }) {
   const item = await prisma.courseTestimonial.findUnique({ where: { id: testimonialId } });
   if (!item) throw new CourseLandingError('Testimonial not found', 404);
   if (item.courseId !== courseId) throw new CourseLandingError('Testimonial does not belong to this course', 403);
@@ -988,6 +1025,7 @@ async function updateTestimonial(courseId, testimonialId, { reviewerName, review
       ...(avatarUrl !== undefined ? { avatarUrl: avatarUrl ? String(avatarUrl).trim().slice(0, 500) : null } : {}),
       ...(initials !== undefined ? { initials: initials ? String(initials).trim().slice(0, 10) : null } : {}),
       ...(isPublished !== undefined ? { isPublished: cleanBoolValue(isPublished) } : {}),
+      ...(isDemo !== undefined ? { isDemo: cleanBoolValue(isDemo) } : {}),
     },
   });
 }

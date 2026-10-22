@@ -404,7 +404,12 @@ async function moveHighlight(req, res, next) {
 async function createTestimonial(req, res, next) {
   try {
     const courseId = parseInt(req.params.courseId, 10);
-    await courseLandingService.addTestimonial(courseId, req.body);
+    const payload = { ...req.body };
+    if (payload.formSubmitted) {
+      payload.isPublished = !!payload.isPublished;
+      payload.isDemo = !!payload.isDemo;
+    }
+    await courseLandingService.addTestimonial(courseId, payload);
     req.flashSuccess('Review / Testimonial added.');
     res.redirect(`/admin/courses/${courseId}/landing-page?tab=reviews`);
   } catch (err) {
@@ -417,7 +422,12 @@ async function updateTestimonial(req, res, next) {
   try {
     const courseId = parseInt(req.params.courseId, 10);
     const testimonialId = parseInt(req.params.testimonialId, 10);
-    await courseLandingService.updateTestimonial(courseId, testimonialId, req.body);
+    const payload = { ...req.body };
+    if (payload.formSubmitted) {
+      payload.isPublished = !!payload.isPublished;
+      payload.isDemo = !!payload.isDemo;
+    }
+    await courseLandingService.updateTestimonial(courseId, testimonialId, payload);
     req.flashSuccess('Review / Testimonial updated.');
     res.redirect(`/admin/courses/${courseId}/landing-page?tab=reviews`);
   } catch (err) {
@@ -763,7 +773,7 @@ async function previewLanding(req, res, next) {
       curriculumService.getCurriculumTree(course.id, { publishedOnly: false }),
       curriculumService.getCourseStats(course.id),
       curriculumService.listResourcesForCourse(course.id, { publishedOnly: false }),
-      courseLandingService.getPublicLandingData(course.id),
+      courseLandingService.getPublicLandingData(course.id, stats, { includeDemo: true }),
     ]);
 
     const price = Number(course.price) || 0;
@@ -795,6 +805,7 @@ async function previewLanding(req, res, next) {
       priceLabel: isFree ? 'Free' : `₹${price.toLocaleString('en-IN')}`,
       gstNote: 'Incl. applicable taxes',
       isPreview: true,
+      isPreviewMode: true,
     });
   } catch (err) {
     next(err);

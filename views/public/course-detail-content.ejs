@@ -32,7 +32,9 @@ const courseFaqsList = (typeof landing !== 'undefined' && landing && Array.isArr
 const whyRegisterWantList = (typeof landing !== 'undefined' && landing && Array.isArray(landing.whyRegisterWant)) ? landing.whyRegisterWant : [];
 const whyRegisterGetList = (typeof landing !== 'undefined' && landing && Array.isArray(landing.whyRegisterGet)) ? landing.whyRegisterGet : [];
 const highlightsList = (typeof landing !== 'undefined' && landing && Array.isArray(landing.highlights)) ? landing.highlights : [];
-const testimonialsList = (typeof landing !== 'undefined' && landing && Array.isArray(landing.testimonials)) ? landing.testimonials : [];
+const inPreviewMode = Boolean((typeof isPreview !== 'undefined' && isPreview) || (typeof isPreviewMode !== 'undefined' && isPreviewMode));
+const rawTestimonialsList = (typeof landing !== 'undefined' && landing && Array.isArray(landing.testimonials)) ? landing.testimonials : [];
+const testimonialsList = inPreviewMode ? rawTestimonialsList : rawTestimonialsList.filter(t => !t.isDemo);
 const accessPlansList = (typeof landing !== 'undefined' && landing && Array.isArray(landing.accessPlans)) ? landing.accessPlans : [];
 const comparisonColumnsList = (typeof landing !== 'undefined' && landing && Array.isArray(landing.comparisonColumns)) ? landing.comparisonColumns : [];
 const accessStepsList = (typeof landing !== 'undefined' && landing && Array.isArray(landing.accessSteps)) ? landing.accessSteps : [];
@@ -278,10 +280,11 @@ const effectiveAccessSubtitle = defaultAccessPlan ? defaultAccessPlan.label : (l
                                     <div class="quick-stat-value">Instant</div>
                                     <div class="quick-stat-label">Access on Enrollment</div>
                                 </div>
-                                <% if (testimonialsList.length > 0) { %>
+                                <% const realReviewCountQuick = (typeof landing !== 'undefined' && landing && landing.realReviewCount) ? landing.realReviewCount : 0; %>
+                                <% if (realReviewCountQuick > 0) { %>
                                     <div class="quick-stat-card">
                                         <div class="quick-stat-icon"><i class="bi bi-star-fill"></i></div>
-                                        <div class="quick-stat-value"><%= testimonialsList.length %>+</div>
+                                        <div class="quick-stat-value"><%= realReviewCountQuick %>+</div>
                                         <div class="quick-stat-label">Verified Reviews</div>
                                     </div>
                                 <% } else { %>
@@ -657,9 +660,9 @@ const effectiveAccessSubtitle = defaultAccessPlan ? defaultAccessPlan.label : (l
             <% } %>
 
             <!-- ======================================================== -->
-            <!-- 08. REVIEWS / TESTIMONIALS (Only If Genuine Reviews > 0)  -->
+            <!-- 08. REVIEWS / TESTIMONIALS                               -->
             <!-- ======================================================== -->
-            <% if (sectionKey === 'REVIEWS' && lc.reviewsEnabled === true && testimonialsList.length > 0) { %>
+            <% if (sectionKey === 'REVIEWS' && (lc.reviewsEnabled === true || inPreviewMode) && testimonialsList.length > 0) { %>
                 <section class="reviews-section" id="reviews">
                     <div class="wrap">
                         <div class="section-head">
@@ -668,14 +671,26 @@ const effectiveAccessSubtitle = defaultAccessPlan ? defaultAccessPlan.label : (l
                             <% if (lc.reviewsIntro) { %>
                                 <p><%= lc.reviewsIntro %></p>
                             <% } %>
+                            <% if (inPreviewMode && testimonialsList.some(r => r.isDemo)) { %>
+                                <div class="mt-2">
+                                    <span class="badge" style="background:#fef3c7; color:#92400e; border:1px solid #fde68a; font-size:12px; padding:5px 12px; border-radius:6px; font-weight:700;">
+                                        <i class="bi bi-flask me-1"></i> TESTIMONIAL PREVIEW &mdash; Demo reviews for layout &amp; responsive QA (Visible in Admin Preview Only)
+                                    </span>
+                                </div>
+                            <% } %>
                         </div>
 
                         <div class="reviews-grid">
                             <% testimonialsList.forEach(function(rev) { %>
-                                <div class="review-card">
+                                <div class="review-card <%= rev.isDemo ? 'review-card-demo' : '' %>" style="<%= rev.isDemo ? 'border:1px dashed #cbd5e1; position:relative;' : '' %>">
+                                    <% if (rev.isDemo) { %>
+                                        <div style="position:absolute; top:14px; right:14px;">
+                                            <span class="badge" style="background:#fef3c7; color:#92400e; font-size:10px; font-weight:700; letter-spacing:0.5px; border-radius:4px; padding:3px 7px;">DEMO REVIEW</span>
+                                        </div>
+                                    <% } %>
                                     <div class="review-quote-mark">“</div>
                                     <div class="review-stars">
-                                        <% for (let s = 1; s <= 5; s++) { %>
+                                        <% for (let s = 1; s <= (rev.rating || 5); s++) { %>
                                             <i class="bi bi-star-fill"></i>
                                         <% } %>
                                     </div>
@@ -1011,10 +1026,11 @@ const effectiveAccessSubtitle = defaultAccessPlan ? defaultAccessPlan.label : (l
                 <section class="final-cta-section" id="final-cta">
                     <div class="wrap">
                         <div class="final-cta-card">
-                            <% if (lc.socialProofEnabled === true && (lc.socialProofValue || testimonialsList.length > 0)) { %>
+                            <% const realReviewCountProof = (typeof landing !== 'undefined' && landing && landing.realReviewCount) ? landing.realReviewCount : 0; %>
+                            <% if (lc.socialProofEnabled === true && (lc.socialProofValue || realReviewCountProof > 0)) { %>
                                 <div class="final-cta-eyebrow">
                                     <i class="bi bi-star-fill text-warning"></i>
-                                    <span><%= lc.socialProofValue || (testimonialsList.length + '+ Five-Star Reviews') %></span>
+                                    <span><%= lc.socialProofValue || (realReviewCountProof + '+ Five-Star Reviews') %></span>
                                 </div>
                             <% } %>
 

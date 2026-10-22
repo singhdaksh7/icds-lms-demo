@@ -995,7 +995,7 @@
 
         <div class="admin-card">
             <div class="d-flex justify-content-between align-items-center mb-3">
-                <h5 class="mb-0 text-primary"><i class="bi bi-person-hearts me-2"></i>Genuine Testimonials (<%= testimonials.length %>)</h5>
+                <h5 class="mb-0 text-primary"><i class="bi bi-person-hearts me-2"></i>Testimonials &amp; Reviews (<%= testimonials.length %>)</h5>
                 <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#createTestimonialModal">
                     <i class="bi bi-plus-lg me-1"></i> Add Review
                 </button>
@@ -1009,6 +1009,7 @@
                         <thead class="table-light">
                             <tr>
                                 <th style="width:70px;">Order</th>
+                                <th style="width:110px;">Type</th>
                                 <th>Reviewer</th>
                                 <th>Designation / Location</th>
                                 <th style="width:90px;">Rating</th>
@@ -1019,9 +1020,25 @@
                         </thead>
                         <tbody>
                             <% testimonials.forEach(function(rev, idx) { %>
-                                <tr>
+                                <tr class="<%= rev.isDemo ? 'table-warning bg-opacity-10' : '' %>">
                                     <td><span class="badge bg-light text-dark border">#<%= rev.sortOrder %></span></td>
-                                    <td><strong><%= rev.reviewerName %></strong></td>
+                                    <td>
+                                        <% if (rev.isDemo) { %>
+                                            <span class="badge bg-warning text-dark border border-warning" title="Test/Demo review - never visible to public visitors">
+                                                <i class="bi bi-flask me-1"></i>DEMO
+                                            </span>
+                                        <% } else { %>
+                                            <span class="badge bg-success" title="Genuine verified testimonial">
+                                                <i class="bi bi-check-circle me-1"></i>REAL
+                                            </span>
+                                        <% } %>
+                                    </td>
+                                    <td>
+                                        <strong><%= rev.reviewerName %></strong>
+                                        <% if (rev.isDemo) { %>
+                                            <div class="small text-muted fst-italic">Demo / QA Preview</div>
+                                        <% } %>
+                                    </td>
                                     <td><%= rev.reviewerDesignation || rev.reviewerLocation || '-' %></td>
                                     <td><span class="text-warning">★ <%= rev.rating %></span></td>
                                     <td class="text-truncate" style="max-width:260px;">"<%= rev.quote %>"</td>
@@ -1042,7 +1059,7 @@
                                                 <input type="hidden" name="direction" value="down">
                                                 <button type="submit" class="btn btn-outline-secondary btn-sm" title="Move Down" <%= idx === testimonials.length - 1 ? 'disabled' : '' %>>↓</button>
                                             </form>
-                                            <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#editTestimonialModal-<%= rev.id %>">
+                                            <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#editTestimonialModal-<%= rev.id %>" title="Edit Review">
                                                 <i class="bi bi-pencil"></i>
                                             </button>
                                             <form method="POST" action="/admin/courses/<%= course.id %>/landing-page/reviews/<%= rev.id %>/delete" class="d-inline" data-confirm='Delete testimonial?'>
@@ -1056,6 +1073,76 @@
                         </tbody>
                     </table>
                 </div>
+
+                <% testimonials.forEach(function(rev) { %>
+                    <!-- Modal: Edit Testimonial <%= rev.id %> -->
+                    <div class="modal fade" id="editTestimonialModal-<%= rev.id %>" tabindex="-1">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <form method="POST" action="/admin/courses/<%= course.id %>/landing-page/reviews/<%= rev.id %>/edit">
+                                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                    <input type="hidden" name="formSubmitted" value="1">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title">Edit <%= rev.isDemo ? 'Demo' : 'Genuine' %> Review</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <div class="modal-body text-start">
+                                        <div class="row g-2 mb-3">
+                                            <div class="col-8">
+                                                <label class="form-label small fw-semibold">Reviewer Full Name</label>
+                                                <input type="text" name="reviewerName" class="form-control" value="<%= rev.reviewerName %>" required>
+                                            </div>
+                                            <div class="col-4">
+                                                <label class="form-label small fw-semibold">Rating</label>
+                                                <select name="rating" class="form-select">
+                                                    <option value="5" <%= rev.rating === 5 ? 'selected' : '' %>>5 Stars</option>
+                                                    <option value="4" <%= rev.rating === 4 ? 'selected' : '' %>>4 Stars</option>
+                                                    <option value="3" <%= rev.rating === 3 ? 'selected' : '' %>>3 Stars</option>
+                                                    <option value="2" <%= rev.rating === 2 ? 'selected' : '' %>>2 Stars</option>
+                                                    <option value="1" <%= rev.rating === 1 ? 'selected' : '' %>>1 Star</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="row g-2 mb-3">
+                                            <div class="col-6">
+                                                <label class="form-label small fw-semibold">Designation (optional)</label>
+                                                <input type="text" name="reviewerDesignation" class="form-control" value="<%= rev.reviewerDesignation || '' %>">
+                                            </div>
+                                            <div class="col-6">
+                                                <label class="form-label small fw-semibold">Location (optional)</label>
+                                                <input type="text" name="reviewerLocation" class="form-control" value="<%= rev.reviewerLocation || '' %>">
+                                            </div>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label small fw-semibold">Quote / Feedback</label>
+                                            <textarea name="quote" class="form-control" rows="3" required><%= rev.quote %></textarea>
+                                        </div>
+                                        <div class="row g-2">
+                                            <div class="col-6">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" name="isPublished" id="editRevPub-<%= rev.id %>" <%= rev.isPublished ? 'checked' : '' %>>
+                                                    <label class="form-check-label" for="editRevPub-<%= rev.id %>">Published</label>
+                                                </div>
+                                            </div>
+                                            <div class="col-6">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" name="isDemo" id="editRevDemo-<%= rev.id %>" <%= rev.isDemo ? 'checked' : '' %>>
+                                                    <label class="form-check-label text-warning-emphasis fw-semibold" for="editRevDemo-<%= rev.id %>">
+                                                        Demo Review (Preview only)
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                        <button type="submit" class="btn btn-sm btn-primary">Save Changes</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                <% }); %>
             <% } %>
         </div>
     </div>
@@ -2120,11 +2207,12 @@
         <div class="modal-content">
             <form method="POST" action="/admin/courses/<%= course.id %>/landing-page/reviews">
                 <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <input type="hidden" name="formSubmitted" value="1">
                 <div class="modal-header">
-                    <h5 class="modal-title">Add Genuine Clinician Review</h5>
+                    <h5 class="modal-title">Add Review / Testimonial</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
-                <div class="modal-body">
+                <div class="modal-body text-start">
                     <div class="row g-2 mb-3">
                         <div class="col-8">
                             <label class="form-label small fw-semibold">Reviewer Full Name</label>
@@ -2135,6 +2223,9 @@
                             <select name="rating" class="form-select">
                                 <option value="5">5 Stars</option>
                                 <option value="4">4 Stars</option>
+                                <option value="3">3 Stars</option>
+                                <option value="2">2 Stars</option>
+                                <option value="1">1 Star</option>
                             </select>
                         </div>
                     </div>
@@ -2152,9 +2243,21 @@
                         <label class="form-label small fw-semibold">Quote / Feedback</label>
                         <textarea name="quote" class="form-control" rows="3" placeholder="Real feedback from clinician" required></textarea>
                     </div>
-                    <div class="form-check">
-                        <input class="form-check-input" type="checkbox" name="isPublished" id="revPub" checked>
-                        <label class="form-check-label" for="revPub">Published</label>
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="isPublished" id="revPub" checked>
+                                <label class="form-check-label" for="revPub">Published</label>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="isDemo" id="revDemo">
+                                <label class="form-check-label text-warning-emphasis fw-semibold" for="revDemo">
+                                    Demo Review (Preview only)
+                                </label>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer">

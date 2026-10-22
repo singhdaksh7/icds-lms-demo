@@ -885,12 +885,14 @@ model CourseTestimonial {
   initials            String?  @db.VarChar(10)
   sortOrder           Int      @default(0)
   isPublished         Boolean  @default(true)
+  isDemo              Boolean  @default(false)
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
 
   course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
 
   @@index([courseId, sortOrder])
+  @@index([courseId, isPublished, isDemo])
   @@map("course_testimonials")
 }
 
