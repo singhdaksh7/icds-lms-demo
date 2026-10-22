@@ -61,35 +61,42 @@ async function verifyAll() {
     { statType: 'TOPIC_COUNT', label: 'Topics', sortOrder: 5 },
     { statType: 'REVIEW_COUNT', label: 'Reviews', sortOrder: 6 },
   ];
-  const resolved = await courseLandingService.resolveCourseStats(courseId, dummyStats);
+  const context = {
+    videoCount: publishedLessons.length,
+    resourceCount: course.resources.length,
+    moduleCount: course.modules.length,
+    topicCount: topicsCount,
+    reviewCount: course.testimonials.length,
+  };
+  const resolved = courseLandingService.resolveCourseStats(dummyStats, context);
   resolved.forEach(s => {
-    console.log(`   - ${s.statType}: value="${s.value}", label="${s.label}"`);
+    console.log(`   - ${s.statType}: displayValue="${s.displayValue}", label="${s.label}"`);
   });
 
   const videoStat = resolved.find(s => s.statType === 'PUBLISHED_VIDEO_COUNT');
-  if (videoStat.value !== '15') throw new Error(`Expected 15 videos, got ${videoStat.value}`);
+  if (videoStat.displayValue !== '15') throw new Error(`Expected 15 videos, got ${videoStat.displayValue}`);
   const resourceStat = resolved.find(s => s.statType === 'RESOURCE_COUNT');
-  if (resourceStat.value !== '1') throw new Error(`Expected 1 resource, got ${resourceStat.value}`);
+  if (resourceStat.displayValue !== '1') throw new Error(`Expected 1 resource, got ${resourceStat.displayValue}`);
   const moduleStat = resolved.find(s => s.statType === 'MODULE_COUNT');
-  if (moduleStat.value !== '4') throw new Error(`Expected 4 modules, got ${moduleStat.value}`);
+  if (moduleStat.displayValue !== '4') throw new Error(`Expected 4 modules, got ${moduleStat.displayValue}`);
   const topicStat = resolved.find(s => s.statType === 'TOPIC_COUNT');
-  if (topicStat.value !== '9') throw new Error(`Expected 9 topics, got ${topicStat.value}`);
+  if (topicStat.displayValue !== '9') throw new Error(`Expected 9 topics, got ${topicStat.displayValue}`);
   const reviewStat = resolved.find(s => s.statType === 'REVIEW_COUNT');
-  if (reviewStat.value !== '0') throw new Error(`Expected 0 reviews, got ${reviewStat.value}`);
+  if (reviewStat.displayValue !== '0') throw new Error(`Expected 0 reviews, got ${reviewStat.displayValue}`);
   console.log('   ✔ All auto stats match real DB data exactly.');
 
   // 3. Section Reordering Verification
   console.log('\n3. Verifying Section Reordering:');
-  const initialSections = await courseLandingService.getOrderedSections(courseId);
+  const initialSections = await courseLandingService.ensureCourseLandingSections(courseId);
   console.log(`   - Default ordered sections: ${initialSections.length} sections`);
   console.log(`   - Initial order: ${initialSections.map(s => s.sectionKey).join(' -> ')}`);
 
   // Move second section UP to first position
   const sec2 = initialSections[1];
   console.log(`   - Testing move '${sec2.sectionKey}' UP...`);
-  await courseLandingService.moveSection(courseId, sec2.id, 'up');
+  await courseLandingService.moveCourseSection(courseId, sec2.sectionKey, 'up');
 
-  const afterMove = await courseLandingService.getOrderedSections(courseId);
+  const afterMove = await courseLandingService.ensureCourseLandingSections(courseId);
   console.log(`   - Order after move: ${afterMove.map(s => s.sectionKey).join(' -> ')}`);
   if (afterMove[0].sectionKey !== sec2.sectionKey) {
     throw new Error(`Move UP failed! Expected first section to be ${sec2.sectionKey}`);
@@ -98,8 +105,8 @@ async function verifyAll() {
 
   // Revert back
   console.log(`   - Reverting '${sec2.sectionKey}' back DOWN...`);
-  await courseLandingService.moveSection(courseId, sec2.id, 'down');
-  const restored = await courseLandingService.getOrderedSections(courseId);
+  await courseLandingService.moveCourseSection(courseId, sec2.sectionKey, 'down');
+  const restored = await courseLandingService.ensureCourseLandingSections(courseId);
   console.log(`   - Restored order: ${restored.map(s => s.sectionKey).join(' -> ')}`);
   if (restored[0].sectionKey !== initialSections[0].sectionKey) {
     throw new Error('Revert move failed!');
@@ -108,7 +115,7 @@ async function verifyAll() {
 
   // 4. Access Plan CRUD Verification
   console.log('\n4. Verifying Access Plan CRUD:');
-  const plan = await courseLandingService.createAccessPlan(courseId, {
+  const plan = await courseLandingService.addAccessPlan(courseId, {
     label: 'Test 365 Days Access',
     durationDays: 365,
     price: 4999,
@@ -122,37 +129,47 @@ async function verifyAll() {
     price: 3999,
   });
   await courseLandingService.deleteAccessPlan(courseId, plan.id);
-  const remainingPlans = await courseLandingService.getCourseAccessPlans(courseId);
+  const remainingPlans = await prisma.courseAccessPlan.findMany({ where: { courseId, isPublished: true } });
   console.log(`   - Cleaned up test plan. Current published plans for FMR: ${remainingPlans.length}`);
   console.log('   ✔ Access Plan CRUD verified.');
 
   // 5. Comparison Section CRUD Verification
   console.log('\n5. Verifying Comparison Matrix CRUD:');
-  const col = await courseLandingService.createComparisonColumn(courseId, {
+  const col = await courseLandingService.addComparisonColumn(courseId, {
     title: 'Masterclass Edition',
     subtitle: 'Comprehensive Access',
     badgeText: 'Recommended',
     isRecommended: true,
   });
-  const colItem = await courseLandingService.createComparisonItem(col.id, {
+  const colItem = await courseLandingService.addComparisonItem(courseId, col.id, {
     text: 'Full Access to 15 Clinical Modules',
   });
   await courseLandingService.deleteComparisonColumn(courseId, col.id);
-  const remainingCols = await courseLandingService.getComparisonColumns(courseId);
+  const remainingCols = await prisma.courseComparisonColumn.findMany({ where: { courseId } });
   console.log(`   - Cleaned up test comparison. Current columns for FMR: ${remainingCols.length}`);
   console.log('   ✔ Comparison matrix CRUD verified.');
 
   // 6. Access Steps CRUD Verification
   console.log('\n6. Verifying How You Get Access Steps CRUD:');
-  const step = await courseLandingService.createAccessStep(courseId, {
+  const step = await courseLandingService.addAccessStep(courseId, {
     title: 'Instant Enrollment Step',
     description: 'Verify instant access upon registration',
     icon: 'bi-box-arrow-in-right',
   });
   await courseLandingService.deleteAccessStep(courseId, step.id);
-  const remainingSteps = await courseLandingService.getAccessSteps(courseId);
+  const remainingSteps = await prisma.courseAccessStep.findMany({ where: { courseId } });
   console.log(`   - Cleaned up test step. Current steps for FMR: ${remainingSteps.length}`);
   console.log('   ✔ Access steps CRUD verified.');
+
+  // 7. Public Landing Data Aggregation Verification
+  console.log('\n7. Verifying Public Landing Data Aggregation:');
+  const publicData = await courseLandingService.getPublicLandingData(courseId, context);
+  console.log(`   - Enabled ordered sections: ${publicData.landingSections.length}`);
+  console.log(`   - Questions count: ${publicData.questions.length}`);
+  console.log(`   - FAQs count: ${publicData.faqs.length}`);
+  console.log(`   - Why Register items (Want: ${publicData.whyRegisterWant.length}, Get: ${publicData.whyRegisterGet.length})`);
+  console.log(`   - Highlights count: ${publicData.highlights.length}`);
+  console.log('   ✔ Public landing data aggregation verified.');
 
   console.log('\n=== ALL VERIFICATIONS PASSED SUCCESSFULLY ===');
 }
