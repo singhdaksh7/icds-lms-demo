@@ -8,7 +8,7 @@ async function getHomePage(req, res, next) {
   try {
     const isAdmin = Boolean(res.locals.currentUser && res.locals.currentUser.role === 'ADMIN');
     // Demo reviews are shown (badged) only to an admin explicitly previewing.
-    const includeDemo = isAdmin && req.query.previewDemo === '1';
+    const includeDemo = (isAdmin && req.query.previewDemo === '1') || (await homeReviewsService.isDemoShowcaseEnabled());
     const [categories, featuredCourses, instructors, reviews, stats, faqs, mentorInstructor, banners, homeReviewSettings, homeReviews] = await Promise.all([
       homeService.getActiveCategories(),
       homeService.getFeaturedCourses(),

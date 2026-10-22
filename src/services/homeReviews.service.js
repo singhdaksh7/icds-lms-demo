@@ -37,6 +37,18 @@ function normalizeSettings(raw = {}) {
   };
 }
 
+// Owner-controlled client-demo switch (SiteSetting demo.showReviewsPublicly = "true").
+// When on, demo testimonials are shown publicly WITH their DEMO REVIEW badge; they
+// are still excluded from counts, averages and JSON-LD. Off by default.
+async function isDemoShowcaseEnabled() {
+  try {
+    const row = await prisma.siteSetting.findUnique({ where: { key: 'demo.showReviewsPublicly' } });
+    return Boolean(row && String(row.value).trim().toLowerCase() === 'true');
+  } catch (_err) {
+    return false;
+  }
+}
+
 async function getHomeReviewSettings() {
   let rows = [];
   try {
@@ -144,6 +156,7 @@ async function getHomeReviews({ includeDemo = false, settings = null } = {}) {
 }
 
 module.exports = {
+  isDemoShowcaseEnabled,
   getHomeReviewSettings,
   saveHomeReviewSettings,
   validateHomeReviewSettings,

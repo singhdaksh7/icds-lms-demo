@@ -6,7 +6,7 @@
 
 /* ---------- Banner carousel ---------- */
 .home-banner-section { padding: 18px 0 0; background: #fff; }
-.home-banner-wrap { max-width: 1240px; margin: 0 auto; padding: 0 16px; }
+.home-banner-wrap { /* width/padding come from Bootstrap .container so edges align with the hero below */ }
 .home-banner {
   position: relative; overflow: hidden; border-radius: 22px;
   background: var(--secondary-color, #15162b);

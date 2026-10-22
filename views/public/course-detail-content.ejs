@@ -597,8 +597,9 @@ const effectiveAccessSubtitle = defaultAccessPlan ? defaultAccessPlan.label : (l
                 <section class="highlights-section" id="highlights">
                     <div class="wrap">
                         <div class="section-head">
-                            <span class="eyebrow"><%= lc.highlightsEyebrow || 'Highlights' %></span>
-                            <h2><%= lc.highlightsHeading || 'Course Highlights' %></h2>
+                            <% const hlHeading = lc.highlightsHeading || 'Course Highlights'; const hlEyebrow = lc.highlightsEyebrow || ''; %>
+                            <% if (hlEyebrow && hlEyebrow.trim().toLowerCase() !== hlHeading.trim().toLowerCase()) { %><span class="eyebrow"><%= hlEyebrow %></span><% } %>
+                            <h2><%= hlHeading %></h2>
                             <% if (lc.highlightsDescription) { %>
                                 <p><%= lc.highlightsDescription %></p>
                             <% } %>

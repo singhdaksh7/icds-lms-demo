@@ -11,17 +11,28 @@ async function getActiveCategories() {
 }
 
 async function getFeaturedCourses(limit = 6) {
-  return prisma.course.findMany({
+  const include = {
+    category: true,
+    instructor: true,
+    _count: { select: { lessons: { where: { status: 'PUBLISHED' } } } },
+    reviews: { where: { status: 'APPROVED' }, select: { rating: true } },
+  };
+  // Featured courses first; top up with the latest published ones so the
+  // homepage never shows an empty Courses section while courses are live.
+  const featured = await prisma.course.findMany({
     where: { status: 'PUBLISHED', featured: true },
-    include: {
-      category: true,
-      instructor: true,
-      _count: { select: { lessons: { where: { status: 'PUBLISHED' } } } },
-      reviews: { where: { status: 'APPROVED' }, select: { rating: true } },
-    },
+    include,
     orderBy: { publishedAt: 'desc' },
     take: limit,
   });
+  if (featured.length >= limit) return featured;
+  const others = await prisma.course.findMany({
+    where: { status: 'PUBLISHED', id: { notIn: featured.map((c) => c.id) } },
+    include,
+    orderBy: { publishedAt: 'desc' },
+    take: limit - featured.length,
+  });
+  return featured.concat(others);
 }
 
 async function getActiveInstructors() {

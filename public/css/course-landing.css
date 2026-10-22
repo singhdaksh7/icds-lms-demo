@@ -161,6 +161,7 @@
   padding: 18px 0 0;
   position: relative;
   z-index: 2;
+  text-align: center;
 }
 
 .course-landing-page .breadcrumb ol {
@@ -169,6 +170,7 @@
   margin: 0;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
   flex-wrap: wrap;
   font-size: 13px;
@@ -300,7 +302,9 @@
    01. HERO SECTION (Centered Dark Experience)
    ========================================================================== */
 .course-landing-page .hero {
-  background: radial-gradient(circle at 50% 20%, rgba(14, 165, 233, 0.16) 0%, transparent 60%),
+  /* top layer fades into the breadcrumb colour so there is no visible seam between them */
+  background: linear-gradient(180deg, var(--mik-navy-bg) 0, rgba(11, 19, 32, 0) 120px),
+              radial-gradient(circle at 50% 20%, rgba(14, 165, 233, 0.16) 0%, transparent 60%),
               radial-gradient(circle at 80% 40%, rgba(14, 165, 233, 0.08) 0%, transparent 50%),
               linear-gradient(180deg, var(--mik-navy-bg) 0%, var(--mik-navy-hero) 100%);
   padding: 60px 0 80px;

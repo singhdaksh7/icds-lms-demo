@@ -114,7 +114,7 @@ async function getCourseDetail(req, res, next) {
       curriculumService.getPublicCourseStats(course.id),
       curriculumService.listResourcesForCourse(course.id, { publishedOnly: true }),
       prisma.faq.findMany({ where: { isActive: true }, orderBy: { sortOrder: 'asc' }, take: 6 }),
-      courseLandingService.getPublicLandingData(course.id),
+      courseLandingService.getPublicLandingData(course.id, { includeDemo: await require('../services/homeReviews.service').isDemoShowcaseEnabled() }),
     ]);
 
     const jsonLd = {
