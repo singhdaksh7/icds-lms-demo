@@ -41,6 +41,7 @@ async function sitemapXml(req, res, next) {
     const staticEntries = [
       { path: '/', changefreq: 'weekly', priority: '1.0' },
       { path: '/courses', changefreq: 'daily', priority: '0.9' },
+      { path: '/founder', changefreq: 'monthly', priority: '0.6' },
       { path: '/contact', changefreq: 'monthly', priority: '0.5' },
       { path: '/privacy', changefreq: 'yearly', priority: '0.2' },
       { path: '/terms', changefreq: 'yearly', priority: '0.2' },

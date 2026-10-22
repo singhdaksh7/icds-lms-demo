@@ -1,0 +1,16 @@
+<% fields.forEach(function (f) {
+    var v = item && item[f.key] != null ? item[f.key] : '';
+    var id = idp + '-' + f.key; %>
+    <div class="mb-2">
+        <label class="form-label small mb-1" for="<%= id %>"><%= f.label %></label>
+        <% if (f.type === 'textarea') { %>
+            <textarea class="form-control form-control-sm" id="<%= id %>" name="<%= f.key %>" rows="3" maxlength="<%= f.max || 5000 %>"><%= v %></textarea>
+        <% } else if (f.type === 'select') { %>
+            <select class="form-select form-select-sm" id="<%= id %>" name="<%= f.key %>">
+                <% f.options.forEach(function (o) { %><option value="<%= o %>" <%= v === o ? 'selected' : '' %>><%= o.replace(/_/g, ' ') %></option><% }); %>
+            </select>
+        <% } else { %>
+            <input class="form-control form-control-sm" id="<%= id %>" name="<%= f.key %>" maxlength="<%= f.max || 300 %>" value="<%= v %>">
+        <% } %>
+    </div>
+<% }); %>

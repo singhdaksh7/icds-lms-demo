@@ -115,7 +115,39 @@ async function getMentorInstructor(instructorId = null) {
   return instructor;
 }
 
+// Safe CTA URL: only site-relative paths or http(s) URLs. Anything else
+// (javascript:, data:, protocol-relative //host) is dropped.
+function safeCtaUrl(url) {
+  const v = typeof url === 'string' ? url.trim() : '';
+  if (!v) return '';
+  if (/^\/(?![/\\])/.test(v)) return v;
+  if (/^https?:\/\/[^\s]+$/i.test(v)) return v;
+  return '';
+}
+
+// Active banners for the homepage carousel (Agent 5's service owns the query).
+// Defensive: a missing service or DB error just hides the carousel.
+async function getHomeBanners(now = new Date()) {
+  let rows = [];
+  try {
+    // eslint-disable-next-line global-require
+    const { getActiveBanners } = require('./homeBanner.service');
+    rows = await getActiveBanners(now);
+  } catch (_err) {
+    return [];
+  }
+  return (Array.isArray(rows) ? rows : [])
+    .filter((b) => b && b.imageUrl)
+    .map((b) => ({
+      ...b,
+      ctaUrl: safeCtaUrl(b.ctaUrl),
+      secondaryCtaUrl: safeCtaUrl(b.secondaryCtaUrl),
+    }));
+}
+
 module.exports = {
+  safeCtaUrl,
+  getHomeBanners,
   getActiveCategories,
   getFeaturedCourses,
   getActiveInstructors,

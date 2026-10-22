@@ -1,0 +1,71 @@
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 style="font-size:24px;" class="mb-0">Homepage Banners</h1>
+    <a href="/admin/homepage/banners/new" class="btn btn-sm" style="background:var(--primary-color); color:#fff;">
+        <i class="bi bi-plus-lg"></i> Add Banner
+    </a>
+</div>
+
+<div class="admin-card">
+    <div class="table-responsive">
+        <table class="table admin-table align-middle">
+            <thead>
+                <tr>
+                    <th style="width:180px;">Preview</th>
+                    <th>Banner</th>
+                    <th>Status</th>
+                    <th>Schedule</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% if (banners.length === 0) { %>
+                    <tr><td colspan="5" class="text-center text-muted py-4">No banners yet. The homepage falls back to its default hero.</td></tr>
+                <% } %>
+                <% banners.forEach(function (b, i) {
+                    var scheduled = b.startAt && new Date(b.startAt) > now;
+                    var expired = b.endAt && new Date(b.endAt) <= now;
+                %>
+                    <tr>
+                        <td><%- include('./banner-preview', { b: b, previewWidth: '170px' }) %></td>
+                        <td>
+                            <strong><%= b.title || '(no title)' %></strong>
+                            <div class="small text-muted">Order <%= i + 1 %><% if (b.ctaUrl) { %> &middot; <%= b.ctaUrl %><% } %></div>
+                        </td>
+                        <td>
+                            <% if (!b.isActive) { %><span class="badge bg-secondary">Inactive</span>
+                            <% } else if (scheduled) { %><span class="badge bg-info text-dark">Scheduled</span>
+                            <% } else if (expired) { %><span class="badge bg-warning text-dark">Expired</span>
+                            <% } else { %><span class="badge bg-success">Live</span><% } %>
+                        </td>
+                        <td class="small">
+                            <%= b.startAt ? new Date(b.startAt).toLocaleString('en-IN') : 'Immediately' %><br>
+                            to <%= b.endAt ? new Date(b.endAt).toLocaleString('en-IN') : 'No end' %>
+                        </td>
+                        <td class="text-end">
+                            <div class="d-flex justify-content-end gap-1 flex-wrap">
+                                <% ['up', 'down'].forEach(function (dir) { %>
+                                    <form method="POST" action="/admin/homepage/banners/<%= b.id %>/move" class="m-0">
+                                        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                        <input type="hidden" name="direction" value="<%= dir %>">
+                                        <button type="submit" class="btn btn-sm btn-outline-secondary" title="Move <%= dir %>" <%= (dir === 'up' && i === 0) || (dir === 'down' && i === banners.length - 1) ? 'disabled' : '' %>>
+                                            <i class="bi bi-arrow-<%= dir %>"></i>
+                                        </button>
+                                    </form>
+                                <% }); %>
+                                <form method="POST" action="/admin/homepage/banners/<%= b.id %>/toggle" class="m-0">
+                                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                    <button type="submit" class="btn btn-sm btn-outline-secondary"><%= b.isActive ? 'Deactivate' : 'Activate' %></button>
+                                </form>
+                                <a href="/admin/homepage/banners/<%= b.id %>/edit" class="btn btn-sm btn-outline-secondary">Edit</a>
+                                <form method="POST" action="/admin/homepage/banners/<%= b.id %>/delete" class="m-0" data-confirm="Delete this banner permanently?">
+                                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                <% }); %>
+            </tbody>
+        </table>
+    </div>
+</div>

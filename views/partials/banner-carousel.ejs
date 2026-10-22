@@ -1,0 +1,59 @@
+<%# Compact dynamic banner carousel. Data: banners[] (HomeBanner rows). Zero banners => nothing rendered. #%>
+<% const bnr = (typeof banners !== 'undefined' && Array.isArray(banners)) ? banners : []; %>
+<% const safeUrl = function (u) { return (typeof u === 'string' && (/^\/(?![/\\])/.test(u) || /^https?:\/\/\S+$/i.test(u))) ? u : ''; }; %>
+<% if (bnr.length > 0) { %>
+<!-- HOME BANNERS -->
+<section class="home-banner-section" aria-label="Featured announcements">
+    <div class="home-banner-wrap">
+        <div class="home-banner"
+             data-banner-carousel
+             data-autoplay="<%= bnr.length > 1 ? '5000' : '0' %>"
+             role="region"
+             aria-roledescription="carousel"
+             aria-label="Featured announcements">
+            <div class="home-banner-track" data-banner-track aria-live="off">
+                <% bnr.forEach(function (b, i) {
+                    const cta1 = safeUrl(b.ctaUrl), cta2 = safeUrl(b.secondaryCtaUrl);
+                    const hasText = b.title || b.subtitle || b.description || (cta1 && b.ctaLabel) || (cta2 && b.secondaryCtaLabel);
+                %>
+                <article class="home-banner-slide<%= i === 0 ? ' is-active' : '' %>"
+                         data-banner-slide
+                         role="group"
+                         aria-roledescription="slide"
+                         aria-label="<%= (i + 1) %> of <%= bnr.length %>"
+                         <%- i === 0 ? '' : 'aria-hidden="true"' %>>
+                    <picture>
+                        <% if (b.mobileImageUrl) { %><source media="(max-width: 575.98px)" srcset="<%= b.mobileImageUrl %>"><% } %>
+                        <img src="<%= b.imageUrl %>" alt="<%= b.title ? '' : 'Banner ' + (i + 1) %>" class="home-banner-img"
+                             <%- i === 0 ? 'fetchpriority="high"' : 'loading="lazy"' %> decoding="async">
+                    </picture>
+                    <% if (hasText) { %>
+                    <% if (b.overlayEnabled) { %><div class="home-banner-overlay" aria-hidden="true"></div><% } %>
+                    <div class="home-banner-copy<%= b.overlayEnabled ? '' : ' no-overlay' %>">
+                        <% if (b.subtitle) { %><p class="home-banner-subtitle"><%= b.subtitle %></p><% } %>
+                        <% if (b.title) { %><h2 class="home-banner-title"><%= b.title %></h2><% } %>
+                        <% if (b.description) { %><p class="home-banner-desc"><%= b.description %></p><% } %>
+                        <% if ((cta1 && b.ctaLabel) || (cta2 && b.secondaryCtaLabel)) { %>
+                        <div class="home-banner-actions">
+                            <% if (cta1 && b.ctaLabel) { %><a class="home-banner-btn is-primary" href="<%= cta1 %>"<% if (/^https?:/i.test(cta1)) { %> rel="noopener"<% } %> <%- i === 0 ? '' : 'tabindex="-1"' %>><%= b.ctaLabel %></a><% } %>
+                            <% if (cta2 && b.secondaryCtaLabel) { %><a class="home-banner-btn is-secondary" href="<%= cta2 %>"<% if (/^https?:/i.test(cta2)) { %> rel="noopener"<% } %> <%- i === 0 ? '' : 'tabindex="-1"' %>><%= b.secondaryCtaLabel %></a><% } %>
+                        </div>
+                        <% } %>
+                    </div>
+                    <% } %>
+                </article>
+                <% }); %>
+            </div>
+            <% if (bnr.length > 1) { %>
+            <button type="button" class="home-banner-arrow is-prev" data-banner-prev aria-label="Previous banner"><i class="bi bi-chevron-left" aria-hidden="true"></i></button>
+            <button type="button" class="home-banner-arrow is-next" data-banner-next aria-label="Next banner"><i class="bi bi-chevron-right" aria-hidden="true"></i></button>
+            <div class="home-banner-dots" data-banner-dots>
+                <% bnr.forEach(function (b, i) { %>
+                <button type="button" class="home-banner-dot<%= i === 0 ? ' is-active' : '' %>" data-banner-dot="<%= i %>" aria-label="Go to banner <%= i + 1 %>"<%- i === 0 ? ' aria-current="true"' : '' %>></button>
+                <% }); %>
+            </div>
+            <% } %>
+        </div>
+    </div>
+</section>
+<% } %>

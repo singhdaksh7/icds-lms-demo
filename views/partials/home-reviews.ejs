@@ -1,0 +1,42 @@
+<%# Homepage reviews from CourseTestimonial. Data: homeReviews[] (shaped by homeReviews.service), homeReviewSettings. Hidden when disabled/empty. #%>
+<% const hrList = (typeof homeReviews !== 'undefined' && Array.isArray(homeReviews)) ? homeReviews : []; %>
+<% const hrCfg = (typeof homeReviewSettings !== 'undefined' && homeReviewSettings) ? homeReviewSettings : { enabled: true, heading: 'What our learners say', subheading: '' }; %>
+<% if (hrCfg.enabled && hrList.length > 0) { %>
+<!-- HOME REVIEWS -->
+<section class="section-space home-reviews-section" id="reviews">
+    <div class="container">
+        <div class="section-heading reveal-element">
+            <div class="section-tag">Learner stories</div>
+            <h2 class="section-title"><%= hrCfg.heading %></h2>
+            <% if (hrCfg.subheading) { %><p class="section-description"><%= hrCfg.subheading %></p><% } %>
+        </div>
+
+        <div class="home-reviews-grid" role="list">
+            <% hrList.forEach(function (r) { %>
+            <figure class="home-review-card" role="listitem">
+                <% if (r.isDemo) { %><span class="home-review-demo">DEMO REVIEW</span><% } %>
+                <% if (r.rating > 0) { %>
+                <div class="home-review-stars" role="img" aria-label="Rated <%= r.rating %> out of 5">
+                    <% for (let s = 1; s <= 5; s++) { %><i class="bi <%= s <= r.rating ? 'bi-star-fill' : 'bi-star' %>" aria-hidden="true"></i><% } %>
+                </div>
+                <% } %>
+                <blockquote class="home-review-quote">&ldquo;<%= r.quote %>&rdquo;</blockquote>
+                <figcaption class="home-review-person">
+                    <% if (r.avatarUrl) { %>
+                        <img class="home-review-avatar" src="<%= r.avatarUrl %>" alt="" loading="lazy" width="48" height="48">
+                    <% } else { %>
+                        <span class="home-review-avatar is-initials" aria-hidden="true"><%= r.initials %></span>
+                    <% } %>
+                    <span class="home-review-meta">
+                        <strong><%= r.reviewerName %></strong>
+                        <% if (r.reviewerDesignation) { %><span><%= r.reviewerDesignation %></span><% } %>
+                        <% if (r.reviewerLocation) { %><span><i class="bi bi-geo-alt" aria-hidden="true"></i> <%= r.reviewerLocation %></span><% } %>
+                        <% if (r.courseTitle && r.courseSlug) { %><a href="/courses/<%= encodeURIComponent(r.courseSlug) %>" class="home-review-course"><%= r.courseTitle %></a><% } %>
+                    </span>
+                </figcaption>
+            </figure>
+            <% }); %>
+        </div>
+    </div>
+</section>
+<% } %>

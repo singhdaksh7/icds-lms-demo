@@ -154,6 +154,10 @@
 /* Navigation / Breadcrumb */
 .course-landing-page .breadcrumb {
   background: var(--mik-navy-bg);
+  /* Reset Bootstrap .breadcrumb (margin-bottom:1rem, flex, radius) which leaked a white strip above the hero */
+  display: block;
+  margin: 0;
+  border-radius: 0;
   padding: 18px 0 0;
   position: relative;
   z-index: 2;
@@ -859,7 +863,7 @@
 
 .course-landing-page .reviews-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 24px;
 }
 
@@ -1518,6 +1522,9 @@
    RESPONSIVE QA (1440, 1366, 1024, 768, 430, 390, 360)
    ========================================================================== */
 @media (max-width: 1024px) {
+  .course-landing-page .reviews-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
   .course-landing-page .quick-stats-grid {
     grid-template-columns: repeat(3, 1fr);
   }

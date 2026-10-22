@@ -1,0 +1,71 @@
+<%
+    var founder = data.founder;
+    var canAdd = Boolean(founder);
+    var sectionLabels = { HERO: 'Hero', BIOGRAPHY: 'Biography', QUALIFICATIONS: 'Qualifications', TIMELINE: 'Timeline', INITIATIVES: 'Initiatives', RESEARCH: 'Research & Teaching', IMPACT: 'Impact stats', FAQ: 'FAQ', CTA: 'Call to action' };
+    var defs = [
+        { name: 'qualifications', title: 'Qualifications', summaryKey: 'title', fields: [
+            { key: 'title', label: 'Title', max: 300 }, { key: 'subtitle', label: 'Subtitle', max: 500 } ] },
+        { name: 'timeline', title: 'Career timeline', summaryKey: 'title', fields: [
+            { key: 'yearLabel', label: 'Year / period', max: 100 }, { key: 'title', label: 'Title', max: 300 }, { key: 'description', label: 'Description', type: 'textarea' } ] },
+        { name: 'initiatives', title: 'Initiatives', summaryKey: 'title', fields: [
+            { key: 'title', label: 'Title', max: 300 }, { key: 'description', label: 'Description', type: 'textarea' },
+            { key: 'imageUrl', label: 'Image URL (relative or https)', max: 500 }, { key: 'iconKey', label: 'Icon key (e.g. book-half)', max: 50 },
+            { key: 'ctaLabel', label: 'Button label', max: 100 }, { key: 'ctaUrl', label: 'Button link', max: 500 } ] },
+        { name: 'research', title: 'Research, teaching & training', summaryKey: 'title', fields: [
+            { key: 'kind', label: 'Type', type: 'select', options: researchKinds }, { key: 'title', label: 'Title', max: 500 }, { key: 'description', label: 'Description', type: 'textarea' } ] },
+        { name: 'stats', title: 'Impact stats', summaryKey: 'label', fields: [
+            { key: 'valueText', label: 'Value (e.g. 500+)', max: 50 }, { key: 'label', label: 'Label', max: 200 } ] },
+        { name: 'faqs', title: 'Founder FAQs', summaryKey: 'question', fields: [
+            { key: 'question', label: 'Question', max: 500 }, { key: 'answer', label: 'Answer', type: 'textarea' } ] },
+    ];
+%>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 style="font-size:24px;" class="mb-0">Founder Page</h1>
+    <a href="/founder" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-secondary">View page <i class="bi bi-box-arrow-up-right"></i></a>
+</div>
+
+<div class="admin-card mb-4" id="profile">
+    <h2 style="font-size:18px;">Founder profile</h2>
+    <p class="small text-muted">Name, title, bio and photo are edited on the instructor record.
+        <% if (founder) { %><a href="/admin/instructors/<%= founder.id %>/edit">Edit <%= founder.name %> (bio, photo)</a><% } else { %><a href="/admin/instructors">Open instructors</a><% } %></p>
+    <form method="POST" action="/admin/founder/profile">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <div class="mb-3">
+            <label class="form-label" for="instructorId">Instructor</label>
+            <select class="form-select" id="instructorId" name="instructorId" style="max-width:360px;">
+                <% instructors.forEach(function (ins) { %>
+                    <option value="<%= ins.id %>" <%= (founder ? founder.id === ins.id : false) ? 'selected' : '' %>><%= ins.name %><%= ins.isFounder ? ' (current founder)' : '' %></option>
+                <% }); %>
+            </select>
+        </div>
+        <div class="form-check mb-3"><input class="form-check-input" type="checkbox" id="isFounder" name="isFounder" value="true" <%= founder ? 'checked' : '' %>><label class="form-check-label" for="isFounder">This instructor is the founder (only one at a time)</label></div>
+        <div class="mb-3"><label class="form-label">Qualifications line</label><input class="form-control" name="qualificationsLine" maxlength="500" value="<%= founder && founder.qualificationsLine ? founder.qualificationsLine : '' %>"></div>
+        <div class="mb-3"><label class="form-label">Founder intro</label><textarea class="form-control" name="founderIntro" rows="4" maxlength="5000"><%= founder && founder.founderIntro ? founder.founderIntro : '' %></textarea></div>
+        <button class="btn btn-primary">Save profile</button>
+    </form>
+</div>
+
+<div class="admin-card mb-4" id="sections">
+    <h2 style="font-size:18px;">Section order &amp; visibility</h2>
+    <% sections.order.forEach(function (key, i) { var hid = sections.hidden.indexOf(key) !== -1; %>
+        <div class="d-flex justify-content-between align-items-center border-bottom py-2">
+            <span><%= i + 1 %>. <strong><%= sectionLabels[key] || key %></strong> <% if (hid) { %><span class="badge bg-secondary">Hidden</span><% } %></span>
+            <div class="d-flex gap-1">
+                <% ['up', 'down'].forEach(function (dir) { %>
+                    <form method="POST" action="/admin/founder/sections/<%= key %>/move" class="m-0">
+                        <input type="hidden" name="_csrf" value="<%= csrfToken %>"><input type="hidden" name="direction" value="<%= dir %>">
+                        <button class="btn btn-sm btn-outline-secondary" <%= (dir === 'up' && i === 0) || (dir === 'down' && i === sections.order.length - 1) ? 'disabled' : '' %>><i class="bi bi-arrow-<%= dir %>"></i></button>
+                    </form>
+                <% }); %>
+                <form method="POST" action="/admin/founder/sections/<%= key %>/toggle" class="m-0">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                    <button class="btn btn-sm btn-outline-secondary"><%= hid ? 'Show' : 'Hide' %></button>
+                </form>
+            </div>
+        </div>
+    <% }); %>
+</div>
+
+<% defs.forEach(function (d) { %>
+    <%- include('./entity-section', { name: d.name, title: d.title, items: data[d.name], fields: d.fields, summaryKey: d.summaryKey, canAdd: (d.name === 'timeline' || d.name === 'research') ? canAdd : true }) %>
+<% }); %>

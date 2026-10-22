@@ -50,16 +50,28 @@ const orderedSectionKeys = (typeof landing !== 'undefined' && landing && Array.i
         'CURRICULUM',
         'HIGHLIGHTS',
         'PURCHASE',
-        'REVIEWS',
         'COMPARISON',
         'AUDIENCE',
         'ACCESS',
         'RESOURCES',
         'MENTOR',
+        'REVIEWS',
         'FAQ',
         'SOCIAL_PROOF',
         'FINAL_CTA',
     ];
+
+// Single render path: dedupe keys; companion blocks (takeaways, certificate) render exactly once.
+const renderList = (typeof landing !== 'undefined' && landing && Array.isArray(landing.renderList) && landing.renderList.length > 0)
+    ? landing.renderList
+    : (function () {
+        const uniq = Array.from(new Set(orderedSectionKeys));
+        [['TAKEAWAYS', ['QUESTIONS', 'WHY_REGISTER']], ['CERTIFICATE', ['RESOURCES', 'CURRICULUM']]].forEach(function (c) {
+            const a = c[1].find(function (k) { return uniq.indexOf(k) !== -1; });
+            if (a) uniq.splice(uniq.indexOf(a) + 1, 0, c[0]);
+        });
+        return uniq;
+    })();
 
 // Default access plan or price subtitle label
 const defaultAccessPlan = accessPlansList.find(p => p.isDefault) || accessPlansList[0];
@@ -111,7 +123,7 @@ const effectiveAccessSubtitle = defaultAccessPlan ? defaultAccessPlan.label : (l
         </nav>
 
         <!-- DYNAMIC SECTIONS LOOP (Strict Order from CMS) -->
-        <% for (const sectionKey of orderedSectionKeys) { %>
+        <% for (const sectionKey of renderList) { %>
 
             <!-- ======================================================== -->
             <!-- 01. HERO SECTION (Centered Reference Composition)        -->
@@ -326,7 +338,7 @@ const effectiveAccessSubtitle = defaultAccessPlan ? defaultAccessPlan.label : (l
             <% } %>
 
             <!-- Learning Outcomes / Takeaways (When Present in CMS) -->
-            <% if (lc.takeawaysEnabled !== false && takeawaysList.length > 0 && (sectionKey === 'QUESTIONS' || sectionKey === 'WHY_REGISTER')) { %>
+            <% if (lc.takeawaysEnabled !== false && takeawaysList.length > 0 && sectionKey === 'TAKEAWAYS') { %>
                 <section class="takeaways-section" id="takeaways" style="background:#ffffff; border-top:1px solid #e2e8f0;">
                     <div class="wrap">
                         <div class="section-head">
@@ -891,7 +903,7 @@ const effectiveAccessSubtitle = defaultAccessPlan ? defaultAccessPlan.label : (l
             <% } %>
 
             <!-- Certificate Section (Critical: OFF by default, rendered ONLY if certificateSectionEnabled === true) -->
-            <% if (lc.certificateSectionEnabled === true && (sectionKey === 'RESOURCES' || sectionKey === 'CURRICULUM')) { %>
+            <% if (lc.certificateSectionEnabled === true && sectionKey === 'CERTIFICATE') { %>
                 <section class="certificate-section" id="certificate" style="background:#f8fafc; border-top:1px solid #e2e8f0;">
                     <div class="wrap" style="display:grid; grid-template-columns:1fr 1fr; gap:40px; align-items:center;">
                         <div class="certificate-mockup" style="background:linear-gradient(135deg, #0b1320, #1e293b); border:3px solid #d4af37; border-radius:16px; padding:32px; color:#ffffff; text-align:center;">

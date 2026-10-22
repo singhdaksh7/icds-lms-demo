@@ -1,0 +1,79 @@
+<h1 style="font-size:24px;" class="mb-4">Homepage Reviews</h1>
+
+<div class="admin-card mb-4">
+    <h2 style="font-size:18px;">Section settings</h2>
+    <form method="POST" action="/admin/homepage/reviews/settings">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <input type="hidden" name="enabled" value="false">
+        <div class="form-check mb-3">
+            <input class="form-check-input" type="checkbox" id="enabled" name="enabled" value="true" <%= settings && settings.enabled ? 'checked' : '' %>>
+            <label class="form-check-label" for="enabled">Show reviews section on the homepage</label>
+        </div>
+        <div class="row g-3 mb-3">
+            <div class="col-md-6"><label class="form-label">Heading</label><input class="form-control" name="heading" maxlength="120" value="<%= settings ? settings.heading : '' %>"></div>
+            <div class="col-md-6"><label class="form-label">Subheading</label><input class="form-control" name="subheading" maxlength="300" value="<%= settings ? settings.subheading : '' %>"></div>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Which reviews to show</label>
+            <select class="form-select" name="sourceMode" style="max-width:360px;">
+                <option value="ALL_APPROVED" <%= settings && settings.sourceMode === 'ALL_APPROVED' ? 'selected' : '' %>>All approved genuine reviews</option>
+                <option value="FEATURED" <%= settings && settings.sourceMode === 'FEATURED' ? 'selected' : '' %>>Only reviews I feature below</option>
+            </select>
+            <div class="form-text">Only published, non-demo reviews are ever shown. Publishing a review in a course's Landing Page editor makes it eligible automatically.</div>
+        </div>
+        <button type="submit" class="btn" style="background:var(--primary-color); color:#fff;">Save settings</button>
+    </form>
+</div>
+
+<div class="admin-card mb-4">
+    <h2 style="font-size:18px;">Approved reviews</h2>
+    <div class="table-responsive">
+        <table class="table admin-table align-middle">
+            <thead><tr><th>Reviewer</th><th>Course</th><th>Review</th><th>Featured</th><th class="text-end">Actions</th></tr></thead>
+            <tbody>
+                <% if (genuine.length === 0) { %><tr><td colspan="5" class="text-center text-muted py-4">No approved genuine reviews yet.</td></tr><% } %>
+                <% var featuredList = genuine.filter(function (r) { return r.featuredOnHome; }); %>
+                <% genuine.forEach(function (r) {
+                    var fi = featuredList.indexOf(r);
+                %>
+                    <tr>
+                        <td><strong><%= r.reviewerName %></strong><div class="small text-muted"><%= r.rating %>/5</div></td>
+                        <td class="small"><%= r.course ? r.course.title : '' %></td>
+                        <td class="small" style="max-width:360px;"><%= r.quote.length > 160 ? r.quote.slice(0, 160) + '...' : r.quote %></td>
+                        <td><% if (r.featuredOnHome) { %><span class="badge bg-success">Featured #<%= fi + 1 %></span><% } else { %><span class="badge bg-secondary">No</span><% } %></td>
+                        <td class="text-end">
+                            <div class="d-flex justify-content-end gap-1">
+                                <% if (r.featuredOnHome) { %>
+                                    <% ['up', 'down'].forEach(function (dir) { %>
+                                        <form method="POST" action="/admin/homepage/reviews/<%= r.id %>/move" class="m-0">
+                                            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                            <input type="hidden" name="direction" value="<%= dir %>">
+                                            <button class="btn btn-sm btn-outline-secondary" title="Move <%= dir %>" <%= (dir === 'up' && fi === 0) || (dir === 'down' && fi === featuredList.length - 1) ? 'disabled' : '' %>><i class="bi bi-arrow-<%= dir %>"></i></button>
+                                        </form>
+                                    <% }); %>
+                                <% } %>
+                                <form method="POST" action="/admin/homepage/reviews/<%= r.id %>/feature" class="m-0">
+                                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                    <input type="hidden" name="featured" value="<%= r.featuredOnHome ? 'false' : 'true' %>">
+                                    <button class="btn btn-sm btn-outline-secondary"><%= r.featuredOnHome ? 'Unfeature' : 'Feature' %></button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                <% }); %>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<% if (demo.length) { %>
+<div class="admin-card">
+    <h2 style="font-size:18px;">Demo reviews <span class="badge bg-warning text-dark">DEMO REVIEW</span></h2>
+    <p class="small text-muted">Demo reviews are placeholders for previews and cannot be featured or shown on the homepage.</p>
+    <ul class="list-unstyled mb-0">
+        <% demo.forEach(function (r) { %>
+            <li class="mb-1"><span class="badge bg-warning text-dark">DEMO REVIEW</span> <strong><%= r.reviewerName %></strong> <span class="small text-muted">&middot; <%= r.course ? r.course.title : '' %></span></li>
+        <% }); %>
+    </ul>
+</div>
+<% } %>

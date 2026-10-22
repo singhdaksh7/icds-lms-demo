@@ -1,11 +1,15 @@
 const homeService = require('../services/home.service');
+const homeReviewsService = require('../services/homeReviews.service');
 const faqService = require('../services/faq.service');
 const site = require('../config/site');
 const { buildSeo, pageSeoText, PUBLIC_ROBOTS } = require('../lib/seo');
 
 async function getHomePage(req, res, next) {
   try {
-    const [categories, featuredCourses, instructors, reviews, stats, faqs, mentorInstructor] = await Promise.all([
+    const isAdmin = Boolean(res.locals.currentUser && res.locals.currentUser.role === 'ADMIN');
+    // Demo reviews are shown (badged) only to an admin explicitly previewing.
+    const includeDemo = isAdmin && req.query.previewDemo === '1';
+    const [categories, featuredCourses, instructors, reviews, stats, faqs, mentorInstructor, banners, homeReviewSettings, homeReviews] = await Promise.all([
       homeService.getActiveCategories(),
       homeService.getFeaturedCourses(),
       homeService.getActiveInstructors(),
@@ -13,6 +17,9 @@ async function getHomePage(req, res, next) {
       homeService.getPlatformStats(),
       faqService.listActiveFaqs(),
       homeService.getMentorInstructor(res.locals.cms?.mentor?.instructorId),
+      homeService.getHomeBanners(),
+      homeReviewsService.getHomeReviewSettings(),
+      homeReviewsService.getHomeReviews({ includeDemo }).catch(() => []),
     ]);
 
     const { title, description } = pageSeoText(res.locals.settings, 'home', {
@@ -42,6 +49,10 @@ async function getHomePage(req, res, next) {
       instructors,
       mentorInstructor,
       reviews,
+      banners,
+      homeReviewSettings,
+      homeReviews: homeReviewSettings.enabled ? homeReviews : [],
+      homeReviewsPreviewDemo: includeDemo,
       stats,
       faqs,
     });

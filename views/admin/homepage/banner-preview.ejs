@@ -1,0 +1,11 @@
+<%# Shared inline preview of a banner card. Expects: b (object with imageUrl, title, subtitle, ctaLabel, secondaryCtaLabel, overlayEnabled). All output escaped. %>
+<div style="position:relative; width:<%= typeof previewWidth !== 'undefined' ? previewWidth : '100%' %>; aspect-ratio:16/6; overflow:hidden; border-radius:8px; background:#1f2a44;">
+    <% if (b.imageUrl) { %><img src="<%= b.imageUrl %>" alt="" style="position:absolute; inset:0; width:100%; height:100%; object-fit:cover;"><% } %>
+    <% if (b.overlayEnabled) { %><div style="position:absolute; inset:0; background:linear-gradient(90deg, rgba(0,0,0,.65), rgba(0,0,0,.1));"></div><% } %>
+    <div style="position:relative; color:#fff; padding:8px 12px; font-size:11px;">
+        <% if (b.title) { %><div style="font-weight:700; font-size:14px;"><%= b.title %></div><% } %>
+        <% if (b.subtitle) { %><div><%= b.subtitle %></div><% } %>
+        <% if (b.ctaLabel) { %><span class="badge bg-light text-dark mt-1"><%= b.ctaLabel %></span><% } %>
+        <% if (b.secondaryCtaLabel) { %><span class="badge border border-light mt-1"><%= b.secondaryCtaLabel %></span><% } %>
+    </div>
+</div>

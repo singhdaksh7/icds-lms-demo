@@ -1,0 +1,190 @@
+<link rel="stylesheet" href="/css/founder.css">
+<% const i = vm.instructor; %>
+<main class="founder-page">
+<% vm.sections.forEach(function (key) { %>
+<% if (key === 'HERO') { %>
+    <section class="fp-hero" aria-labelledby="fp-name">
+        <div class="container">
+            <div class="fp-hero-grid">
+                <div class="fp-portrait-wrap">
+                    <% if (i.photoUrl) { %>
+                        <img class="fp-portrait" src="<%= i.photoUrl %>" alt="<%= i.name %>" width="520" height="640" fetchpriority="high">
+                    <% } else { %>
+                        <div class="fp-portrait fp-portrait-initials" aria-hidden="true"><%= i.name.replace(/^Dr\.?\s*/i, '').split(/\s+/).map(function (w) { return w.charAt(0); }).slice(0, 2).join('').toUpperCase() %></div>
+                    <% } %>
+                </div>
+                <div class="fp-hero-copy">
+                    <p class="fp-eyebrow"><%= i.title || 'Founder' %></p>
+                    <h1 id="fp-name" class="fp-name"><%= i.name %></h1>
+                    <% if (i.qualificationsLine) { %><p class="fp-quals"><%= i.qualificationsLine %></p><% } %>
+                    <% if (i.designation) { %><p class="fp-role"><%= i.designation %></p><% } %>
+                    <% if (i.founderIntro) { %><p class="fp-intro"><%= i.founderIntro %></p><% } %>
+                    <% if (i.linkedinHref || i.instagramHref) { %>
+                        <div class="fp-social">
+                            <% if (i.linkedinHref) { %><a href="<%= i.linkedinHref %>" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn"><i class="bi bi-linkedin"></i></a><% } %>
+                            <% if (i.instagramHref) { %><a href="<%= i.instagramHref %>" target="_blank" rel="noopener noreferrer" aria-label="Instagram"><i class="bi bi-instagram"></i></a><% } %>
+                        </div>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+    </section>
+
+<% } else if (key === 'BIOGRAPHY') { %>
+    <section class="fp-section" aria-labelledby="fp-bio-h">
+        <div class="container fp-narrow">
+            <p class="fp-kicker">Biography</p>
+            <h2 id="fp-bio-h" class="fp-h2">About <%= i.name %></h2>
+            <% i.bioParagraphs.forEach(function (p) { %><p class="fp-prose"><%= p %></p><% }) %>
+        </div>
+    </section>
+
+<% } else if (key === 'QUALIFICATIONS') { %>
+    <section class="fp-section fp-alt" aria-labelledby="fp-qual-h">
+        <div class="container">
+            <p class="fp-kicker">Credentials</p>
+            <h2 id="fp-qual-h" class="fp-h2">Qualifications</h2>
+            <ul class="fp-grid fp-qual-grid">
+                <% vm.qualifications.forEach(function (q) { %>
+                    <li class="fp-card fp-qual">
+                        <i class="bi bi-patch-check" aria-hidden="true"></i>
+                        <h3><%= q.title %></h3>
+                        <% if (q.subtitle) { %><p><%= q.subtitle %></p><% } %>
+                    </li>
+                <% }) %>
+            </ul>
+        </div>
+    </section>
+
+<% } else if (key === 'TIMELINE') { %>
+    <section class="fp-section" aria-labelledby="fp-time-h">
+        <div class="container fp-narrow">
+            <p class="fp-kicker">Journey</p>
+            <h2 id="fp-time-h" class="fp-h2">Career timeline</h2>
+            <ol class="fp-timeline">
+                <% vm.timeline.forEach(function (t) { %>
+                    <li>
+                        <span class="fp-time-label"><%= t.yearLabel %></span>
+                        <div class="fp-time-body">
+                            <h3><%= t.title %></h3>
+                            <% if (t.description) { %><p><%= t.description %></p><% } %>
+                        </div>
+                    </li>
+                <% }) %>
+            </ol>
+        </div>
+    </section>
+
+<% } else if (key === 'INITIATIVES') { %>
+    <section class="fp-section fp-alt" aria-labelledby="fp-init-h">
+        <div class="container">
+            <p class="fp-kicker">Initiatives</p>
+            <h2 id="fp-init-h" class="fp-h2">What she has built</h2>
+            <div class="fp-grid fp-init-grid">
+                <% vm.initiatives.forEach(function (n) { %>
+                    <article class="fp-card fp-init">
+                        <% if (n.imageUrl) { %>
+                            <img src="<%= n.imageUrl %>" alt="" loading="lazy" class="fp-init-img">
+                        <% } else if (n.iconKey && /^[a-z0-9-]+$/.test(n.iconKey)) { %>
+                            <i class="bi bi-<%= n.iconKey %> fp-init-icon" aria-hidden="true"></i>
+                        <% } else { %>
+                            <i class="bi bi-mortarboard fp-init-icon" aria-hidden="true"></i>
+                        <% } %>
+                        <h3><%= n.title %></h3>
+                        <p><%= n.description %></p>
+                        <% if (n.ctaHref) { %><a class="fp-link" href="<%= n.ctaHref %>"><%= n.ctaLabel %> <i class="bi bi-arrow-right" aria-hidden="true"></i></a><% } %>
+                    </article>
+                <% }) %>
+            </div>
+        </div>
+    </section>
+
+<% } else if (key === 'RESEARCH') { %>
+    <section class="fp-section" aria-labelledby="fp-res-h">
+        <div class="container">
+            <p class="fp-kicker">Academics</p>
+            <h2 id="fp-res-h" class="fp-h2">Research &amp; education</h2>
+            <div class="fp-grid fp-res-grid">
+                <% vm.researchGroups.forEach(function (g) { %>
+                    <div class="fp-card fp-res">
+                        <h3><%= g.label %></h3>
+                        <ul>
+                            <% g.items.forEach(function (r) { %>
+                                <li><strong><%= r.title %></strong><% if (r.description) { %><span><%= r.description %></span><% } %></li>
+                            <% }) %>
+                        </ul>
+                    </div>
+                <% }) %>
+            </div>
+        </div>
+    </section>
+
+<% } else if (key === 'IMPACT') { %>
+    <section class="fp-section fp-alt" aria-labelledby="fp-imp-h">
+        <div class="container">
+            <p class="fp-kicker">Impact</p>
+            <h2 id="fp-imp-h" class="fp-h2">Training impact</h2>
+            <ul class="fp-grid fp-stat-grid">
+                <% vm.stats.forEach(function (s) { %>
+                    <li class="fp-card fp-stat">
+                        <span class="fp-stat-value"><%= s.valueText %></span>
+                        <span class="fp-stat-label"><%= s.label %></span>
+                    </li>
+                <% }) %>
+            </ul>
+        </div>
+    </section>
+
+<% } else if (key === 'FAQ') { %>
+    <section class="fp-section" aria-labelledby="fp-faq-h">
+        <div class="container fp-narrow">
+            <p class="fp-kicker">FAQ</p>
+            <h2 id="fp-faq-h" class="fp-h2">Frequently asked questions</h2>
+            <div class="fp-faq">
+                <% vm.faqs.forEach(function (f, idx) { %>
+                    <div class="fp-faq-item">
+                        <h3>
+                            <button type="button" class="fp-faq-q" aria-expanded="false" aria-controls="fp-faq-a-<%= idx %>" id="fp-faq-q-<%= idx %>">
+                                <span><%= f.question %></span>
+                                <i class="bi bi-plus-lg" aria-hidden="true"></i>
+                            </button>
+                        </h3>
+                        <div class="fp-faq-a" id="fp-faq-a-<%= idx %>" role="region" aria-labelledby="fp-faq-q-<%= idx %>" hidden>
+                            <p><%= f.answer %></p>
+                        </div>
+                    </div>
+                <% }) %>
+            </div>
+        </div>
+    </section>
+
+<% } else if (key === 'CTA') { %>
+    <section class="fp-cta" aria-labelledby="fp-cta-h">
+        <div class="container">
+            <h2 id="fp-cta-h">Learn with <%= i.name %> and ICDS</h2>
+            <p>Explore our courses, or get in touch with the team.</p>
+            <div class="fp-cta-actions">
+                <a class="fp-btn fp-btn-primary" href="/courses">Browse courses</a>
+                <a class="fp-btn fp-btn-ghost" href="/contact">Contact us</a>
+            </div>
+        </div>
+    </section>
+<% } %>
+<% }) %>
+</main>
+
+<% if (vm.sections.includes('FAQ')) { %>
+<script>
+(function () {
+    document.querySelectorAll('.fp-faq-q').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            var open = btn.getAttribute('aria-expanded') === 'true';
+            btn.setAttribute('aria-expanded', open ? 'false' : 'true');
+            var panel = document.getElementById(btn.getAttribute('aria-controls'));
+            if (panel) panel.hidden = open;
+            btn.classList.toggle('is-open', !open);
+        });
+    });
+})();
+</script>
+<% } %>

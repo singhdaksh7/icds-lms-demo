@@ -1,0 +1,75 @@
+<%
+    function dt(v) {
+        if (!v) return '';
+        var d = new Date(v);
+        if (isNaN(d.getTime())) return typeof v === 'string' ? v : '';
+        return d.toISOString().slice(0, 16);
+    }
+    var action = banner ? '/admin/homepage/banners/' + banner.id : '/admin/homepage/banners';
+    var checked = function (v) { return v === true || v === 'on' || v === 'true'; };
+%>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 style="font-size:24px;" class="mb-0"><%= banner ? 'Edit Banner' : 'Add Banner' %></h1>
+    <a href="/admin/homepage/banners" class="btn btn-sm btn-outline-secondary">Back to banners</a>
+</div>
+
+<% if (errors.length) { %>
+    <div class="alert alert-danger"><ul class="mb-0"><% errors.forEach(function (e) { %><li><%= e %></li><% }); %></ul></div>
+<% } %>
+
+<div class="row g-4">
+    <div class="col-lg-8">
+        <form method="POST" action="<%= action %>" enctype="multipart/form-data" class="admin-card">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+            <div class="mb-3">
+                <label class="form-label" for="desktopImage">Desktop image <span class="text-danger">*</span></label>
+                <input class="form-control" type="file" id="desktopImage" name="desktopImage" accept=".jpg,.jpeg,.png,.webp">
+                <div class="form-text">JPG, PNG or WEBP, max 5MB. Recommended 1920x700. Or paste an image URL below.</div>
+                <input class="form-control mt-2" type="text" name="imageUrl" maxlength="500" placeholder="/uploads/... or https://..." value="<%= values.imageUrl || '' %>">
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label" for="mobileImage">Mobile image (optional)</label>
+                <input class="form-control" type="file" id="mobileImage" name="mobileImage" accept=".jpg,.jpeg,.png,.webp">
+                <input class="form-control mt-2" type="text" name="mobileImageUrl" maxlength="500" placeholder="Mobile image URL (optional)" value="<%= values.mobileImageUrl || '' %>">
+                <% if (banner && banner.mobileImageUrl) { %>
+                    <div class="form-check mt-2"><input class="form-check-input" type="checkbox" name="removeMobile" id="removeMobile"><label class="form-check-label" for="removeMobile">Remove mobile image</label></div>
+                <% } %>
+            </div>
+
+            <div class="mb-3"><label class="form-label">Title</label><input class="form-control" name="title" maxlength="255" value="<%= values.title || '' %>"></div>
+            <div class="mb-3"><label class="form-label">Subtitle</label><input class="form-control" name="subtitle" maxlength="500" value="<%= values.subtitle || '' %>"></div>
+            <div class="mb-3"><label class="form-label">Description</label><textarea class="form-control" name="description" rows="3" maxlength="5000"><%= values.description || '' %></textarea></div>
+
+            <div class="row g-3 mb-3">
+                <div class="col-md-5"><label class="form-label">Primary button label</label><input class="form-control" name="ctaLabel" maxlength="100" value="<%= values.ctaLabel || '' %>"></div>
+                <div class="col-md-7"><label class="form-label">Primary button link</label><input class="form-control" name="ctaUrl" maxlength="500" placeholder="/courses or https://..." value="<%= values.ctaUrl || '' %>"></div>
+                <div class="col-md-5"><label class="form-label">Secondary button label</label><input class="form-control" name="secondaryCtaLabel" maxlength="100" value="<%= values.secondaryCtaLabel || '' %>"></div>
+                <div class="col-md-7"><label class="form-label">Secondary button link</label><input class="form-control" name="secondaryCtaUrl" maxlength="500" value="<%= values.secondaryCtaUrl || '' %>"></div>
+            </div>
+
+            <div class="row g-3 mb-3">
+                <div class="col-md-6"><label class="form-label">Start (optional)</label><input class="form-control" type="datetime-local" name="startAt" value="<%= dt(values.startAt) %>"></div>
+                <div class="col-md-6"><label class="form-label">End (optional)</label><input class="form-control" type="datetime-local" name="endAt" value="<%= dt(values.endAt) %>"></div>
+            </div>
+
+            <div class="form-check mb-2"><input class="form-check-input" type="checkbox" id="overlayEnabled" name="overlayEnabled" value="true" <%= checked(values.overlayEnabled) ? 'checked' : '' %>><label class="form-check-label" for="overlayEnabled">Dark overlay behind text</label></div>
+            <div class="form-check mb-4"><input class="form-check-input" type="checkbox" id="isActive" name="isActive" value="true" <%= checked(values.isActive) ? 'checked' : '' %>><label class="form-check-label" for="isActive">Active</label></div>
+            <input type="hidden" name="_formSent" value="1">
+
+            <button type="submit" class="btn" style="background:var(--primary-color); color:#fff;"><%= banner ? 'Save changes' : 'Create banner' %></button>
+        </form>
+    </div>
+    <div class="col-lg-4">
+        <div class="admin-card">
+            <h2 style="font-size:16px;">Current preview</h2>
+            <% if (banner) { %>
+                <%- include('./banner-preview', { b: banner }) %>
+                <p class="small text-muted mt-2 mb-0">Preview of the saved banner. Save to see changes.</p>
+            <% } else { %>
+                <p class="small text-muted mb-0">The preview appears after the banner is created.</p>
+            <% } %>
+        </div>
+    </div>
+</div>

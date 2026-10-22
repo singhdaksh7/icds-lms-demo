@@ -1,3 +1,5 @@
+<link rel="stylesheet" href="/css/home-polish.css">
+<%- include('../partials/banner-carousel', { banners: (typeof banners !== 'undefined' ? banners : []) }) %>
 <%- include('../partials/hero') %>
 <%- include('../partials/categories', { categories }) %>
 <%- include('../partials/courses', { featuredCourses }) %>
@@ -5,6 +7,11 @@
 <%- include('../partials/process') %>
 <%- include('../partials/mentor', { mentorInstructor: (typeof mentorInstructor !== 'undefined' ? mentorInstructor : null) }) %>
 <%- include('../partials/instructors', { instructors }) %>
+<%- include('../partials/home-reviews', {
+    homeReviews: (typeof homeReviews !== 'undefined' ? homeReviews : []),
+    homeReviewSettings: (typeof homeReviewSettings !== 'undefined' ? homeReviewSettings : null)
+}) %>
 <%- include('../partials/testimonials') %>
 <%- include('../partials/faq', { faqs }) %>
 <%- include('../partials/newsletter') %>
+<% if (typeof banners !== 'undefined' && banners.length > 1) { %><script src="/js/banner-carousel.js" defer></script><% } %>

@@ -35,6 +35,11 @@ const paymentLimiter = require('../middleware/paymentRateLimit');
 const videoStorageController = require('../controllers/admin/videoStorage.controller');
 const r2UploadController = require('../controllers/admin/r2Upload.controller');
 
+const homeBannerController = require('../controllers/admin/homeBanner.controller');
+const homeReviewsController = require('../controllers/admin/homeReviews.controller');
+const founderAdminController = require('../controllers/admin/founder.controller');
+const { uploadBannerImages } = require('../middleware/bannerUpload.middleware');
+
 const curriculumController = require('../controllers/admin/curriculum.controller');
 const courseLandingController = require('../controllers/admin/courseLanding.controller');
 
@@ -129,6 +134,37 @@ router.post('/courses/:courseId/landing-page/access-steps/:stepId/move', doubleC
 
 router.post('/courses/:courseId/landing-page/sections/:sectionId/toggle', doubleCsrfProtection, courseLandingController.toggleSection);
 router.post('/courses/:courseId/landing-page/sections/:sectionId/move', doubleCsrfProtection, courseLandingController.moveSection);
+
+// --- Homepage CMS: banners + reviews ------------------------------------------
+// Banner multipart parsing runs BEFORE CSRF so the token in the multipart body
+// is available (same as thumbnail/site-content uploads).
+router.get('/homepage', (req, res) => res.redirect('/admin/homepage/banners'));
+router.get('/homepage/banners', homeBannerController.list);
+router.get('/homepage/banners/new', homeBannerController.newForm);
+router.post('/homepage/banners', uploadBannerImages('/admin/homepage/banners/new'), doubleCsrfProtection, homeBannerController.create);
+router.get('/homepage/banners/:id/edit', homeBannerController.editForm);
+router.post('/homepage/banners/:id', uploadBannerImages((req) => `/admin/homepage/banners/${req.params.id}/edit`), doubleCsrfProtection, homeBannerController.update);
+router.post('/homepage/banners/:id/toggle', doubleCsrfProtection, homeBannerController.toggle);
+router.post('/homepage/banners/:id/move', doubleCsrfProtection, homeBannerController.move);
+router.post('/homepage/banners/:id/delete', doubleCsrfProtection, homeBannerController.remove);
+
+router.get('/homepage/reviews', homeReviewsController.show);
+router.post('/homepage/reviews/settings', doubleCsrfProtection, homeReviewsController.saveSettings);
+router.post('/homepage/reviews/:id/feature', doubleCsrfProtection, homeReviewsController.feature);
+router.post('/homepage/reviews/:id/move', doubleCsrfProtection, homeReviewsController.move);
+
+// --- Founder page CMS -----------------------------------------------------------
+// :entity is whitelisted in founderAdmin.service (qualifications, timeline,
+// initiatives, stats, faqs, research); :key against the section key list.
+router.get('/founder', founderAdminController.show);
+router.post('/founder/profile', doubleCsrfProtection, founderAdminController.saveProfile);
+router.post('/founder/sections/:key/toggle', doubleCsrfProtection, founderAdminController.toggleSection);
+router.post('/founder/sections/:key/move', doubleCsrfProtection, founderAdminController.moveSection);
+router.post('/founder/items/:entity', doubleCsrfProtection, founderAdminController.createItem);
+router.post('/founder/items/:entity/:id/edit', doubleCsrfProtection, founderAdminController.updateItem);
+router.post('/founder/items/:entity/:id/delete', doubleCsrfProtection, founderAdminController.deleteItem);
+router.post('/founder/items/:entity/:id/toggle', doubleCsrfProtection, founderAdminController.togglePublished);
+router.post('/founder/items/:entity/:id/move', doubleCsrfProtection, founderAdminController.moveItem);
 
 // --- Curriculum Builder (Modules, Topics, Reorder, Resources) --------------
 router.get('/courses/:courseId/curriculum', curriculumController.getCurriculumBuilder);

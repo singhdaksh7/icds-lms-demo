@@ -16,16 +16,44 @@ const DEFAULT_SECTION_ORDER = [
   'CURRICULUM',
   'HIGHLIGHTS',
   'PURCHASE',
-  'REVIEWS',
   'COMPARISON',
   'AUDIENCE',
   'ACCESS',
   'RESOURCES',
   'MENTOR',
+  'REVIEWS',
   'FAQ',
   'SOCIAL_PROOF',
   'FINAL_CTA',
 ];
+
+/**
+ * Pure helper: turn the CMS section-key order into the final render list.
+ * - Duplicate section keys are collapsed (first occurrence wins).
+ * - Blocks that are "companions" of a section (takeaways, certificate) are
+ *   emitted exactly once, right after their anchor section, never per anchor.
+ * Returns an array of block ids, e.g. ['HERO','QUESTIONS','TAKEAWAYS',...].
+ */
+function buildSectionRenderList(sectionKeys) {
+  const seen = new Set();
+  const keys = [];
+  for (const k of Array.isArray(sectionKeys) ? sectionKeys : []) {
+    if (typeof k === 'string' && k && !seen.has(k)) {
+      seen.add(k);
+      keys.push(k);
+    }
+  }
+  const companions = [
+    { id: 'TAKEAWAYS', anchors: ['QUESTIONS', 'WHY_REGISTER'] },
+    { id: 'CERTIFICATE', anchors: ['RESOURCES', 'CURRICULUM'] },
+  ];
+  const list = [...keys];
+  for (const c of companions) {
+    const anchor = c.anchors.find((a) => seen.has(a));
+    if (anchor) list.splice(list.indexOf(anchor) + 1, 0, c.id);
+  }
+  return list;
+}
 
 const SECTION_METADATA = {
   HERO: { name: 'Hero Section', tab: 'hero' },
@@ -489,6 +517,7 @@ async function getPublicLandingData(courseId, courseStatsContext = {}, options =
     comparisonColumns,
     accessSteps,
     landingSections,
+    renderList: buildSectionRenderList(landingSections),
   };
 }
 
@@ -1422,6 +1451,7 @@ module.exports = {
   CourseLandingError,
   DEFAULT_SECTION_ORDER,
   SECTION_METADATA,
+  buildSectionRenderList,
   getAdminLandingData,
   getDefaultLandingSettings,
   getPublicLandingData,
