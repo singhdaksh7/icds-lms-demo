@@ -3,9 +3,10 @@ const { generateUniqueSlug } = require('../lib/slug');
 const imageStorage = require('../lib/imageStorage');
 
 class InstructorError extends Error {
-  constructor(message) {
+  constructor(message, statusCode = 400) {
     super(message);
     this.name = 'InstructorError';
+    this.statusCode = statusCode;
   }
 }
 
@@ -17,7 +18,13 @@ async function listInstructorsAdmin() {
 }
 
 async function getInstructorByIdAdmin(id) {
-  return prisma.instructor.findUnique({ where: { id } });
+  return prisma.instructor.findUnique({
+    where: { id },
+    include: {
+      credentials: { orderBy: { sortOrder: 'asc' } },
+      _count: { select: { courses: true } },
+    },
+  });
 }
 
 async function slugTaken(slug, excludeId) {
@@ -37,7 +44,15 @@ async function createInstructor(values) {
       name: values.name,
       slug,
       title: values.title || null,
-      bio: values.bio || null,
+      designation: values.designation || values.title || null,
+      organization: values.organization || null,
+      experienceLabel: values.experienceLabel || null,
+      shortBio: values.shortBio || null,
+      bio: values.bio || values.fullBio || null,
+      qualificationSummary: values.qualificationSummary || null,
+      practiceName: values.practiceName || null,
+      practiceLocation: values.practiceLocation || null,
+      mentorQuote: values.mentorQuote || null,
       photoUrl: values.photoUrl || null,
       email: values.email || null,
       linkedinUrl: values.linkedinUrl || null,
@@ -66,7 +81,15 @@ async function updateInstructor(id, values) {
       name: values.name,
       slug,
       title: values.title || null,
-      bio: values.bio || null,
+      designation: values.designation || values.title || null,
+      organization: values.organization || null,
+      experienceLabel: values.experienceLabel || null,
+      shortBio: values.shortBio || null,
+      bio: values.bio || values.fullBio || null,
+      qualificationSummary: values.qualificationSummary || null,
+      practiceName: values.practiceName || null,
+      practiceLocation: values.practiceLocation || null,
+      mentorQuote: values.mentorQuote || null,
       photoUrl: values.photoUrl || null,
       email: values.email || null,
       linkedinUrl: values.linkedinUrl || null,
@@ -101,6 +124,69 @@ async function deleteInstructor(id) {
   return existing._count.courses;
 }
 
+// ---------------------------------------------------------------------------
+// Instructor Credentials CRUD
+// ---------------------------------------------------------------------------
+
+async function addCredential(instructorId, { title, description, icon, sortOrder = 0, isPublished = true }) {
+  if (!title || !String(title).trim()) throw new InstructorError('Credential title is required.');
+  const count = await prisma.instructorCredential.count({ where: { instructorId } });
+  return prisma.instructorCredential.create({
+    data: {
+      instructorId,
+      title: String(title).trim().slice(0, 300),
+      description: description ? String(description).trim() : null,
+      icon: icon ? String(icon).trim().slice(0, 50) : null,
+      sortOrder: Number(sortOrder) || count * 10 + 10,
+      isPublished: Boolean(isPublished),
+    },
+  });
+}
+
+async function updateCredential(instructorId, credentialId, { title, description, icon, isPublished }) {
+  const cred = await prisma.instructorCredential.findUnique({ where: { id: credentialId } });
+  if (!cred) throw new InstructorError('Credential not found.', 404);
+  if (cred.instructorId !== instructorId) throw new InstructorError('Credential does not belong to this instructor.', 403);
+  return prisma.instructorCredential.update({
+    where: { id: credentialId },
+    data: {
+      ...(title !== undefined ? { title: String(title).trim().slice(0, 300) } : {}),
+      ...(description !== undefined ? { description: description ? String(description).trim() : null } : {}),
+      ...(icon !== undefined ? { icon: icon ? String(icon).trim().slice(0, 50) : null } : {}),
+      ...(isPublished !== undefined ? { isPublished: isPublished === true || isPublished === 'true' || isPublished === 1 || isPublished === '1' } : {}),
+    },
+  });
+}
+
+async function deleteCredential(instructorId, credentialId) {
+  const cred = await prisma.instructorCredential.findUnique({ where: { id: credentialId } });
+  if (!cred) throw new InstructorError('Credential not found.', 404);
+  if (cred.instructorId !== instructorId) throw new InstructorError('Credential does not belong to this instructor.', 403);
+  return prisma.instructorCredential.delete({ where: { id: credentialId } });
+}
+
+async function moveCredential(instructorId, credentialId, direction) {
+  const items = await prisma.instructorCredential.findMany({
+    where: { instructorId },
+    orderBy: { sortOrder: 'asc' },
+  });
+  const currentIndex = items.findIndex((i) => i.id === credentialId);
+  if (currentIndex === -1) throw new InstructorError('Credential not found.');
+  const targetIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
+  if (targetIndex < 0 || targetIndex >= items.length) return items;
+
+  const currentItem = items[currentIndex];
+  const targetItem = items[targetIndex];
+
+  await prisma.instructorCredential.update({ where: { id: currentItem.id }, data: { sortOrder: targetItem.sortOrder } });
+  await prisma.instructorCredential.update({ where: { id: targetItem.id }, data: { sortOrder: currentItem.sortOrder } });
+
+  return prisma.instructorCredential.findMany({
+    where: { instructorId },
+    orderBy: { sortOrder: 'asc' },
+  });
+}
+
 module.exports = {
   InstructorError,
   listInstructorsAdmin,
@@ -109,4 +195,8 @@ module.exports = {
   updateInstructor,
   setInstructorPhoto,
   deleteInstructor,
+  addCredential,
+  updateCredential,
+  deleteCredential,
+  moveCredential,
 };

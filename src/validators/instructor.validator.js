@@ -35,11 +35,38 @@ function validateInstructor(body) {
     errors.push('Instagram URL must be a valid http(s) link.');
   }
 
+  const designation = typeof body.designation === 'string' ? body.designation.trim().slice(0, 255) : (title || '');
+  const organization = typeof body.organization === 'string' ? body.organization.trim().slice(0, 255) : '';
+  const experienceLabel = typeof body.experienceLabel === 'string' ? body.experienceLabel.trim().slice(0, 100) : '';
+  const shortBio = typeof body.shortBio === 'string' ? body.shortBio.trim() : '';
+  const qualificationSummary = typeof body.qualificationSummary === 'string' ? body.qualificationSummary.trim() : '';
+  const practiceName = typeof body.practiceName === 'string' ? body.practiceName.trim().slice(0, 255) : '';
+  const practiceLocation = typeof body.practiceLocation === 'string' ? body.practiceLocation.trim().slice(0, 255) : '';
+  const mentorQuote = typeof body.mentorQuote === 'string' ? body.mentorQuote.trim() : '';
+
   const status = STATUSES.includes(body.status) ? body.status : 'ACTIVE';
 
   return {
     errors,
-    values: { name, slugInput, title, bio, photoUrl, email, linkedinUrl, instagramUrl, status },
+    values: {
+      name,
+      slugInput,
+      title: title || designation,
+      designation,
+      organization,
+      experienceLabel,
+      shortBio,
+      bio,
+      qualificationSummary,
+      practiceName,
+      practiceLocation,
+      mentorQuote,
+      photoUrl,
+      email,
+      linkedinUrl,
+      instagramUrl,
+      status,
+    },
   };
 }
 

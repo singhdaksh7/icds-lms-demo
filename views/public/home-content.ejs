@@ -3,6 +3,7 @@
 <%- include('../partials/courses', { featuredCourses }) %>
 <%- include('../partials/about') %>
 <%- include('../partials/process') %>
+<%- include('../partials/mentor', { mentorInstructor: (typeof mentorInstructor !== 'undefined' ? mentorInstructor : null) }) %>
 <%- include('../partials/instructors', { instructors }) %>
 <%- include('../partials/testimonials') %>
 <%- include('../partials/faq', { faqs }) %>

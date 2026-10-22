@@ -86,6 +86,21 @@ router.post('/courses/:courseId/landing-page/faqs/:faqId/edit', doubleCsrfProtec
 router.post('/courses/:courseId/landing-page/faqs/:faqId/delete', doubleCsrfProtection, courseLandingController.deleteFaq);
 router.post('/courses/:courseId/landing-page/faqs/:faqId/move', doubleCsrfProtection, courseLandingController.moveFaq);
 
+router.post('/courses/:courseId/landing-page/why-register', doubleCsrfProtection, courseLandingController.createWhyRegisterItem);
+router.post('/courses/:courseId/landing-page/why-register/:itemId/edit', doubleCsrfProtection, courseLandingController.updateWhyRegisterItem);
+router.post('/courses/:courseId/landing-page/why-register/:itemId/delete', doubleCsrfProtection, courseLandingController.deleteWhyRegisterItem);
+router.post('/courses/:courseId/landing-page/why-register/:itemId/move', doubleCsrfProtection, courseLandingController.moveWhyRegisterItem);
+
+router.post('/courses/:courseId/landing-page/highlights', doubleCsrfProtection, courseLandingController.createHighlight);
+router.post('/courses/:courseId/landing-page/highlights/:highlightId/edit', doubleCsrfProtection, courseLandingController.updateHighlight);
+router.post('/courses/:courseId/landing-page/highlights/:highlightId/delete', doubleCsrfProtection, courseLandingController.deleteHighlight);
+router.post('/courses/:courseId/landing-page/highlights/:highlightId/move', doubleCsrfProtection, courseLandingController.moveHighlight);
+
+router.post('/courses/:courseId/landing-page/reviews', doubleCsrfProtection, courseLandingController.createTestimonial);
+router.post('/courses/:courseId/landing-page/reviews/:testimonialId/edit', doubleCsrfProtection, courseLandingController.updateTestimonial);
+router.post('/courses/:courseId/landing-page/reviews/:testimonialId/delete', doubleCsrfProtection, courseLandingController.deleteTestimonial);
+router.post('/courses/:courseId/landing-page/reviews/:testimonialId/move', doubleCsrfProtection, courseLandingController.moveTestimonial);
+
 // --- Curriculum Builder (Modules, Topics, Reorder, Resources) --------------
 router.get('/courses/:courseId/curriculum', curriculumController.getCurriculumBuilder);
 router.post('/courses/:courseId/curriculum/modules', doubleCsrfProtection, curriculumController.createModule);
@@ -206,6 +221,10 @@ router.post(
 );
 router.post('/instructors/:id/photo/remove', doubleCsrfProtection, instructorController.removeInstructorPhoto);
 router.post('/instructors/:id/delete', doubleCsrfProtection, instructorController.deleteInstructor);
+router.post('/instructors/:id/credentials', doubleCsrfProtection, instructorController.createCredential);
+router.post('/instructors/:id/credentials/:credId/edit', doubleCsrfProtection, instructorController.updateCredential);
+router.post('/instructors/:id/credentials/:credId/delete', doubleCsrfProtection, instructorController.deleteCredential);
+router.post('/instructors/:id/credentials/:credId/move', doubleCsrfProtection, instructorController.moveCredential);
 
 // --- Students / manual enrollment --------------------------------------------
 router.get('/students', studentController.listStudents);

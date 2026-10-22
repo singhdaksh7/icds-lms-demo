@@ -42,7 +42,14 @@ function imageUrls(settings) {
   return urls;
 }
 
-function renderTab(res, tab, settings, { errors = [], errorFormId = null, status = 200 } = {}) {
+async function renderTab(res, tab, settings, { errors = [], errorFormId = null, status = 200 } = {}) {
+  let instructors = [];
+  try {
+    const instructorService = require('../../services/instructor.service');
+    instructors = await instructorService.listInstructorsAdmin();
+  } catch (err) {
+    // ignore
+  }
   return res.status(status).render('admin/site-content/tab', {
     pageTitle: `${tab.title} | Site Content | Admin`,
     metaDescription: 'Admin site content management.',
@@ -50,6 +57,7 @@ function renderTab(res, tab, settings, { errors = [], errorFormId = null, status
     tab,
     settings,
     linkTargets: LINK_TARGETS,
+    instructors,
     imageUrls: imageUrls(settings),
     legalProvisional: legalProvisional(settings),
     env: envFallbacks(),
@@ -81,7 +89,7 @@ function index(req, res) {
 async function showTab(req, res, next) {
   try {
     const settings = await settingsService.listSettingsAdmin();
-    renderTab(res, req.siteTab, settings);
+    await renderTab(res, req.siteTab, settings);
   } catch (err) {
     next(err);
   }
@@ -97,7 +105,7 @@ async function saveForm(req, res, next) {
 
     if (errors.length > 0) {
       const current = await settingsService.listSettingsAdmin();
-      return renderTab(res, tab, { ...current, ...values }, { errors, errorFormId: form.id, status: 400 });
+      return await renderTab(res, tab, { ...current, ...values }, { errors, errorFormId: form.id, status: 400 });
     }
 
     const current = await settingsService.listSettingsAdmin();

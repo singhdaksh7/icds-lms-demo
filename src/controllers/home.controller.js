@@ -5,13 +5,14 @@ const { buildSeo, pageSeoText, PUBLIC_ROBOTS } = require('../lib/seo');
 
 async function getHomePage(req, res, next) {
   try {
-    const [categories, featuredCourses, instructors, reviews, stats, faqs] = await Promise.all([
+    const [categories, featuredCourses, instructors, reviews, stats, faqs, mentorInstructor] = await Promise.all([
       homeService.getActiveCategories(),
       homeService.getFeaturedCourses(),
       homeService.getActiveInstructors(),
       homeService.getApprovedReviews(),
       homeService.getPlatformStats(),
       faqService.listActiveFaqs(),
+      homeService.getMentorInstructor(res.locals.cms?.mentor?.instructorId),
     ]);
 
     const { title, description } = pageSeoText(res.locals.settings, 'home', {
@@ -39,6 +40,7 @@ async function getHomePage(req, res, next) {
       categories,
       featuredCourses,
       instructors,
+      mentorInstructor,
       reviews,
       stats,
       faqs,

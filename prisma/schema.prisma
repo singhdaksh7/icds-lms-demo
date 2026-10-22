@@ -140,22 +140,48 @@ model Category {
 }
 
 model Instructor {
-  id           Int          @id @default(autoincrement())
-  name         String
-  slug         String       @unique
-  title        String?
-  bio          String?      @db.Text
-  photoUrl     String?      @db.VarChar(500)
-  email        String?
-  linkedinUrl  String?      @db.VarChar(500)
-  instagramUrl String?      @db.VarChar(500)
-  status       EntityStatus @default(ACTIVE)
-  createdAt    DateTime     @default(now())
-  updatedAt    DateTime     @updatedAt
+  id                   Int                    @id @default(autoincrement())
+  name                 String
+  slug                 String                 @unique
+  title                String?
+  designation          String?                @db.VarChar(255)
+  organization         String?                @db.VarChar(255)
+  experienceLabel      String?                @db.VarChar(100)
+  shortBio             String?                @db.Text
+  bio                  String?                @db.Text
+  qualificationSummary String?                @db.Text
+  practiceName         String?                @db.VarChar(255)
+  practiceLocation     String?                @db.VarChar(255)
+  mentorQuote          String?                @db.Text
+  photoUrl             String?                @db.VarChar(500)
+  email                String?
+  linkedinUrl          String?                @db.VarChar(500)
+  instagramUrl         String?                @db.VarChar(500)
+  status               EntityStatus           @default(ACTIVE)
+  createdAt            DateTime               @default(now())
+  updatedAt            DateTime               @updatedAt
 
-  courses Course[]
+  courses     Course[]
+  credentials InstructorCredential[]
 
   @@map("instructors")
+}
+
+model InstructorCredential {
+  id           Int        @id @default(autoincrement())
+  instructorId Int
+  title        String     @db.VarChar(300)
+  description  String?    @db.Text
+  icon         String?    @db.VarChar(50)
+  sortOrder    Int        @default(0)
+  isPublished  Boolean    @default(true)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  instructor Instructor @relation(fields: [instructorId], references: [id], onDelete: Cascade)
+
+  @@index([instructorId, sortOrder])
+  @@map("instructor_credentials")
 }
 
 model Course {
@@ -199,6 +225,9 @@ model Course {
   questions          CourseQuestion[]
   audienceItems      CourseAudienceItem[]
   faqs               CourseFaq[]
+  whyRegisterItems   CourseWhyRegisterItem[]
+  courseHighlights   CourseHighlight[]
+  testimonials       CourseTestimonial[]
 
   @@index([categoryId])
   @@index([instructorId])
@@ -729,6 +758,35 @@ model CourseLandingContent {
   stickyCtaText              String?  @db.VarChar(255)
   stickyCtaButtonLabel       String?  @db.VarChar(100)
 
+  // Access display setting
+  accessLabel                String?  @db.VarChar(100)
+
+  // Why Register section
+  whyRegisterEnabled         Boolean  @default(true)
+  whyRegisterEyebrow         String?  @db.VarChar(100)
+  whyRegisterHeading         String?  @db.VarChar(255)
+  whyRegisterIntro           String?  @db.Text
+  whyRegisterEmphasisText    String?  @db.Text
+  whyRegisterWantHeading     String?  @default("This course is for you if you want to:") @db.VarChar(255)
+  whyRegisterGetHeading      String?  @default("What you get:") @db.VarChar(255)
+  whyRegisterClosingText     String?  @db.Text
+
+  // Highlights section
+  highlightsEnabled          Boolean  @default(true)
+  highlightsHeading          String?  @default("Course Highlights") @db.VarChar(255)
+  highlightsDescription      String?  @db.Text
+
+  // Reviews / Testimonials section (DISABLED by default!)
+  reviewsEnabled             Boolean  @default(false)
+  reviewsEyebrow             String?  @default("Student Reviews") @db.VarChar(100)
+  reviewsHeading             String?  @default("Reviews from dentists who transformed their practice with this masterclass") @db.VarChar(255)
+  reviewsIntro               String?  @db.Text
+
+  // Meet Your Mentor section settings
+  mentorSectionEnabled       Boolean  @default(true)
+  mentorEyebrow              String?  @default("Meet Your Mentor") @db.VarChar(100)
+  mentorHeading              String?  @default("Learn from an Experienced Clinician") @db.VarChar(255)
+
   createdAt                  DateTime @default(now())
   updatedAt                  DateTime @updatedAt
 
@@ -736,6 +794,62 @@ model CourseLandingContent {
 
   @@index([courseId])
   @@map("course_landing_contents")
+}
+
+model CourseWhyRegisterItem {
+  id          Int      @id @default(autoincrement())
+  courseId    Int
+  type        String   @db.VarChar(20) // WANT, GET
+  title       String   @db.VarChar(300)
+  description String?  @db.Text
+  icon        String?  @db.VarChar(50)
+  sortOrder   Int      @default(0)
+  isPublished Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@index([courseId, type, sortOrder])
+  @@map("course_why_register_items")
+}
+
+model CourseHighlight {
+  id          Int      @id @default(autoincrement())
+  courseId    Int
+  title       String   @db.VarChar(300)
+  description String?  @db.Text
+  icon        String?  @db.VarChar(50)
+  sortOrder   Int      @default(0)
+  isPublished Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@index([courseId, sortOrder])
+  @@map("course_highlights")
+}
+
+model CourseTestimonial {
+  id                  Int      @id @default(autoincrement())
+  courseId            Int
+  reviewerName        String   @db.VarChar(255)
+  reviewerDesignation String?  @db.VarChar(255)
+  reviewerLocation    String?  @db.VarChar(255)
+  quote               String   @db.Text
+  rating              Int      @default(5)
+  avatarUrl           String?  @db.VarChar(500)
+  initials            String?  @db.VarChar(10)
+  sortOrder           Int      @default(0)
+  isPublished         Boolean  @default(true)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@index([courseId, sortOrder])
+  @@map("course_testimonials")
 }
 
 model CourseHeroChip {

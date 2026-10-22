@@ -28,6 +28,10 @@ const questionsList = (typeof landing !== 'undefined' && landing && Array.isArra
 const audienceForList = (typeof landing !== 'undefined' && landing && Array.isArray(landing.audienceFor)) ? landing.audienceFor : [];
 const audienceNotForList = (typeof landing !== 'undefined' && landing && Array.isArray(landing.audienceNotFor)) ? landing.audienceNotFor : [];
 const courseFaqsList = (typeof landing !== 'undefined' && landing && Array.isArray(landing.faqs)) ? landing.faqs : (typeof faqs !== 'undefined' && Array.isArray(faqs) ? faqs : []);
+const whyRegisterWantList = (typeof landing !== 'undefined' && landing && Array.isArray(landing.whyRegisterWant)) ? landing.whyRegisterWant : [];
+const whyRegisterGetList = (typeof landing !== 'undefined' && landing && Array.isArray(landing.whyRegisterGet)) ? landing.whyRegisterGet : [];
+const highlightsList = (typeof landing !== 'undefined' && landing && Array.isArray(landing.highlights)) ? landing.highlights : [];
+const testimonialsList = (typeof landing !== 'undefined' && landing && Array.isArray(landing.testimonials)) ? landing.testimonials : [];
 %>
 <link rel="stylesheet" href="/css/course-landing.css">
 
@@ -120,6 +124,9 @@ const courseFaqsList = (typeof landing !== 'undefined' && landing && Array.isArr
                             <div class="mrp">₹<%= Number(course.price).toLocaleString('en-IN') %></div>
                             <div class="save-pill">Save ₹<%= (Number(course.price) - Number(course.salePrice)).toLocaleString('en-IN') %></div>
                         <% } %>
+                        <% if (lc.accessLabel) { %>
+                            <div class="access-pill"><i class="bi bi-clock-history me-1"></i><%= lc.accessLabel %></div>
+                        <% } %>
                     </div>
 
                     <div class="actions rv d3">
@@ -192,10 +199,107 @@ const courseFaqsList = (typeof landing !== 'undefined' && landing && Array.isArr
                 </div>
                 <div class="stat">
                     <strong><%= freeCourse ? 'Free' : (course.currency === 'INR' ? '₹' : course.currency + ' ') + effectivePrice.toLocaleString('en-IN') %></strong>
-                    <span><%= lc.priceSubtitle || 'Full Access' %></span>
+                    <span><%= lc.accessLabel || lc.priceSubtitle || 'Full Access' %></span>
                 </div>
             </div>
         </section>
+
+        <!-- Section 1: Why Register For This Course -->
+        <% const hasWhyRegister = (lc.whyRegisterEnabled !== false) && (whyRegisterWantList.length > 0 || whyRegisterGetList.length > 0); %>
+        <% if (hasWhyRegister) { %>
+            <section class="why-register-section" id="why-register">
+                <div class="wrap">
+                    <div class="section-head rv">
+                        <span class="eyebrow"><%= lc.whyRegisterEyebrow || 'Why Register For This Course?' %></span>
+                        <h2><%= lc.whyRegisterHeading || 'Master Full Mouth Rehabilitation with Clinical Predictability' %></h2>
+                        <% if (lc.whyRegisterIntro) { %>
+                            <p class="why-register-intro"><%= lc.whyRegisterIntro %></p>
+                        <% } %>
+                        <% if (lc.whyRegisterEmphasisText) { %>
+                            <div class="why-register-emphasis">
+                                <strong><%= lc.whyRegisterEmphasisText %></strong>
+                            </div>
+                        <% } %>
+                    </div>
+
+                    <div class="why-register-grid">
+                        <% if (whyRegisterWantList.length > 0) { %>
+                            <div class="why-card want-card rv">
+                                <h3 class="group-title"><%= lc.whyRegisterWantHeading || 'This course is for you if you want to:' %></h3>
+                                <ul class="checklist">
+                                    <% whyRegisterWantList.forEach(function(item) { %>
+                                        <li class="check-item">
+                                            <span class="check-ico"><i class="bi bi-check-circle-fill"></i></span>
+                                            <div>
+                                                <strong><%= item.title %></strong>
+                                                <% if (item.description) { %>
+                                                    <span class="desc"><%= item.description %></span>
+                                                <% } %>
+                                            </div>
+                                        </li>
+                                    <% }); %>
+                                </ul>
+                            </div>
+                        <% } %>
+
+                        <% if (whyRegisterGetList.length > 0) { %>
+                            <div class="why-card get-card rv d1">
+                                <h3 class="group-title"><%= lc.whyRegisterGetHeading || 'What you get:' %></h3>
+                                <ul class="checklist">
+                                    <% whyRegisterGetList.forEach(function(item) { %>
+                                        <li class="check-item">
+                                            <span class="check-ico"><i class="bi bi-check-circle-fill"></i></span>
+                                            <div>
+                                                <strong><%= item.title %></strong>
+                                                <% if (item.description) { %>
+                                                    <span class="desc"><%= item.description %></span>
+                                                <% } %>
+                                            </div>
+                                        </li>
+                                    <% }); %>
+                                </ul>
+                            </div>
+                        <% } %>
+                    </div>
+
+                    <% if (lc.whyRegisterClosingText) { %>
+                        <div class="why-register-closing rv d2">
+                            <p><%= lc.whyRegisterClosingText %></p>
+                        </div>
+                    <% } %>
+                </div>
+            </section>
+        <% } %>
+
+        <!-- Section 2: Course Highlights -->
+        <% const hasHighlights = (lc.highlightsEnabled !== false) && (highlightsList.length > 0); %>
+        <% if (hasHighlights) { %>
+            <section class="highlights-section" id="highlights">
+                <div class="wrap">
+                    <div class="section-head rv">
+                        <span class="eyebrow"><%= lc.heroEyebrow || 'Highlights' %></span>
+                        <h2><%= lc.highlightsHeading || 'Course Highlights' %></h2>
+                        <% if (lc.highlightsDescription) { %>
+                            <p><%= lc.highlightsDescription %></p>
+                        <% } %>
+                    </div>
+
+                    <div class="highlights-grid">
+                        <% highlightsList.forEach(function(hl, idx) { %>
+                            <div class="highlight-card rv <%= idx % 2 === 1 ? 'd1' : '' %>">
+                                <span class="highlight-ico"><i class="bi bi-check-circle-fill"></i></span>
+                                <div class="highlight-text">
+                                    <h4 class="highlight-title"><%= hl.title %></h4>
+                                    <% if (hl.description) { %>
+                                        <p class="highlight-desc"><%= hl.description %></p>
+                                    <% } %>
+                                </div>
+                            </div>
+                        <% }); %>
+                    </div>
+                </div>
+            </section>
+        <% } %>
 
         <!-- Course Fundamentals / Context Card -->
         <% if (lc.aboutEnabled !== false && (lc.aboutBody || course.description)) { %>
@@ -485,23 +589,121 @@ const courseFaqsList = (typeof landing !== 'undefined' && landing && Array.isArr
             </section>
         <% } %>
 
-        <!-- Instructor Section (Shown ONLY if instructor exists) -->
-        <% if (course.instructor) { %>
-            <section id="mentor">
-                <div class="wrap mentor">
-                    <div class="mentor-frame rv">
-                        <img src="<%= course.instructor.photoUrl || cms.brand.defaultInstructorImageUrl || '/assets/images/instructor-placeholder.svg' %>"
-                             alt="<%= course.instructor.name %>"
-                             loading="lazy"
-                             data-fallback-src="/assets/images/instructor-placeholder.svg">
-                    </div>
-                    <div class="rv d1">
-                        <span class="eyebrow"><%= cd.instructorHeading || 'Course Instructor' %></span>
-                        <h2><%= course.instructor.name %></h2>
-                        <% if (course.instructor.title) { %>
-                            <p style="font-weight:700; color:#5d3fd3; margin-top:8px;"><%= course.instructor.title %></p>
+        <!-- Section 3: Reviews / Testimonials (Rendered ONLY if reviewsEnabled === true AND testimonialsList.length > 0) -->
+        <% if (lc.reviewsEnabled === true && testimonialsList.length > 0) { %>
+            <section class="reviews-section" id="reviews">
+                <div class="wrap">
+                    <div class="section-head rv">
+                        <span class="eyebrow"><%= lc.reviewsEyebrow || 'Dentist Reviews' %></span>
+                        <h2><%= lc.reviewsHeading || 'Reviews from clinicians who transformed their practice' %></h2>
+                        <% if (lc.reviewsIntro) { %>
+                            <p><%= lc.reviewsIntro %></p>
                         <% } %>
-                        <p><%= course.instructor.bio || '' %></p>
+                    </div>
+
+                    <div class="reviews-grid">
+                        <% testimonialsList.forEach(function(rev, rIdx) { %>
+                            <div class="review-card rv <%= rIdx % 3 === 1 ? 'd1' : (rIdx % 3 === 2 ? 'd2' : '') %>">
+                                <div class="stars-row" aria-label="<%= rev.rating %> out of 5 stars">
+                                    <% for (let s = 1; s <= 5; s++) { %>
+                                        <i class="bi bi-star-fill <%= s <= (rev.rating || 5) ? 'active' : 'inactive' %>"></i>
+                                    <% } %>
+                                </div>
+                                <blockquote class="review-quote">
+                                    "<%= rev.quote %>"
+                                </blockquote>
+                                <div class="reviewer-meta">
+                                    <div class="reviewer-avatar">
+                                        <% if (rev.avatarUrl) { %>
+                                            <img src="<%= rev.avatarUrl %>" alt="<%= rev.reviewerName %>" loading="lazy">
+                                        <% } else { %>
+                                            <span class="initials"><%= rev.initials || rev.reviewerName.split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase() %></span>
+                                        <% } %>
+                                    </div>
+                                    <div class="reviewer-details">
+                                        <div class="reviewer-name"><%= rev.reviewerName %></div>
+                                        <% if (rev.reviewerDesignation || rev.reviewerLocation) { %>
+                                            <div class="reviewer-sub">
+                                                <%= rev.reviewerDesignation || '' %><%= (rev.reviewerDesignation && rev.reviewerLocation) ? ' • ' : '' %><%= rev.reviewerLocation || '' %>
+                                            </div>
+                                        <% } %>
+                                    </div>
+                                </div>
+                            </div>
+                        <% }); %>
+                    </div>
+                </div>
+            </section>
+        <% } %>
+
+        <!-- Section 4: Meet Your Mentor -->
+        <% if (lc.mentorSectionEnabled !== false && course.instructor) { 
+            const inst = course.instructor;
+            const instCreds = (inst.credentials && Array.isArray(inst.credentials)) ? inst.credentials : [];
+        %>
+            <section class="mentor-section" id="mentor">
+                <div class="wrap">
+                    <div class="mentor-layout">
+                        <!-- Desktop Left / Mobile Top: Large Portrait + Experience Badge -->
+                        <div class="mentor-visual rv">
+                            <div class="mentor-portrait-card">
+                                <img src="<%= inst.photoUrl || (typeof cms !== 'undefined' && cms.brand ? cms.brand.defaultInstructorImageUrl : '') || '/assets/images/instructor-placeholder.svg' %>"
+                                     alt="<%= inst.name %>"
+                                     loading="lazy"
+                                     data-fallback-src="/assets/images/instructor-placeholder.svg">
+                                <% if (inst.experienceLabel) { %>
+                                    <div class="mentor-exp-badge">
+                                        <i class="bi bi-award-fill me-1"></i> <%= inst.experienceLabel %>
+                                    </div>
+                                <% } %>
+                            </div>
+                        </div>
+
+                        <!-- Desktop Right / Mobile Bottom: Details, Bio, Credentials, Closing Quote -->
+                        <div class="mentor-info rv d1">
+                            <span class="eyebrow"><%= lc.mentorEyebrow || (typeof cd !== 'undefined' && cd.instructorHeading) || 'Meet Your Mentor' %></span>
+                            <h2><%= lc.mentorHeading || inst.name %></h2>
+
+                            <% if (inst.designation || inst.title || inst.organization) { %>
+                                <div class="mentor-role">
+                                    <strong><%= inst.designation || inst.title %></strong>
+                                    <% if (inst.organization) { %>
+                                        <span class="inst-org"> &bull; <%= inst.organization %></span>
+                                    <% } %>
+                                </div>
+                            <% } %>
+
+                            <% const mentorBio = inst.fullBio || inst.bio || inst.shortBio; %>
+                            <% if (mentorBio) { %>
+                                <div class="mentor-bio-text">
+                                    <p><%= mentorBio %></p>
+                                </div>
+                            <% } %>
+
+                            <% if (instCreds.length > 0) { %>
+                                <div class="mentor-credentials">
+                                    <ul class="credentials-checklist">
+                                        <% instCreds.forEach(function(cred) { %>
+                                            <li>
+                                                <i class="bi <%= cred.icon || 'bi-check-circle-fill' %>"></i>
+                                                <div>
+                                                    <strong><%= cred.title %></strong>
+                                                    <% if (cred.description) { %>
+                                                        <span class="cred-desc"><%= cred.description %></span>
+                                                    <% } %>
+                                                </div>
+                                            </li>
+                                        <% }); %>
+                                    </ul>
+                                </div>
+                            <% } %>
+
+                            <% if (inst.mentorQuote) { %>
+                                <blockquote class="mentor-closing-quote">
+                                    "<%= inst.mentorQuote %>"
+                                </blockquote>
+                            <% } %>
+                        </div>
                     </div>
                 </div>
             </section>

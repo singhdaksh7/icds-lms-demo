@@ -40,6 +40,19 @@
             <% }); %>
         </select>
     </div>
+<% } else if (field.type === 'instructor') { %>
+    <div class="col-12 col-md-6">
+        <label class="form-label small fw-semibold" for="f-<%= field.key %>"><%= field.label %></label>
+        <select class="form-select form-control-custom" id="f-<%= field.key %>" name="<%= field.key %>">
+            <option value="">-- Default (Dr. Tanu Raghav / Primary Mentor) --</option>
+            <% if (typeof instructors !== 'undefined' && Array.isArray(instructors)) { %>
+                <% instructors.forEach(function (inst) { %>
+                    <option value="<%= inst.id %>" <%= String(settings[field.key] || '') === String(inst.id) ? 'selected' : '' %>><%= inst.name %><%= inst.designation || inst.title ? ' (' + (inst.designation || inst.title) + ')' : '' %></option>
+                <% }); %>
+            <% } %>
+        </select>
+        <% if (field.help) { %><p class="small text-muted mt-1 mb-0"><%= field.help %></p><% } %>
+    </div>
 <% } else if (field.type === 'textarea' || field.type === 'longtext') { %>
     <div class="col-12">
         <label class="form-label small fw-semibold" for="f-<%= field.key %>"><%= field.label %></label>

@@ -294,6 +294,162 @@ async function moveFaq(req, res, next) {
   }
 }
 
+// 6. Why Register Items
+async function createWhyRegisterItem(req, res, next) {
+  try {
+    const courseId = parseInt(req.params.courseId, 10);
+    await courseLandingService.addWhyRegisterItem(courseId, req.body);
+    req.flashSuccess('Why Register item added.');
+    res.redirect(`/admin/courses/${courseId}/landing-page?tab=why-register`);
+  } catch (err) {
+    req.flashError(err.message || 'Failed to add Why Register item.');
+    res.redirect(`/admin/courses/${req.params.courseId}/landing-page?tab=why-register`);
+  }
+}
+
+async function updateWhyRegisterItem(req, res, next) {
+  try {
+    const courseId = parseInt(req.params.courseId, 10);
+    const itemId = parseInt(req.params.itemId, 10);
+    await courseLandingService.updateWhyRegisterItem(courseId, itemId, req.body);
+    req.flashSuccess('Why Register item updated.');
+    res.redirect(`/admin/courses/${courseId}/landing-page?tab=why-register`);
+  } catch (err) {
+    req.flashError(err.message || 'Failed to update Why Register item.');
+    res.redirect(`/admin/courses/${req.params.courseId}/landing-page?tab=why-register`);
+  }
+}
+
+async function deleteWhyRegisterItem(req, res, next) {
+  try {
+    const courseId = parseInt(req.params.courseId, 10);
+    const itemId = parseInt(req.params.itemId, 10);
+    await courseLandingService.deleteWhyRegisterItem(courseId, itemId);
+    req.flashSuccess('Why Register item deleted.');
+    res.redirect(`/admin/courses/${courseId}/landing-page?tab=why-register`);
+  } catch (err) {
+    req.flashError(err.message || 'Failed to delete Why Register item.');
+    res.redirect(`/admin/courses/${req.params.courseId}/landing-page?tab=why-register`);
+  }
+}
+
+async function moveWhyRegisterItem(req, res, next) {
+  try {
+    const courseId = parseInt(req.params.courseId, 10);
+    const itemId = parseInt(req.params.itemId, 10);
+    const direction = req.body.direction === 'down' ? 'down' : 'up';
+    await courseLandingService.moveWhyRegisterItem(courseId, itemId, direction);
+    res.redirect(`/admin/courses/${courseId}/landing-page?tab=why-register`);
+  } catch (err) {
+    req.flashError(err.message || 'Failed to reorder item.');
+    res.redirect(`/admin/courses/${req.params.courseId}/landing-page?tab=why-register`);
+  }
+}
+
+// 7. Highlights
+async function createHighlight(req, res, next) {
+  try {
+    const courseId = parseInt(req.params.courseId, 10);
+    await courseLandingService.addHighlight(courseId, req.body);
+    req.flashSuccess('Course highlight added.');
+    res.redirect(`/admin/courses/${courseId}/landing-page?tab=highlights`);
+  } catch (err) {
+    req.flashError(err.message || 'Failed to add highlight.');
+    res.redirect(`/admin/courses/${req.params.courseId}/landing-page?tab=highlights`);
+  }
+}
+
+async function updateHighlight(req, res, next) {
+  try {
+    const courseId = parseInt(req.params.courseId, 10);
+    const highlightId = parseInt(req.params.highlightId, 10);
+    await courseLandingService.updateHighlight(courseId, highlightId, req.body);
+    req.flashSuccess('Course highlight updated.');
+    res.redirect(`/admin/courses/${courseId}/landing-page?tab=highlights`);
+  } catch (err) {
+    req.flashError(err.message || 'Failed to update highlight.');
+    res.redirect(`/admin/courses/${req.params.courseId}/landing-page?tab=highlights`);
+  }
+}
+
+async function deleteHighlight(req, res, next) {
+  try {
+    const courseId = parseInt(req.params.courseId, 10);
+    const highlightId = parseInt(req.params.highlightId, 10);
+    await courseLandingService.deleteHighlight(courseId, highlightId);
+    req.flashSuccess('Course highlight deleted.');
+    res.redirect(`/admin/courses/${courseId}/landing-page?tab=highlights`);
+  } catch (err) {
+    req.flashError(err.message || 'Failed to delete highlight.');
+    res.redirect(`/admin/courses/${req.params.courseId}/landing-page?tab=highlights`);
+  }
+}
+
+async function moveHighlight(req, res, next) {
+  try {
+    const courseId = parseInt(req.params.courseId, 10);
+    const highlightId = parseInt(req.params.highlightId, 10);
+    const direction = req.body.direction === 'down' ? 'down' : 'up';
+    await courseLandingService.moveHighlight(courseId, highlightId, direction);
+    res.redirect(`/admin/courses/${courseId}/landing-page?tab=highlights`);
+  } catch (err) {
+    req.flashError(err.message || 'Failed to reorder highlight.');
+    res.redirect(`/admin/courses/${req.params.courseId}/landing-page?tab=highlights`);
+  }
+}
+
+// 8. Testimonials / Reviews
+async function createTestimonial(req, res, next) {
+  try {
+    const courseId = parseInt(req.params.courseId, 10);
+    await courseLandingService.addTestimonial(courseId, req.body);
+    req.flashSuccess('Review / Testimonial added.');
+    res.redirect(`/admin/courses/${courseId}/landing-page?tab=reviews`);
+  } catch (err) {
+    req.flashError(err.message || 'Failed to add testimonial.');
+    res.redirect(`/admin/courses/${req.params.courseId}/landing-page?tab=reviews`);
+  }
+}
+
+async function updateTestimonial(req, res, next) {
+  try {
+    const courseId = parseInt(req.params.courseId, 10);
+    const testimonialId = parseInt(req.params.testimonialId, 10);
+    await courseLandingService.updateTestimonial(courseId, testimonialId, req.body);
+    req.flashSuccess('Review / Testimonial updated.');
+    res.redirect(`/admin/courses/${courseId}/landing-page?tab=reviews`);
+  } catch (err) {
+    req.flashError(err.message || 'Failed to update testimonial.');
+    res.redirect(`/admin/courses/${req.params.courseId}/landing-page?tab=reviews`);
+  }
+}
+
+async function deleteTestimonial(req, res, next) {
+  try {
+    const courseId = parseInt(req.params.courseId, 10);
+    const testimonialId = parseInt(req.params.testimonialId, 10);
+    await courseLandingService.deleteTestimonial(courseId, testimonialId);
+    req.flashSuccess('Review / Testimonial deleted.');
+    res.redirect(`/admin/courses/${courseId}/landing-page?tab=reviews`);
+  } catch (err) {
+    req.flashError(err.message || 'Failed to delete testimonial.');
+    res.redirect(`/admin/courses/${req.params.courseId}/landing-page?tab=reviews`);
+  }
+}
+
+async function moveTestimonial(req, res, next) {
+  try {
+    const courseId = parseInt(req.params.courseId, 10);
+    const testimonialId = parseInt(req.params.testimonialId, 10);
+    const direction = req.body.direction === 'down' ? 'down' : 'up';
+    await courseLandingService.moveTestimonial(courseId, testimonialId, direction);
+    res.redirect(`/admin/courses/${courseId}/landing-page?tab=reviews`);
+  } catch (err) {
+    req.flashError(err.message || 'Failed to reorder testimonial.');
+    res.redirect(`/admin/courses/${req.params.courseId}/landing-page?tab=reviews`);
+  }
+}
+
 module.exports = {
   getLandingEditor,
   saveSettings,
@@ -322,4 +478,19 @@ module.exports = {
   updateFaq,
   deleteFaq,
   moveFaq,
+
+  createWhyRegisterItem,
+  updateWhyRegisterItem,
+  deleteWhyRegisterItem,
+  moveWhyRegisterItem,
+
+  createHighlight,
+  updateHighlight,
+  deleteHighlight,
+  moveHighlight,
+
+  createTestimonial,
+  updateTestimonial,
+  deleteTestimonial,
+  moveTestimonial,
 };

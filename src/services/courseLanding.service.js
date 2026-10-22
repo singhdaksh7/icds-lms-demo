@@ -15,10 +15,28 @@ async function getAdminLandingData(courseId) {
   const numericCourseId = parseInt(courseId, 10);
   if (!numericCourseId) throw new CourseLandingError('Invalid course id', 400);
 
-  const [course, landingContent, heroChips, takeaways, questions, audienceItems, faqs] = await Promise.all([
+  const [
+    course,
+    landingContent,
+    heroChips,
+    takeaways,
+    questions,
+    audienceItems,
+    faqs,
+    whyRegisterItems,
+    highlights,
+    testimonials,
+  ] = await Promise.all([
     prisma.course.findUnique({
       where: { id: numericCourseId },
-      include: { category: true, instructor: true },
+      include: {
+        category: true,
+        instructor: {
+          include: {
+            credentials: { orderBy: { sortOrder: 'asc' } },
+          },
+        },
+      },
     }),
     prisma.courseLandingContent.findUnique({
       where: { courseId: numericCourseId },
@@ -43,6 +61,18 @@ async function getAdminLandingData(courseId) {
       where: { courseId: numericCourseId },
       orderBy: { sortOrder: 'asc' },
     }),
+    prisma.courseWhyRegisterItem.findMany({
+      where: { courseId: numericCourseId },
+      orderBy: { sortOrder: 'asc' },
+    }),
+    prisma.courseHighlight.findMany({
+      where: { courseId: numericCourseId },
+      orderBy: { sortOrder: 'asc' },
+    }),
+    prisma.courseTestimonial.findMany({
+      where: { courseId: numericCourseId },
+      orderBy: { sortOrder: 'asc' },
+    }),
   ]);
 
   if (!course) throw new CourseLandingError('Course not found', 404);
@@ -55,6 +85,9 @@ async function getAdminLandingData(courseId) {
     questions,
     audienceItems,
     faqs,
+    whyRegisterItems,
+    highlights,
+    testimonials,
   };
 }
 
@@ -73,6 +106,20 @@ function getDefaultLandingSettings(course) {
     secondaryCtaLabel: 'Explore Curriculum',
     secondaryCtaTarget: '#curriculum',
     priceSubtitle: 'Full Lifetime Access',
+    accessLabel: '',
+
+    whyRegisterEnabled: true,
+    whyRegisterEyebrow: 'Why Register For This Course?',
+    whyRegisterHeading: 'Master Full Mouth Rehabilitation with Clinical Predictability',
+    whyRegisterIntro: 'Full mouth rehabilitation requires a structured approach to occlusal diagnostics, vertical dimension determination, and systematic clinical execution.',
+    whyRegisterEmphasisText: 'Gain the confidence to evaluate, plan, and execute complex full mouth cases systematically.',
+    whyRegisterWantHeading: 'This course is for you if you want to:',
+    whyRegisterGetHeading: 'What you get:',
+    whyRegisterClosingText: 'Take your restorative dentistry skills to the master level.',
+
+    highlightsEnabled: true,
+    highlightsHeading: 'Course Highlights',
+    highlightsDescription: 'Key pillars and clinical skills covered in this masterclass.',
 
     aboutEnabled: true,
     aboutEyebrow: course.category ? course.category.name : 'Clinical Fundamentals',
@@ -102,6 +149,15 @@ function getDefaultLandingSettings(course) {
     showLessonDuration: true,
     showLockIcon: true,
     showPreviewBadge: true,
+
+    reviewsEnabled: false, // Critical: OFF by default unless genuine testimonials exist!
+    reviewsEyebrow: 'Student Reviews',
+    reviewsHeading: 'Reviews from dentists who transformed their practice with this masterclass',
+    reviewsIntro: '',
+
+    mentorSectionEnabled: true,
+    mentorEyebrow: 'Meet Your Mentor',
+    mentorHeading: 'Learn from an Experienced Clinician',
 
     certificateSectionEnabled: false, // Critical: OFF by default!
     certificateEyebrow: 'E-Certificate',
@@ -139,7 +195,17 @@ async function getPublicLandingData(courseId) {
   const numericCourseId = parseInt(courseId, 10);
   if (!numericCourseId) return null;
 
-  const [landingContent, heroChips, takeaways, questions, audienceItems, faqs] = await Promise.all([
+  const [
+    landingContent,
+    heroChips,
+    takeaways,
+    questions,
+    audienceItems,
+    faqs,
+    whyRegisterItems,
+    highlights,
+    testimonials,
+  ] = await Promise.all([
     prisma.courseLandingContent.findUnique({
       where: { courseId: numericCourseId },
     }),
@@ -163,6 +229,18 @@ async function getPublicLandingData(courseId) {
       where: { courseId: numericCourseId, isPublished: true },
       orderBy: { sortOrder: 'asc' },
     }),
+    prisma.courseWhyRegisterItem.findMany({
+      where: { courseId: numericCourseId, isPublished: true },
+      orderBy: { sortOrder: 'asc' },
+    }),
+    prisma.courseHighlight.findMany({
+      where: { courseId: numericCourseId, isPublished: true },
+      orderBy: { sortOrder: 'asc' },
+    }),
+    prisma.courseTestimonial.findMany({
+      where: { courseId: numericCourseId, isPublished: true },
+      orderBy: { sortOrder: 'asc' },
+    }),
   ]);
 
   return {
@@ -173,6 +251,10 @@ async function getPublicLandingData(courseId) {
     audienceFor: audienceItems.filter((item) => item.type === 'FOR'),
     audienceNotFor: audienceItems.filter((item) => item.type === 'NOT_FOR'),
     faqs,
+    whyRegisterWant: whyRegisterItems.filter((item) => item.type === 'WANT'),
+    whyRegisterGet: whyRegisterItems.filter((item) => item.type === 'GET'),
+    highlights,
+    testimonials,
   };
 }
 
@@ -205,6 +287,20 @@ async function upsertLandingSettings(courseId, payload) {
     secondaryCtaLabel: cleanString(payload.secondaryCtaLabel, 100) || 'Explore Curriculum',
     secondaryCtaTarget: cleanString(payload.secondaryCtaTarget, 255) || '#curriculum',
     priceSubtitle: cleanString(payload.priceSubtitle, 100),
+    accessLabel: cleanString(payload.accessLabel, 100),
+
+    whyRegisterEnabled: cleanBool(payload.whyRegisterEnabled, true),
+    whyRegisterEyebrow: cleanString(payload.whyRegisterEyebrow, 100),
+    whyRegisterHeading: cleanString(payload.whyRegisterHeading, 255),
+    whyRegisterIntro: cleanString(payload.whyRegisterIntro, 5000),
+    whyRegisterEmphasisText: cleanString(payload.whyRegisterEmphasisText, 5000),
+    whyRegisterWantHeading: cleanString(payload.whyRegisterWantHeading, 255) || 'This course is for you if you want to:',
+    whyRegisterGetHeading: cleanString(payload.whyRegisterGetHeading, 255) || 'What you get:',
+    whyRegisterClosingText: cleanString(payload.whyRegisterClosingText, 5000),
+
+    highlightsEnabled: cleanBool(payload.highlightsEnabled, true),
+    highlightsHeading: cleanString(payload.highlightsHeading, 255) || 'Course Highlights',
+    highlightsDescription: cleanString(payload.highlightsDescription, 5000),
 
     aboutEnabled: cleanBool(payload.aboutEnabled, true),
     aboutEyebrow: cleanString(payload.aboutEyebrow, 100),
@@ -234,6 +330,15 @@ async function upsertLandingSettings(courseId, payload) {
     showLessonDuration: cleanBool(payload.showLessonDuration, true),
     showLockIcon: cleanBool(payload.showLockIcon, true),
     showPreviewBadge: cleanBool(payload.showPreviewBadge, true),
+
+    reviewsEnabled: cleanBool(payload.reviewsEnabled, false), // OFF by default
+    reviewsEyebrow: cleanString(payload.reviewsEyebrow, 100) || 'Student Reviews',
+    reviewsHeading: cleanString(payload.reviewsHeading, 255) || 'Reviews from dentists who transformed their practice with this masterclass',
+    reviewsIntro: cleanString(payload.reviewsIntro, 5000),
+
+    mentorSectionEnabled: cleanBool(payload.mentorSectionEnabled, true),
+    mentorEyebrow: cleanString(payload.mentorEyebrow, 100) || 'Meet Your Mentor',
+    mentorHeading: cleanString(payload.mentorHeading, 255) || 'Learn from an Experienced Clinician',
 
     certificateSectionEnabled: cleanBool(payload.certificateSectionEnabled, false), // OFF by default
     certificateEyebrow: cleanString(payload.certificateEyebrow, 100) || 'E-Certificate',
@@ -479,7 +584,159 @@ async function deleteCourseFaq(courseId, faqId) {
 }
 
 async function moveCourseFaq(courseId, faqId, direction) {
+  const item = await prisma.courseFaq.findUnique({ where: { id: faqId } });
+  if (!item) throw new CourseLandingError('Course FAQ not found', 404);
+  if (item.courseId !== courseId) throw new CourseLandingError('Course FAQ does not belong to this course', 403);
   return reorderItem(prisma.courseFaq, { courseId }, faqId, direction);
+}
+
+// 6. Why Register Items
+async function addWhyRegisterItem(courseId, { type = 'WANT', title, description, icon, sortOrder = 0, isPublished = true }) {
+  if (!title || !String(title).trim()) throw new CourseLandingError('Item title is required');
+  const cleanType = String(type).trim().toUpperCase() === 'GET' ? 'GET' : 'WANT';
+  const count = await prisma.courseWhyRegisterItem.count({ where: { courseId, type: cleanType } });
+  return prisma.courseWhyRegisterItem.create({
+    data: {
+      courseId,
+      type: cleanType,
+      title: String(title).trim().slice(0, 300),
+      description: description ? String(description).trim() : null,
+      icon: icon ? String(icon).trim().slice(0, 50) : null,
+      sortOrder: Number(sortOrder) || count * 10 + 10,
+      isPublished: Boolean(isPublished),
+    },
+  });
+}
+
+async function updateWhyRegisterItem(courseId, itemId, { type, title, description, icon, isPublished }) {
+  const item = await prisma.courseWhyRegisterItem.findUnique({ where: { id: itemId } });
+  if (!item) throw new CourseLandingError('Why Register item not found', 404);
+  if (item.courseId !== courseId) throw new CourseLandingError('Item does not belong to this course', 403);
+  const cleanType = type !== undefined ? (String(type).trim().toUpperCase() === 'GET' ? 'GET' : 'WANT') : undefined;
+  return prisma.courseWhyRegisterItem.update({
+    where: { id: itemId },
+    data: {
+      ...(cleanType !== undefined ? { type: cleanType } : {}),
+      ...(title !== undefined ? { title: String(title).trim().slice(0, 300) } : {}),
+      ...(description !== undefined ? { description: description ? String(description).trim() : null } : {}),
+      ...(icon !== undefined ? { icon: icon ? String(icon).trim().slice(0, 50) : null } : {}),
+      ...(isPublished !== undefined ? { isPublished: isPublished === true || isPublished === 'true' || isPublished === 1 || isPublished === '1' } : {}),
+    },
+  });
+}
+
+async function deleteWhyRegisterItem(courseId, itemId) {
+  const item = await prisma.courseWhyRegisterItem.findUnique({ where: { id: itemId } });
+  if (!item) throw new CourseLandingError('Why Register item not found', 404);
+  if (item.courseId !== courseId) throw new CourseLandingError('Item does not belong to this course', 403);
+  return prisma.courseWhyRegisterItem.delete({ where: { id: itemId } });
+}
+
+async function moveWhyRegisterItem(courseId, itemId, direction) {
+  const item = await prisma.courseWhyRegisterItem.findUnique({ where: { id: itemId } });
+  if (!item) throw new CourseLandingError('Why Register item not found', 404);
+  if (item.courseId !== courseId) throw new CourseLandingError('Item does not belong to this course', 403);
+  return reorderItem(prisma.courseWhyRegisterItem, { courseId, type: item.type }, itemId, direction);
+}
+
+// 7. Highlights
+async function addHighlight(courseId, { title, description, icon, sortOrder = 0, isPublished = true }) {
+  if (!title || !String(title).trim()) throw new CourseLandingError('Highlight title is required');
+  const count = await prisma.courseHighlight.count({ where: { courseId } });
+  return prisma.courseHighlight.create({
+    data: {
+      courseId,
+      title: String(title).trim().slice(0, 300),
+      description: description ? String(description).trim() : null,
+      icon: icon ? String(icon).trim().slice(0, 50) : null,
+      sortOrder: Number(sortOrder) || count * 10 + 10,
+      isPublished: isPublished === true || isPublished === 'true' || isPublished === 1 || isPublished === '1',
+    },
+  });
+}
+
+async function updateHighlight(courseId, highlightId, { title, description, icon, isPublished }) {
+  const item = await prisma.courseHighlight.findUnique({ where: { id: highlightId } });
+  if (!item) throw new CourseLandingError('Highlight not found', 404);
+  if (item.courseId !== courseId) throw new CourseLandingError('Highlight does not belong to this course', 403);
+  return prisma.courseHighlight.update({
+    where: { id: highlightId },
+    data: {
+      ...(title !== undefined ? { title: String(title).trim().slice(0, 300) } : {}),
+      ...(description !== undefined ? { description: description ? String(description).trim() : null } : {}),
+      ...(icon !== undefined ? { icon: icon ? String(icon).trim().slice(0, 50) : null } : {}),
+      ...(isPublished !== undefined ? { isPublished: isPublished === true || isPublished === 'true' || isPublished === 1 || isPublished === '1' } : {}),
+    },
+  });
+}
+
+async function deleteHighlight(courseId, highlightId) {
+  const item = await prisma.courseHighlight.findUnique({ where: { id: highlightId } });
+  if (!item) throw new CourseLandingError('Highlight not found', 404);
+  if (item.courseId !== courseId) throw new CourseLandingError('Highlight does not belong to this course', 403);
+  return prisma.courseHighlight.delete({ where: { id: highlightId } });
+}
+
+async function moveHighlight(courseId, highlightId, direction) {
+  return reorderItem(prisma.courseHighlight, { courseId }, highlightId, direction);
+}
+
+// 8. Reviews / Testimonials
+async function addTestimonial(courseId, { reviewerName, reviewerDesignation, reviewerLocation, quote, rating = 5, avatarUrl, initials, sortOrder = 0, isPublished = true }) {
+  if (!reviewerName || !String(reviewerName).trim()) throw new CourseLandingError('Reviewer name is required');
+  if (!quote || !String(quote).trim()) throw new CourseLandingError('Testimonial quote is required');
+  const count = await prisma.courseTestimonial.count({ where: { courseId } });
+  const cleanRating = Math.max(1, Math.min(5, parseInt(rating, 10) || 5));
+  const rawInitials = initials ? String(initials).trim().slice(0, 10) : '';
+  const fallbackInitials = rawInitials || String(reviewerName).trim().split(/\s+/).map(w => w[0]).join('').slice(0, 3).toUpperCase();
+
+  return prisma.courseTestimonial.create({
+    data: {
+      courseId,
+      reviewerName: String(reviewerName).trim().slice(0, 255),
+      reviewerDesignation: reviewerDesignation ? String(reviewerDesignation).trim().slice(0, 255) : null,
+      reviewerLocation: reviewerLocation ? String(reviewerLocation).trim().slice(0, 255) : null,
+      quote: String(quote).trim(),
+      rating: cleanRating,
+      avatarUrl: avatarUrl ? String(avatarUrl).trim().slice(0, 500) : null,
+      initials: fallbackInitials || null,
+      sortOrder: Number(sortOrder) || count * 10 + 10,
+      isPublished: isPublished === true || isPublished === 'true' || isPublished === 1 || isPublished === '1',
+    },
+  });
+}
+
+async function updateTestimonial(courseId, testimonialId, { reviewerName, reviewerDesignation, reviewerLocation, quote, rating, avatarUrl, initials, isPublished }) {
+  const item = await prisma.courseTestimonial.findUnique({ where: { id: testimonialId } });
+  if (!item) throw new CourseLandingError('Testimonial not found', 404);
+  if (item.courseId !== courseId) throw new CourseLandingError('Testimonial does not belong to this course', 403);
+
+  const cleanRating = rating !== undefined ? Math.max(1, Math.min(5, parseInt(rating, 10) || 5)) : undefined;
+
+  return prisma.courseTestimonial.update({
+    where: { id: testimonialId },
+    data: {
+      ...(reviewerName !== undefined ? { reviewerName: String(reviewerName).trim().slice(0, 255) } : {}),
+      ...(reviewerDesignation !== undefined ? { reviewerDesignation: reviewerDesignation ? String(reviewerDesignation).trim().slice(0, 255) : null } : {}),
+      ...(reviewerLocation !== undefined ? { reviewerLocation: reviewerLocation ? String(reviewerLocation).trim().slice(0, 255) : null } : {}),
+      ...(quote !== undefined ? { quote: String(quote).trim() } : {}),
+      ...(cleanRating !== undefined ? { rating: cleanRating } : {}),
+      ...(avatarUrl !== undefined ? { avatarUrl: avatarUrl ? String(avatarUrl).trim().slice(0, 500) : null } : {}),
+      ...(initials !== undefined ? { initials: initials ? String(initials).trim().slice(0, 10) : null } : {}),
+      ...(isPublished !== undefined ? { isPublished: isPublished === true || isPublished === 'true' || isPublished === 1 || isPublished === '1' } : {}),
+    },
+  });
+}
+
+async function deleteTestimonial(courseId, testimonialId) {
+  const item = await prisma.courseTestimonial.findUnique({ where: { id: testimonialId } });
+  if (!item) throw new CourseLandingError('Testimonial not found', 404);
+  if (item.courseId !== courseId) throw new CourseLandingError('Testimonial does not belong to this course', 403);
+  return prisma.courseTestimonial.delete({ where: { id: testimonialId } });
+}
+
+async function moveTestimonial(courseId, testimonialId, direction) {
+  return reorderItem(prisma.courseTestimonial, { courseId }, testimonialId, direction);
 }
 
 // Reordering helper (Move Up / Move Down)
@@ -546,4 +803,23 @@ module.exports = {
   updateFaq: updateCourseFaq,
   deleteFaq: deleteCourseFaq,
   moveFaq: moveCourseFaq,
+
+  addWhyRegisterItem,
+  updateWhyRegisterItem,
+  deleteWhyRegisterItem,
+  moveWhyRegisterItem,
+
+  addHighlight,
+  updateHighlight,
+  deleteHighlight,
+  moveHighlight,
+
+  addTestimonial,
+  updateTestimonial,
+  deleteTestimonial,
+  moveTestimonial,
+  addReview: addTestimonial,
+  updateReview: updateTestimonial,
+  deleteReview: deleteTestimonial,
+  moveReview: moveTestimonial,
 };

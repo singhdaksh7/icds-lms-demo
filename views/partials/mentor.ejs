@@ -1,0 +1,86 @@
+<% const sec = (typeof cms !== 'undefined' && cms.mentor) ? cms.mentor : {}; %>
+<% if (sec.enabled !== false && typeof mentorInstructor !== 'undefined' && mentorInstructor) { %>
+<!-- MEET YOUR MENTOR (HOMEPAGE) -->
+<section class="section-space mentor-section" id="mentor">
+    <div class="container">
+        <div class="row align-items-center g-5">
+            <div class="col-lg-5 text-center text-lg-start">
+                <div class="mentor-portrait-wrap reveal-element position-relative d-inline-block">
+                    <img
+                        class="mentor-portrait-img img-fluid"
+                        src="<%= mentorInstructor.photoUrl || (typeof cms !== 'undefined' && cms.brand ? cms.brand.defaultInstructorImageUrl : '') || '/assets/images/instructor-placeholder.svg' %>"
+                        alt="<%= mentorInstructor.name %>"
+                        loading="lazy"
+                        data-fallback-src="/assets/images/instructor-placeholder.svg">
+
+                    <% if (mentorInstructor.experienceLabel) { %>
+                        <div class="mentor-experience-badge">
+                            <i class="bi bi-award-fill me-1"></i> <%= mentorInstructor.experienceLabel %>
+                        </div>
+                    <% } %>
+                </div>
+            </div>
+
+            <div class="col-lg-7">
+                <div class="mentor-content reveal-element">
+                    <div class="section-tag">
+                        <%= sec.eyebrow || 'Meet Your Mentor' %>
+                    </div>
+
+                    <h2 class="section-title mb-2">
+                        <%= mentorInstructor.name %>
+                    </h2>
+
+                    <% if (mentorInstructor.designation || mentorInstructor.title || mentorInstructor.organization) { %>
+                        <div class="mentor-subtitle mb-3">
+                            <span class="text-primary fw-bold"><%= mentorInstructor.designation || mentorInstructor.title %></span>
+                            <% if (mentorInstructor.organization) { %>
+                                <span class="text-muted"> &bull; <%= mentorInstructor.organization %></span>
+                            <% } %>
+                        </div>
+                    <% } %>
+
+                    <% const bioText = mentorInstructor.shortBio || mentorInstructor.bio || ''; %>
+                    <% if (bioText) { %>
+                        <p class="section-description mb-4">
+                            <%= bioText %>
+                        </p>
+                    <% } %>
+
+                    <% const limit = Number(sec.credentialLimit) || 5; %>
+                    <% const creds = (mentorInstructor.credentials || []).slice(0, limit); %>
+                    <% if (creds.length > 0) { %>
+                        <ul class="mentor-credentials-list mb-4">
+                            <% creds.forEach(function (cred) { %>
+                                <li class="mentor-cred-item">
+                                    <div class="mentor-cred-icon">
+                                        <i class="bi <%= cred.icon || 'bi-check2-circle' %>"></i>
+                                    </div>
+                                    <div class="mentor-cred-text">
+                                        <strong><%= cred.title %></strong>
+                                        <% if (cred.description) { %>
+                                            <span class="d-block text-muted small"><%= cred.description %></span>
+                                        <% } %>
+                                    </div>
+                                </li>
+                            <% }); %>
+                        </ul>
+                    <% } %>
+
+                    <% if (mentorInstructor.mentorQuote) { %>
+                        <blockquote class="mentor-quote mb-4">
+                            "<%= mentorInstructor.mentorQuote %>"
+                        </blockquote>
+                    <% } %>
+
+                    <div class="mentor-cta-wrap pt-2">
+                        <a href="<%= sec.ctaTarget || '#courses' %>" class="btn btn-primary px-4 py-2">
+                            <%= sec.ctaLabel || 'View Courses' %> <i class="bi bi-arrow-right ms-1"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+<% } %>

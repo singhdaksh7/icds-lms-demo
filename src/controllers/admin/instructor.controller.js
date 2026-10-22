@@ -163,6 +163,53 @@ async function deleteInstructor(req, res, next) {
   res.redirect('/admin/instructors');
 }
 
+async function createCredential(req, res, next) {
+  const id = parseInt(req.params.id, 10);
+  try {
+    await instructorService.addCredential(id, req.body);
+    req.flashSuccess('Credential added successfully.');
+  } catch (err) {
+    req.flashError(err.message || 'Failed to add credential.');
+  }
+  res.redirect(`/admin/instructors/${id}/edit#credentials`);
+}
+
+async function updateCredential(req, res, next) {
+  const id = parseInt(req.params.id, 10);
+  const credId = parseInt(req.params.credId, 10);
+  try {
+    await instructorService.updateCredential(id, credId, req.body);
+    req.flashSuccess('Credential updated.');
+  } catch (err) {
+    req.flashError(err.message || 'Failed to update credential.');
+  }
+  res.redirect(`/admin/instructors/${id}/edit#credentials`);
+}
+
+async function deleteCredential(req, res, next) {
+  const id = parseInt(req.params.id, 10);
+  const credId = parseInt(req.params.credId, 10);
+  try {
+    await instructorService.deleteCredential(id, credId);
+    req.flashSuccess('Credential deleted.');
+  } catch (err) {
+    req.flashError(err.message || 'Failed to delete credential.');
+  }
+  res.redirect(`/admin/instructors/${id}/edit#credentials`);
+}
+
+async function moveCredential(req, res, next) {
+  const id = parseInt(req.params.id, 10);
+  const credId = parseInt(req.params.credId, 10);
+  try {
+    const direction = req.body.direction === 'down' ? 'down' : 'up';
+    await instructorService.moveCredential(id, credId, direction);
+  } catch (err) {
+    req.flashError(err.message || 'Failed to reorder credential.');
+  }
+  res.redirect(`/admin/instructors/${id}/edit#credentials`);
+}
+
 module.exports = {
   listInstructors,
   newInstructorForm,
@@ -172,4 +219,8 @@ module.exports = {
   uploadInstructorPhoto,
   removeInstructorPhoto,
   deleteInstructor,
+  createCredential,
+  updateCredential,
+  deleteCredential,
+  moveCredential,
 };

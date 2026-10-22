@@ -28,18 +28,67 @@
             </div>
 
             <div class="col-md-6">
-                <label class="form-label small fw-semibold">Title</label>
-                <input type="text" name="title" class="form-control form-control-custom" value="<%= values.title || '' %>">
+                <label class="form-label small fw-semibold">Designation / Professional Title</label>
+                <input type="text" name="designation" class="form-control form-control-custom" value="<%= values.designation || values.title || '' %>" placeholder="e.g. Lead Clinical Mentor & Prosthodontist">
+                <div class="form-text">Displayed prominently below name on Course Landing and Homepage.</div>
             </div>
 
             <div class="col-md-6">
-                <label class="form-label small fw-semibold">Email</label>
+                <label class="form-label small fw-semibold">Organization / Affiliation</label>
+                <input type="text" name="organization" class="form-control form-control-custom" value="<%= values.organization || '' %>" placeholder="e.g. Institute of Cosmetology & Dental Sciences">
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label small fw-semibold">Experience Badge Label</label>
+                <input type="text" name="experienceLabel" class="form-control form-control-custom" value="<%= values.experienceLabel || '' %>" placeholder="e.g. 18+ Years Experience">
+                <div class="form-text">Floating badge on portrait. Leave blank to hide.</div>
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label small fw-semibold">Practice Name (optional)</label>
+                <input type="text" name="practiceName" class="form-control form-control-custom" value="<%= values.practiceName || '' %>" placeholder="e.g. Raghav Dental Clinic">
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label small fw-semibold">Practice Location (optional)</label>
+                <input type="text" name="practiceLocation" class="form-control form-control-custom" value="<%= values.practiceLocation || '' %>" placeholder="e.g. Delhi NCR, India">
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label small fw-semibold">Contact Email</label>
                 <input type="email" name="email" class="form-control form-control-custom" value="<%= values.email || '' %>">
             </div>
 
+            <div class="col-md-6">
+                <label class="form-label small fw-semibold">Status</label>
+                <select name="status" class="form-select form-control-custom">
+                    <% statuses.forEach(function (status) { %>
+                        <option value="<%= status %>" <%= values.status === status ? 'selected' : '' %>><%= status %></option>
+                    <% }); %>
+                </select>
+            </div>
+
             <div class="col-12">
-                <label class="form-label small fw-semibold">Bio</label>
-                <textarea name="bio" class="form-control form-control-custom" rows="4"><%= values.bio || '' %></textarea>
+                <label class="form-label small fw-semibold">Short Biography (Summary / Homepage card)</label>
+                <textarea name="shortBio" class="form-control form-control-custom" rows="2" placeholder="Brief 1-2 sentence overview for cards and spotlight sections..."><%= values.shortBio || '' %></textarea>
+                <div class="form-text">Used on the homepage mentor spotlight card and quick summaries.</div>
+            </div>
+
+            <div class="col-12">
+                <label class="form-label small fw-semibold">Full Biography (Course Landing Page)</label>
+                <textarea name="bio" class="form-control form-control-custom" rows="5" placeholder="Comprehensive professional background and clinical journey..."><%= values.bio || values.fullBio || '' %></textarea>
+                <div class="form-text">Displayed on the dedicated Meet Your Mentor course section. Plain text or markdown paragraphs.</div>
+            </div>
+
+            <div class="col-12">
+                <label class="form-label small fw-semibold">Qualifications Summary (optional)</label>
+                <input type="text" name="qualificationSummary" class="form-control form-control-custom" value="<%= values.qualificationSummary || '' %>" placeholder="e.g. BDS, MDS (Prosthodontics), Certified Clinical Implantologist">
+            </div>
+
+            <div class="col-12">
+                <label class="form-label small fw-semibold">Mentor Philosophy Quote (optional)</label>
+                <textarea name="mentorQuote" class="form-control form-control-custom" rows="2" placeholder="e.g. Clinical excellence begins with systematic diagnostic evaluation..."><%= values.mentorQuote || '' %></textarea>
+                <div class="form-text">Displayed as a stylized blockquote in the mentor profile.</div>
             </div>
 
             <div class="col-12">
@@ -58,15 +107,6 @@
                 <input type="text" name="instagramUrl" class="form-control form-control-custom" value="<%= values.instagramUrl || '' %>">
             </div>
 
-            <div class="col-md-4">
-                <label class="form-label small fw-semibold">Status</label>
-                <select name="status" class="form-select form-control-custom">
-                    <% statuses.forEach(function (status) { %>
-                        <option value="<%= status %>" <%= values.status === status ? 'selected' : '' %>><%= status %></option>
-                    <% }); %>
-                </select>
-            </div>
-
         </div>
 
         <button type="submit" class="auth-submit mt-4" style="width:auto; padding:0 32px;">
@@ -74,6 +114,165 @@
         </button>
     </form>
 </div>
+
+<% if (instructor) { %>
+    <!-- CREDENTIALS MANAGEMENT SECTION -->
+    <div class="admin-card mt-4" id="credentials">
+        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+            <div>
+                <h5 class="mb-1 text-primary"><i class="bi bi-patch-check me-2"></i>Verified Credentials &amp; Achievements (<%= (instructor.credentials || []).length %>)</h5>
+                <div class="small text-muted">
+                    Checklist items displayed in the "Meet Your Mentor" section on course pages and homepage.
+                    <strong>Rule:</strong> Enter only verified, owner-supplied credentials.
+                </div>
+            </div>
+            <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#createCredModal">
+                <i class="bi bi-plus-lg me-1"></i> Add Credential
+            </button>
+        </div>
+
+        <% const credsList = instructor.credentials || []; %>
+        <% if (credsList.length === 0) { %>
+            <div class="text-center py-4 border rounded bg-light">
+                <i class="bi bi-patch-check text-muted" style="font-size:28px;"></i>
+                <p class="text-muted small mt-2 mb-0">No credentials added yet. Click "Add Credential" to enter verified items.</p>
+            </div>
+        <% } else { %>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width:50px;">Order</th>
+                            <th>Credential Title</th>
+                            <th>Description</th>
+                            <th style="width:100px;">Status</th>
+                            <th style="width:180px;" class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% credsList.forEach(function(cred, cIdx) { %>
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center gap-1">
+                                        <form method="POST" action="/admin/instructors/<%= instructor.id %>/credentials/<%= cred.id %>/move" class="m-0">
+                                            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                            <input type="hidden" name="direction" value="up">
+                                            <button type="submit" class="btn btn-sm btn-light border p-0 px-1" title="Move Up" <%= cIdx === 0 ? 'disabled' : '' %>>▲</button>
+                                        </form>
+                                        <form method="POST" action="/admin/instructors/<%= instructor.id %>/credentials/<%= cred.id %>/move" class="m-0">
+                                            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                            <input type="hidden" name="direction" value="down">
+                                            <button type="submit" class="btn btn-sm btn-light border p-0 px-1" title="Move Down" <%= cIdx === credsList.length - 1 ? 'disabled' : '' %>>▼</button>
+                                        </form>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="fw-semibold">
+                                        <i class="bi <%= cred.icon || 'bi-check2-circle' %> text-primary me-1"></i>
+                                        <%= cred.title %>
+                                    </div>
+                                </td>
+                                <td class="small text-muted">
+                                    <%= cred.description || '—' %>
+                                </td>
+                                <td>
+                                    <span class="badge bg-<%= cred.isPublished ? 'success' : 'secondary' %>">
+                                        <%= cred.isPublished ? 'Published' : 'Hidden' %>
+                                    </span>
+                                </td>
+                                <td class="text-end">
+                                    <div class="d-flex justify-content-end gap-2">
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#editCredModal-<%= cred.id %>">
+                                            Edit
+                                        </button>
+                                        <form method="POST" action="/admin/instructors/<%= instructor.id %>/credentials/<%= cred.id %>/delete" class="m-0" data-confirm="Delete this credential item?">
+                                            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+
+                            <!-- Edit Credential Modal -->
+                            <div class="modal fade" id="editCredModal-<%= cred.id %>" tabindex="-1">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <form method="POST" action="/admin/instructors/<%= instructor.id %>/credentials/<%= cred.id %>/edit">
+                                            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title">Edit Credential</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                            </div>
+                                            <div class="modal-body text-start">
+                                                <div class="mb-3">
+                                                    <label class="form-label small fw-semibold">Credential Title</label>
+                                                    <input type="text" name="title" class="form-control" value="<%= cred.title %>" required maxlength="191">
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label class="form-label small fw-semibold">Description (optional)</label>
+                                                    <textarea name="description" class="form-control" rows="2" maxlength="500"><%= cred.description || '' %></textarea>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label class="form-label small fw-semibold">Bootstrap Icon Class (optional)</label>
+                                                    <input type="text" name="icon" class="form-control" value="<%= cred.icon || 'bi-check2-circle' %>" placeholder="e.g. bi-check2-circle, bi-award">
+                                                </div>
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" name="isPublished" id="editCredPub-<%= cred.id %>" <%= cred.isPublished ? 'checked' : '' %>>
+                                                    <label class="form-check-label" for="editCredPub-<%= cred.id %>">Published (Visible in profile)</label>
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                                <button type="submit" class="btn btn-sm btn-primary">Save Changes</button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        <% }); %>
+                    </tbody>
+                </table>
+            </div>
+        <% } %>
+    </div>
+
+    <!-- Create Credential Modal -->
+    <div class="modal fade" id="createCredModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form method="POST" action="/admin/instructors/<%= instructor.id %>/credentials">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Add Verified Credential</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold">Credential Title</label>
+                            <input type="text" name="title" class="form-control" placeholder="e.g. Master in Prosthodontics & Crown Bridge" required maxlength="191">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold">Description (optional)</label>
+                            <textarea name="description" class="form-control" rows="2" placeholder="e.g. Certified specialist in advanced occlusal rehab" maxlength="500"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold">Bootstrap Icon Class (optional)</label>
+                            <input type="text" name="icon" class="form-control" value="bi-check2-circle" placeholder="bi-check2-circle">
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="isPublished" id="createCredPub" checked>
+                            <label class="form-check-label" for="createCredPub">Published (Visible on site)</label>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-sm btn-primary">Add Credential</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+<% } %>
 
 <% if (instructor) { %>
     <div class="admin-card mt-4">

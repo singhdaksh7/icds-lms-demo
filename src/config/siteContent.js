@@ -73,6 +73,7 @@ const LINK_TARGETS = [
   { value: '#categories', label: 'Homepage - Categories section' },
   { value: '#about', label: 'Homepage - Why ICDS / About section' },
   { value: '#process', label: 'Homepage - Learning process section' },
+  { value: '#mentor', label: 'Homepage - Meet Your Mentor section' },
   { value: '#instructors', label: 'Homepage - Instructors section' },
   { value: '#testimonials', label: 'Homepage - Reviews section' },
   { value: '#faq', label: 'Homepage - FAQ section' },
@@ -94,6 +95,7 @@ const label = (key, lbl, def, extra = {}) => text(key, lbl, def, LABEL, extra);
 const bool = (key, lbl, def = true, extra = {}) => ({ key, label: lbl, type: 'bool', def: def ? 'true' : 'false', ...extra });
 const target = (key, lbl, def) => ({ key, label: lbl, type: 'target', def });
 const image = (key, lbl, extra = {}) => ({ key, label: lbl, type: 'image', def: '', ...extra });
+const instructorSelect = (key, lbl, def = '', extra = {}) => ({ key, label: lbl, type: 'instructor', def, max: 20, ...extra });
 const seoTitle = (key, lbl = 'SEO title') => text(key, lbl, '', 70, { help: 'Shown in the browser tab and search results. Up to 70 characters. Leave blank to use the automatic title.' });
 const seoDesc = (key, lbl = 'SEO description') => area(key, lbl, '', 170, { rows: 3, help: 'Search-result summary. Up to 170 characters. Leave blank to use the automatic description.' });
 
@@ -320,6 +322,20 @@ const TABS = [
           text('process.step4Number', 'Number', '04', 6),
           text('process.step4Title', 'Title', 'Start Learning'),
           area('process.step4Desc', 'Description', 'Once your enrollment is confirmed, access your lessons from your student dashboard.', DESC, { rows: 2 }),
+        ],
+      },
+      {
+        id: 'mentor',
+        title: 'Meet Your Mentor section',
+        description: 'Spotlight your lead clinical mentor (Dr. Tanu Raghav) on the homepage. Data is shared with course landing pages.',
+        fields: [
+          bool('mentor.enabled', 'Show the mentor spotlight section', true),
+          instructorSelect('mentor.instructorId', 'Selected Mentor Instructor', '', { help: 'Select the mentor to showcase on the homepage (e.g. Dr. Tanu Raghav). Blank defaults to Dr. Tanu Raghav.' }),
+          text('mentor.eyebrow', 'Eyebrow', 'Meet Your Mentor'),
+          text('mentor.heading', 'Heading', 'Learn directly from our lead clinical mentor'),
+          text('mentor.credentialLimit', 'Credentials Limit', '5', 10, { help: 'Maximum number of credentials to display (default 5).' }),
+          label('mentor.ctaLabel', 'CTA button label', 'View Courses'),
+          target('mentor.ctaTarget', 'CTA button target', '#courses'),
         ],
       },
       {

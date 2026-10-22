@@ -64,7 +64,14 @@ async function getPublishedCourseBySlug(slug) {
     where: { slug, status: 'PUBLISHED' },
     include: {
       category: true,
-      instructor: true,
+      instructor: {
+        include: {
+          credentials: {
+            where: { isPublished: true },
+            orderBy: { sortOrder: 'asc' },
+          },
+        },
+      },
       lessons: {
         where: { status: 'PUBLISHED' },
         orderBy: [{ sortOrder: 'asc' }, { id: 'asc' }],
@@ -89,7 +96,14 @@ async function getCourseBySlugForViewer(slug, viewerIsAdmin) {
     where: { slug },
     include: {
       category: true,
-      instructor: true,
+      instructor: {
+        include: {
+          credentials: {
+            where: { isPublished: true },
+            orderBy: { sortOrder: 'asc' },
+          },
+        },
+      },
       lessons: {
         where: viewerIsAdmin ? {} : { status: 'PUBLISHED' },
         orderBy: [{ sortOrder: 'asc' }, { id: 'asc' }],

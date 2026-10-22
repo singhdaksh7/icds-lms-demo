@@ -62,10 +62,64 @@ async function getPlatformStats() {
   };
 }
 
+// Homepage mentor spotlight query: loads selected instructor (or Dr. Tanu Raghav fallback)
+// with published credentials.
+async function getMentorInstructor(instructorId = null) {
+  const numericId = parseInt(instructorId, 10);
+  let instructor = null;
+
+  if (numericId && !Number.isNaN(numericId)) {
+    instructor = await prisma.instructor.findUnique({
+      where: { id: numericId },
+      include: {
+        credentials: {
+          where: { isPublished: true },
+          orderBy: { sortOrder: 'asc' },
+        },
+      },
+    });
+    if (instructor && instructor.status === 'ACTIVE') {
+      return instructor;
+    }
+  }
+
+  instructor = await prisma.instructor.findFirst({
+    where: {
+      status: 'ACTIVE',
+      OR: [
+        { name: { contains: 'Tanu' } },
+        { slug: { contains: 'tanu' } },
+      ],
+    },
+    include: {
+      credentials: {
+        where: { isPublished: true },
+        orderBy: { sortOrder: 'asc' },
+      },
+    },
+  });
+
+  if (!instructor) {
+    instructor = await prisma.instructor.findFirst({
+      where: { status: 'ACTIVE' },
+      include: {
+        credentials: {
+          where: { isPublished: true },
+          orderBy: { sortOrder: 'asc' },
+        },
+      },
+      orderBy: { id: 'asc' },
+    });
+  }
+
+  return instructor;
+}
+
 module.exports = {
   getActiveCategories,
   getFeaturedCourses,
   getActiveInstructors,
   getApprovedReviews,
   getPlatformStats,
+  getMentorInstructor,
 };
