@@ -51,10 +51,14 @@ function buildSectionRenderList(sectionKeys) {
   ];
   const list = [...keys];
   for (const c of companions) {
+    if (seen.has(c.id)) continue;
     const anchor = c.anchors.find((a) => seen.has(a));
-    if (anchor) list.splice(list.indexOf(anchor) + 1, 0, c.id);
+    if (anchor) {
+      list.splice(list.indexOf(anchor) + 1, 0, c.id);
+      seen.add(c.id);
+    }
   }
-  return list;
+  return Array.from(new Set(list));
 }
 
 const SECTION_METADATA = {
