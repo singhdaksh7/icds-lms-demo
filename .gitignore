@@ -32,3 +32,11 @@ prisma/*.db
 
 # Admin-uploaded certificate PDFs - never committed, never web-served directly.
 storage/certificates/*
+
+# Local nested copy or demo clone
+icds-lms-demo/
+
+# Temporary local preview / QA scripts
+scripts/seed-local-preview-banners-and-settings.js
+scripts/test-admin-persistence-qa.js
+
