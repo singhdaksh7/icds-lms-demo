@@ -818,22 +818,41 @@
 .stats-strip {
   position: relative;
   z-index: 5;
-  margin-top: -45px;
-  margin-bottom: 20px;
+  margin-top: -20px;
+  margin-bottom: 28px;
+}
+
+/* Ensure hero floating badge stays safely clear of the stats band */
+.hero-visual .hero-floating-card.first,
+.hero-image-wrapper .hero-floating-card.first {
+  bottom: 95px;
 }
 
 .stats-cohesive-band {
+  position: relative;
   background: #ffffff;
-  background: radial-gradient(ellipse at 50% -20%, rgba(217, 119, 6, 0.08) 0%, rgba(255, 255, 255, 0.98) 60%, #fffdfa 100%);
-  border: 1.5px solid rgba(217, 119, 6, 0.22);
+  border: 1px solid rgba(217, 119, 6, 0.18);
   border-radius: 26px;
-  box-shadow: 0 16px 44px rgba(11, 19, 37, 0.06), 0 0 32px rgba(217, 119, 6, 0.05);
-  padding: 32px 40px;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  box-shadow: 0 10px 30px rgba(11, 19, 37, 0.04), 0 2px 8px rgba(11, 19, 37, 0.02);
+  padding: 26px 36px;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+/* Soft amber aura cleanly behind the container without clipped edges */
+.stats-cohesive-band::before {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  border-radius: 28px;
+  background: radial-gradient(ellipse at 50% 50%, rgba(217, 119, 6, 0.11) 0%, rgba(217, 119, 6, 0.03) 50%, transparent 75%);
+  filter: blur(16px);
+  z-index: -1;
+  pointer-events: none;
 }
 
 .stats-cohesive-band:hover {
-  box-shadow: 0 20px 52px rgba(11, 19, 37, 0.09), 0 0 40px rgba(217, 119, 6, 0.08);
+  box-shadow: 0 14px 38px rgba(11, 19, 37, 0.06), 0 4px 12px rgba(217, 119, 6, 0.04);
+  transform: translateY(-2px);
 }
 
 .stats-band-inner {
@@ -841,75 +860,114 @@
   align-items: center;
   justify-content: space-around;
   width: 100%;
-  gap: 16px;
+  gap: 0;
 }
 
 .stats-band-inner .stat-item {
   flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   text-align: center;
   position: relative;
-  padding: 0 20px;
+  padding: 0 24px;
+  min-width: 0;
 }
 
+/* Subtle short vertical separators centered vertically */
 .stats-band-inner .stat-item:not(:last-child)::after {
   content: "";
   position: absolute;
   right: 0;
-  top: 15%;
-  height: 70%;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 48px;
   width: 1px;
-  background: linear-gradient(180deg, transparent, rgba(217, 119, 6, 0.25), transparent);
+  background: linear-gradient(180deg, rgba(217, 119, 6, 0.04), rgba(217, 119, 6, 0.22) 30%, rgba(217, 119, 6, 0.22) 70%, rgba(217, 119, 6, 0.04));
 }
 
 .stats-band-inner .stat-number {
   font-family: "Playfair Display", Georgia, serif;
-  font-size: clamp(34px, 3.4vw, 44px);
+  font-size: clamp(34px, 2.6vw, 40px);
   font-weight: 800;
   line-height: 1.1;
-  color: var(--hp-charcoal, #0b1325);
-  background: linear-gradient(135deg, #0b1325 35%, #c28e34 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: #0b1325;
   display: inline-block;
   margin-bottom: 4px;
+  letter-spacing: -0.01em;
 }
 
 .stats-band-inner .stat-label {
-  font-size: 13.5px;
+  font-size: 15.5px;
   font-weight: 600;
-  color: #64748b;
-  letter-spacing: 0.02em;
+  color: #556987;
+  letter-spacing: 0.01em;
   margin: 0;
-  line-height: 1.4;
+  line-height: 1.25;
+  text-align: center;
+}
+
+@media (max-width: 991.98px) {
+  .stats-cohesive-band {
+    padding: 22px 24px;
+    border-radius: 22px;
+  }
+  .stats-band-inner .stat-number {
+    font-size: 32px;
+  }
+  .stats-band-inner .stat-label {
+    font-size: 14.5px;
+  }
+  .stats-band-inner .stat-item:not(:last-child)::after {
+    height: 40px;
+  }
 }
 
 @media (max-width: 767.98px) {
   .stats-strip {
-    margin-top: -30px;
+    margin-top: -15px;
+    margin-bottom: 24px;
   }
   .stats-cohesive-band {
-    padding: 22px 14px;
+    padding: 18px 14px;
     border-radius: 20px;
   }
   .stats-band-inner {
-    gap: 6px;
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: 1fr;
+    gap: 8px;
   }
   .stats-band-inner .stat-item {
-    padding: 0 8px;
+    padding: 0 4px;
+  }
+  .stats-band-inner .stat-item:not(:last-child)::after {
+    display: none;
   }
   .stats-band-inner .stat-number {
     font-size: 26px;
+    margin-bottom: 2px;
   }
   .stats-band-inner .stat-label {
-    font-size: 11.5px;
+    font-size: 13px;
+    line-height: 1.2;
   }
 }
 
-@media (max-width: 480px) {
+@media (max-width: 390px) {
+  .stats-cohesive-band {
+    padding: 16px 10px;
+    border-radius: 18px;
+  }
   .stats-band-inner {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    gap: 4px;
+  }
+  .stats-band-inner .stat-number {
+    font-size: 24px;
+  }
+  .stats-band-inner .stat-label {
+    font-size: 12px;
   }
 }
 
