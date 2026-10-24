@@ -13,7 +13,7 @@ const categoryIcons = {
 <% const sec = cms.categories; %>
 <% if (sec.enabled) { %>
 <!-- CATEGORIES -->
-<section class="section-space" id="categories">
+<section class="section-space categories-section" id="categories">
 
     <div class="container">
 
@@ -42,17 +42,67 @@ const categoryIcons = {
                 <%= sec.emptyText %>
             </p>
 
+        <% } else if (categories.length === 1) { %>
+            <% const category = categories[0]; %>
+            <div class="category-featured-wrap reveal-element">
+                <div class="category-card category-featured-card">
+                    <div class="category-featured-content">
+                        <div class="category-featured-eyebrow">
+                            <i class="bi bi-award-fill me-1"></i> Featured Discipline
+                        </div>
+                        <h3 class="category-title category-featured-title">
+                            <%= category.name %>
+                        </h3>
+                        <% if (category.description) { %>
+                            <p class="category-featured-desc">
+                                <%= category.description %>
+                            </p>
+                        <% } else { %>
+                            <p class="category-featured-desc">
+                                Explore master-level clinical training in <%= category.name %>, with structured modules, evidence-based workflows, and practical hands-on demonstrations.
+                            </p>
+                        <% } %>
+                        <div class="category-featured-meta">
+                            <span class="category-count category-featured-pill">
+                                <i class="bi bi-collection-play-fill me-1"></i>
+                                <%= category._count.courses %> Course<%= category._count.courses === 1 ? '' : 's' %>
+                            </span>
+                        </div>
+                        <div class="category-featured-action">
+                            <a href="/courses?category=<%= category.slug %>" class="category-featured-btn">
+                                <span>Explore Courses</span>
+                                <i class="bi bi-arrow-right ms-2"></i>
+                            </a>
+                        </div>
+                    </div>
+                    <div class="category-featured-media">
+                        <% if (category.imageUrl) { %>
+                            <img
+                                class="category-featured-img"
+                                src="<%= category.imageUrl %>"
+                                alt="<%= category.name %>"
+                                loading="lazy"
+                                data-fallback-src="/assets/images/hero-placeholder.svg">
+                        <% } else { %>
+                            <div class="category-featured-fallback">
+                                <i class="bi <%= categoryIcons[category.slug] || 'bi-mortarboard' %>"></i>
+                            </div>
+                        <% } %>
+                    </div>
+                </div>
+            </div>
+
         <% } else { %>
 
-            <div class="row g-4">
+            <div class="row g-4 categories-grid">
 
                 <% categories.forEach(function (category) { %>
 
-                    <div class="col-6 col-lg-3 reveal-element">
+                    <div class="col-12 col-md-6 col-lg-4 reveal-element">
 
-                        <a href="/courses?category=<%= category.slug %>" class="text-decoration-none">
+                        <a href="/courses?category=<%= category.slug %>" class="text-decoration-none d-block h-100">
 
-                            <div class="category-card">
+                            <div class="category-card h-100">
 
                                 <% if (category.imageUrl) { %>
                                     <div class="category-image-wrap">
@@ -65,16 +115,18 @@ const categoryIcons = {
                                     </div>
                                 <% } %>
 
-                                <div class="category-icon">
-                                    <i class="bi <%= categoryIcons[category.slug] || 'bi-mortarboard' %>"></i>
-                                </div>
+                                <div class="category-card-body">
+                                    <div class="category-icon">
+                                        <i class="bi <%= categoryIcons[category.slug] || 'bi-mortarboard' %>"></i>
+                                    </div>
 
-                                <h3 class="category-title">
-                                    <%= category.name %>
-                                </h3>
+                                    <h3 class="category-title">
+                                        <%= category.name %>
+                                    </h3>
 
-                                <div class="category-count">
-                                    <%= category._count.courses %> Course<%= category._count.courses === 1 ? '' : 's' %>
+                                    <div class="category-count">
+                                        <%= category._count.courses %> Course<%= category._count.courses === 1 ? '' : 's' %>
+                                    </div>
                                 </div>
 
                             </div>

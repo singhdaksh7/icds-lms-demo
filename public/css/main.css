@@ -1002,18 +1002,17 @@
         }
 
         .process-section {
-            background: var(--secondary-color);
+            background: #fffdf9;
             position: relative;
             overflow: hidden;
         }
 
-        .process-section .section-title,
-        .process-section .section-description {
-            color: #fff;
+        .process-section .section-title {
+            color: var(--secondary-color);
         }
 
         .process-section .section-description {
-            color: rgba(255,255,255,.62);
+            color: var(--body-color);
         }
 
         .process-step {

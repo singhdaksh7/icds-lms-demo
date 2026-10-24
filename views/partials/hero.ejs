@@ -126,43 +126,35 @@
 
     <div class="container">
 
-        <div class="stats-box">
+        <div class="stats-box stats-cohesive-band">
 
-            <div class="row">
+            <div class="stats-band-inner">
 
                 <% if (stats.courseCount > 0) { %>
-                <div class="col-6 col-lg-3">
-                    <div class="stat-item">
-                        <div class="stat-number"><%= stats.courseCount %>+</div>
-                        <div class="stat-label"><%= hero.statCoursesLabel %></div>
-                    </div>
+                <div class="stat-item">
+                    <div class="stat-number"><%= stats.courseCount %>+</div>
+                    <div class="stat-label"><%= hero.statCoursesLabel %></div>
                 </div>
                 <% } %>
 
                 <% if (stats.studentCount > 0) { %>
-                <div class="col-6 col-lg-3">
-                    <div class="stat-item">
-                        <div class="stat-number"><%= stats.studentCount %></div>
-                        <div class="stat-label"><%= hero.statStudentsLabel %></div>
-                    </div>
+                <div class="stat-item">
+                    <div class="stat-number"><%= stats.studentCount %></div>
+                    <div class="stat-label"><%= hero.statStudentsLabel %></div>
                 </div>
                 <% } %>
 
                 <% if (stats.instructorCount > 0) { %>
-                <div class="col-6 col-lg-3">
-                    <div class="stat-item">
-                        <div class="stat-number"><%= stats.instructorCount %></div>
-                        <div class="stat-label"><%= hero.statInstructorsLabel %></div>
-                    </div>
+                <div class="stat-item">
+                    <div class="stat-number"><%= stats.instructorCount %></div>
+                    <div class="stat-label"><%= hero.statInstructorsLabel %></div>
                 </div>
                 <% } %>
 
                 <% if (stats.averageRating) { %>
-                <div class="col-6 col-lg-3">
-                    <div class="stat-item">
-                        <div class="stat-number"><%= stats.averageRating %>/5</div>
-                        <div class="stat-label"><%= hero.statRatingLabel %> (<%= stats.ratingCount %> reviews)</div>
-                    </div>
+                <div class="stat-item">
+                    <div class="stat-number"><%= stats.averageRating %>/5</div>
+                    <div class="stat-label"><%= hero.statRatingLabel %> (<%= stats.ratingCount %> reviews)</div>
                 </div>
                 <% } %>
 

@@ -7,7 +7,7 @@
 
         <div class="section-heading reveal-element">
 
-            <div class="section-tag text-white-50">
+            <div class="section-tag">
                 <%= proc.eyebrow %>
             </div>
 
@@ -22,28 +22,36 @@
         </div>
 
 
-        <div class="row g-5">
+        <div class="process-steps-track reveal-element">
+            <div class="process-steps-line" aria-hidden="true"></div>
 
-            <% [1, 2, 3, 4].forEach(function (n) { %>
-                <div class="col-md-3 reveal-element">
+            <div class="row g-4 process-steps-row">
 
-                    <div class="process-step">
+                <% [1, 2, 3, 4].forEach(function (n) { %>
+                    <div class="col-12 col-md-6 col-lg-3">
 
-                        <div class="process-number">
-                            <%= proc['step' + n + 'Number'] %>
+                        <div class="process-step">
+
+                            <div class="process-number-wrap">
+                                <div class="process-number">
+                                    <%= proc['step' + n + 'Number'] %>
+                                </div>
+                            </div>
+
+                            <div class="process-step-content">
+                                <h4><%= proc['step' + n + 'Title'] %></h4>
+
+                                <p>
+                                    <%= proc['step' + n + 'Desc'] %>
+                                </p>
+                            </div>
+
                         </div>
 
-                        <h4><%= proc['step' + n + 'Title'] %></h4>
-
-                        <p>
-                            <%= proc['step' + n + 'Desc'] %>
-                        </p>
-
                     </div>
+                <% }); %>
 
-                </div>
-            <% }); %>
-
+            </div>
         </div>
 
     </div>
