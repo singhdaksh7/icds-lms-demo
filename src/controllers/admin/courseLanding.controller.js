@@ -752,11 +752,21 @@ async function moveAccessStep(req, res, next) {
 }
 
 // 13. Dynamic Section Order & Toggle
+// The route param is the section KEY (HERO, FAQ, ...), never a row id: a course with no saved
+// section rows would otherwise be shown made-up ids.
+function sectionKeyFrom(req) {
+  const key = String(req.params.sectionId || '').toUpperCase();
+  if (!courseLandingService.DEFAULT_SECTION_ORDER.includes(key)) throw new courseLandingService.CourseLandingError('Unknown section.', 404);
+  return key;
+}
+
 async function toggleSection(req, res, next) {
   try {
     const courseId = parseInt(req.params.courseId, 10);
-    const sectionId = parseInt(req.params.sectionId, 10);
-    await courseLandingService.toggleLandingSection(courseId, sectionId);
+    const key = sectionKeyFrom(req);
+    const sections = await courseLandingService.ensureCourseLandingSections(courseId);
+    const current = sections.find((s) => s.sectionKey === key);
+    await courseLandingService.toggleCourseSection(courseId, key, !(current && current.isEnabled));
     req.flashSuccess('Section visibility toggled.');
     res.redirect(`/admin/courses/${courseId}/landing-page?tab=section-order`);
   } catch (err) {
@@ -768,9 +778,9 @@ async function toggleSection(req, res, next) {
 async function moveSection(req, res, next) {
   try {
     const courseId = parseInt(req.params.courseId, 10);
-    const sectionId = parseInt(req.params.sectionId, 10);
+    const key = sectionKeyFrom(req);
     const direction = req.body.direction === 'down' ? 'down' : 'up';
-    await courseLandingService.moveLandingSection(courseId, sectionId, direction);
+    await courseLandingService.moveCourseSection(courseId, key, direction);
     res.redirect(`/admin/courses/${courseId}/landing-page?tab=section-order`);
   } catch (err) {
     req.flashError(err.message || 'Failed to reorder section.');
@@ -798,12 +808,13 @@ async function previewLanding(req, res, next) {
       return res.redirect('/admin/courses');
     }
 
-    const [curriculum, stats, resources, landing] = await Promise.all([
-      curriculumService.getCurriculumTree(course.id, { publishedOnly: false }),
-      curriculumService.getCourseStats(course.id),
+    // Admin preview shows everything an Admin can see: unpublished curriculum/resources and demo reviews.
+    const [curriculum, stats, resources] = await Promise.all([
+      curriculumService.getCourseCurriculum(course.id, { publishedOnly: false }),
+      curriculumService.getPublicCourseStats(course.id),
       curriculumService.listResourcesForCourse(course.id, { publishedOnly: false }),
-      courseLandingService.getPublicLandingData(course.id, stats, { includeDemo: true }),
     ]);
+    const landing = await courseLandingService.getPublicLandingData(course.id, stats, { includeDemo: true });
 
     const price = Number(course.price) || 0;
     const isFree = price === 0;

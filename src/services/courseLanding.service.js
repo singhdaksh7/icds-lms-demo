@@ -1551,6 +1551,7 @@ module.exports = {
   moveAccessStep,
 
   ensureCourseLandingSections,
+  ensureCourseLandingSections,
   moveCourseSection,
   toggleCourseSection,
 };

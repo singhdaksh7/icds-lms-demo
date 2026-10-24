@@ -2146,17 +2146,17 @@
                                     </td>
                                     <td class="text-end">
                                         <div class="btn-group btn-group-sm">
-                                            <form method="POST" action="/admin/courses/<%= course.id %>/landing-page/sections/<%= sec.id %>/move" class="d-inline">
+                                            <form method="POST" action="/admin/courses/<%= course.id %>/landing-page/sections/<%= sec.sectionKey %>/move" class="d-inline">
                                                 <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                                                 <input type="hidden" name="direction" value="up">
                                                 <button type="submit" class="btn btn-outline-secondary btn-sm" title="Move Up" <%= idx === 0 ? 'disabled' : '' %>>↑</button>
                                             </form>
-                                            <form method="POST" action="/admin/courses/<%= course.id %>/landing-page/sections/<%= sec.id %>/move" class="d-inline">
+                                            <form method="POST" action="/admin/courses/<%= course.id %>/landing-page/sections/<%= sec.sectionKey %>/move" class="d-inline">
                                                 <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                                                 <input type="hidden" name="direction" value="down">
                                                 <button type="submit" class="btn btn-outline-secondary btn-sm" title="Move Down" <%= idx === landingSections.length - 1 ? 'disabled' : '' %>>↓</button>
                                             </form>
-                                            <form method="POST" action="/admin/courses/<%= course.id %>/landing-page/sections/<%= sec.id %>/toggle" class="d-inline">
+                                            <form method="POST" action="/admin/courses/<%= course.id %>/landing-page/sections/<%= sec.sectionKey %>/toggle" class="d-inline">
                                                 <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                                                 <button type="submit" class="btn btn-outline-<%= sec.isEnabled ? 'warning' : 'success' %> btn-sm" title="Toggle Visibility">
                                                     <%= sec.isEnabled ? 'Disable' : 'Enable' %>
