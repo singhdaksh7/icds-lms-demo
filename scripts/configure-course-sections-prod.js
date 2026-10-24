@@ -1,6 +1,12 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
+// Bootstrap-only by default: creates what is missing and NEVER overwrites
+// content the owner has edited in the admin CMS (instructor profile, course
+// price/instructor, landing-page copy, homepage mentor settings). Pass --force
+// to deliberately re-apply the original FMR configuration.
+const FORCE = process.argv.includes('--force');
+
 async function main() {
   console.log('--- Configuring ICDS Course Content Sections & Dr. Tanu Raghav ---');
 
@@ -32,7 +38,7 @@ async function main() {
     console.log('Created instructor:', instructor.id, instructor.name);
   } else {
     console.log('Found existing instructor:', instructor.id, instructor.name);
-    instructor = await prisma.instructor.update({
+    if (FORCE) instructor = await prisma.instructor.update({
       where: { id: instructor.id },
       data: {
         designation: 'Founder, ICDS',
@@ -99,20 +105,24 @@ async function main() {
   });
 
   // Assign Dr. Tanu Raghav as Course Instructor & ensure FMR is Free
-  await prisma.course.update({
-    where: { id: fmrCourse.id },
-    data: {
-      instructorId: instructor.id,
-      price: 0,
-      salePrice: null,
-    },
-  });
+  if (FORCE) {
+    await prisma.course.update({
+      where: { id: fmrCourse.id },
+      data: {
+        instructorId: instructor.id,
+        price: 0,
+        salePrice: null,
+      },
+    });
+  } else if (!fmrCourse.instructorId) {
+    await prisma.course.update({ where: { id: fmrCourse.id }, data: { instructorId: instructor.id } });
+  }
   console.log(`Assigned course ${fmrCourse.id} to instructor ${instructor.id} (${instructor.name}) and ensured price is Free (0)`);
 
   // 3. Configure Course Landing Content
   const landing = await prisma.courseLandingContent.upsert({
     where: { courseId: fmrCourse.id },
-    update: {
+    update: FORCE ? {
       accessLabel: 'Self-Paced Access',
       // Section 1: Why Register
       whyRegisterEnabled: true,
@@ -135,7 +145,7 @@ async function main() {
       mentorSectionEnabled: true,
       mentorEyebrow: 'Meet Your Mentor',
       mentorHeading: 'Learn from Dr. Tanu Raghav',
-    },
+    } : {},
     create: {
       courseId: fmrCourse.id,
       accessLabel: 'Self-Paced Access',
@@ -287,7 +297,7 @@ async function main() {
   for (const s of homeSettings) {
     await prisma.siteSetting.upsert({
       where: { key: s.key },
-      update: { value: s.value },
+      update: FORCE ? { value: s.value } : {},
       create: { key: s.key, value: s.value },
     });
   }

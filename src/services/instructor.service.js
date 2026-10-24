@@ -1,6 +1,7 @@
 const { prisma } = require('../config/db');
 const { generateUniqueSlug } = require('../lib/slug');
 const imageStorage = require('../lib/imageStorage');
+const { parseFormBool } = require('../lib/formBool');
 
 class InstructorError extends Error {
   constructor(message, statusCode = 400) {
@@ -138,7 +139,7 @@ async function addCredential(instructorId, { title, description, icon, sortOrder
       description: description ? String(description).trim() : null,
       icon: icon ? String(icon).trim().slice(0, 50) : null,
       sortOrder: Number(sortOrder) || count * 10 + 10,
-      isPublished: Boolean(isPublished),
+      isPublished: parseFormBool(isPublished, true),
     },
   });
 }
@@ -153,7 +154,7 @@ async function updateCredential(instructorId, credentialId, { title, description
       ...(title !== undefined ? { title: String(title).trim().slice(0, 300) } : {}),
       ...(description !== undefined ? { description: description ? String(description).trim() : null } : {}),
       ...(icon !== undefined ? { icon: icon ? String(icon).trim().slice(0, 50) : null } : {}),
-      ...(isPublished !== undefined ? { isPublished: isPublished === true || isPublished === 'true' || isPublished === 1 || isPublished === '1' } : {}),
+      ...(isPublished !== undefined ? { isPublished: parseFormBool(isPublished) } : {}),
     },
   });
 }

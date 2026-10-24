@@ -1,7 +1,25 @@
 const { prisma } = require('../src/config/db');
 
+// Bootstrap-only by default: this script creates MISSING content and never
+// touches anything the owner has already saved through the admin CMS. Pass
+// --force to deliberately wipe and re-seed the FMR landing content.
+const FORCE = process.argv.includes('--force');
+
+// Returns true when the section should be (re)seeded: always under --force
+// (after clearing it), otherwise only when the course has no rows yet.
+async function claimSection(delegate, courseId, label) {
+  const existing = await delegate.count({ where: { courseId } });
+  if (existing === 0) return true;
+  if (FORCE) {
+    await delegate.deleteMany({ where: { courseId } });
+    return true;
+  }
+  console.log(`Skipping ${label}: ${existing} existing item(s) preserved (use --force to overwrite).`);
+  return false;
+}
+
 async function seedFmrLandingContent() {
-  console.log('--- Seeding FMR Landing Page CMS Content ---');
+  console.log(`--- Seeding FMR Landing Page CMS Content${FORCE ? ' (FORCE)' : ' (create-missing only)'} ---`);
 
   const course = await prisma.course.findFirst({
     where: { slug: 'advanced-fmr-master-class' },
@@ -87,7 +105,7 @@ async function seedFmrLandingContent() {
       stickyCtaText: '15 Structured Video Lessons',
       stickyCtaButtonLabel: 'Enroll Free →',
     },
-    update: {
+    update: FORCE ? {
       heroEyebrow: 'Dental Sciences • Online Clinical Course',
       heroAccentText: 'Master Class',
       heroDescription: 'Comprehensive clinical masterclass covering foundational principles, occlusion, case diagnostics, treatment sequencing, and hands-on clinical workflows.',
@@ -103,19 +121,19 @@ async function seedFmrLandingContent() {
       finalCtaEnabled: true,
       stickyCtaEnabled: true,
       stickyCtaText: '15 Structured Video Lessons',
-    },
+    } : {},
   });
   console.log('Upserted landing content settings for course ID:', landingContent.courseId);
 
   // 2. Hero Chips
-  await prisma.courseHeroChip.deleteMany({ where: { courseId: course.id } });
+  const doChips = await claimSection(prisma.courseHeroChip, course.id, 'chips');
   const chips = [
     { label: '15 Structured Video Lessons', sortOrder: 1 },
     { label: 'Self-Paced Learning', sortOrder: 2 },
     { label: 'Downloadable Clinical Forms', sortOrder: 3 },
     { label: 'Private Streaming', sortOrder: 4 },
   ];
-  for (const chip of chips) {
+  for (const chip of (doChips ? chips : [])) {
     await prisma.courseHeroChip.create({
       data: { courseId: course.id, label: chip.label, sortOrder: chip.sortOrder, isPublished: true },
     });
@@ -123,7 +141,7 @@ async function seedFmrLandingContent() {
   console.log(`Seeded ${chips.length} hero chips.`);
 
   // 3. Takeaways
-  await prisma.courseTakeaway.deleteMany({ where: { courseId: course.id } });
+  const doTakeaways = await claimSection(prisma.courseTakeaway, course.id, 'takeaways');
   const takeaways = [
     {
       icon: '01',
@@ -150,7 +168,7 @@ async function seedFmrLandingContent() {
       sortOrder: 4,
     },
   ];
-  for (const t of takeaways) {
+  for (const t of (doTakeaways ? takeaways : [])) {
     await prisma.courseTakeaway.create({
       data: {
         courseId: course.id,
@@ -165,7 +183,7 @@ async function seedFmrLandingContent() {
   console.log(`Seeded ${takeaways.length} takeaways.`);
 
   // 4. Clinical Questions
-  await prisma.courseQuestion.deleteMany({ where: { courseId: course.id } });
+  const doQuestions = await claimSection(prisma.courseQuestion, course.id, 'clinical questions');
   const questions = [
     'How to systematically assess, plan, and execute an FMR case',
     'What sequential workflow steps to follow from diagnostics to delivery',
@@ -177,7 +195,7 @@ async function seedFmrLandingContent() {
     'How to zero, calibrate, and program semi-adjustable articulators',
     'How to ensure long-term structural and biological success of restorative cases',
   ];
-  for (let i = 0; i < questions.length; i++) {
+  for (let i = 0; doQuestions && i < questions.length; i++) {
     await prisma.courseQuestion.create({
       data: {
         courseId: course.id,
@@ -190,14 +208,14 @@ async function seedFmrLandingContent() {
   console.log(`Seeded ${questions.length} clinical questions.`);
 
   // 5. Target Audience
-  await prisma.courseAudienceItem.deleteMany({ where: { courseId: course.id } });
+  const doAudience = await claimSection(prisma.courseAudienceItem, course.id, 'audience items');
   const forItems = [
     'Ambitious dentists aiming to excel in functional and restorative dentistry',
     'Clinicians seeking stronger mastery and predictable occlusal outcomes',
     'Dental professionals dedicated to disciplined clinical protocols',
     'Dentists who prioritize long-term patient function, comfort, and stability',
   ];
-  for (let i = 0; i < forItems.length; i++) {
+  for (let i = 0; doAudience && i < forItems.length; i++) {
     await prisma.courseAudienceItem.create({
       data: { courseId: course.id, type: 'FOR', title: forItems[i], sortOrder: i + 1, isPublished: true },
     });
@@ -209,7 +227,7 @@ async function seedFmrLandingContent() {
     'Clinicians resistant to systematic clinical documentation and articulator programming',
     'Anyone seeking superficial cosmetic quick-fixes without functional stability',
   ];
-  for (let i = 0; i < notForItems.length; i++) {
+  for (let i = 0; doAudience && i < notForItems.length; i++) {
     await prisma.courseAudienceItem.create({
       data: { courseId: course.id, type: 'NOT_FOR', title: notForItems[i], sortOrder: i + 1, isPublished: true },
     });
@@ -217,7 +235,7 @@ async function seedFmrLandingContent() {
   console.log(`Seeded ${forItems.length} FOR and ${notForItems.length} NOT_FOR audience items.`);
 
   // 6. Course FAQs
-  await prisma.courseFaq.deleteMany({ where: { courseId: course.id } });
+  const doFaqs = await claimSection(prisma.courseFaq, course.id, 'course FAQs');
   const faqs = [
     {
       question: 'Is this masterclass suitable for general dentists?',
@@ -236,7 +254,7 @@ async function seedFmrLandingContent() {
       answer: 'Once enrolled, you receive online access to all published structured video lessons to learn at your own pace.',
     },
   ];
-  for (let i = 0; i < faqs.length; i++) {
+  for (let i = 0; doFaqs && i < faqs.length; i++) {
     await prisma.courseFaq.create({
       data: {
         courseId: course.id,

@@ -1,4 +1,5 @@
 const { prisma } = require('../config/db');
+const { parseFormBool } = require('../lib/formBool');
 
 class CourseLandingError extends Error {
   constructor(message, statusCode = 400) {
@@ -534,10 +535,7 @@ async function upsertLandingSettings(courseId, payload) {
     return trimmed ? trimmed.slice(0, max) : null;
   };
 
-  const cleanBool = (val, defaultVal = false) => {
-    if (val === undefined || val === null) return defaultVal;
-    return val === true || val === 'true' || val === 'on' || val === '1' || val === 1;
-  };
+  const cleanBool = (val, defaultVal = false) => parseFormBool(val, defaultVal);
 
   const data = {
     heroEnabled: cleanBool(payload.heroEnabled, true),
@@ -664,10 +662,19 @@ async function upsertLandingSettings(courseId, payload) {
     stickyCtaButtonLabel: cleanString(payload.stickyCtaButtonLabel, 100),
   };
 
+  // The admin editor posts one small form per tab to this endpoint. Only the
+  // fields a form actually submitted may be written; everything else keeps its
+  // stored value (otherwise saving one tab would null/reset every other tab and
+  // the public page would fall back to built-in default copy).
+  const submitted = {};
+  for (const key of Object.keys(data)) {
+    if (Object.prototype.hasOwnProperty.call(payload, key)) submitted[key] = data[key];
+  }
+
   return prisma.courseLandingContent.upsert({
     where: { courseId: numericCourseId },
-    create: { courseId: numericCourseId, ...data },
-    update: data,
+    create: { courseId: numericCourseId, ...submitted },
+    update: submitted,
   });
 }
 
@@ -1420,7 +1427,7 @@ async function toggleCourseSection(courseId, sectionKey, isEnabled) {
 // ============================================================================
 
 function cleanBoolValue(val) {
-  return val === true || val === 'true' || val === 'on' || val === 1 || val === '1';
+  return parseFormBool(val);
 }
 
 async function reorderItem(modelDelegate, whereFilter, itemId, direction) {

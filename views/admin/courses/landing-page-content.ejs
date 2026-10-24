@@ -84,6 +84,11 @@
         </button>
     </li>
     <li class="nav-item" role="presentation">
+        <button class="nav-link <%= activeTab === 'takeaways' ? 'active' : '' %>" id="tab-takeaways-nav" data-bs-toggle="tab" data-bs-target="#tab-takeaways" type="button" role="tab">
+            05b Learning Outcomes (<%= (typeof takeaways !== 'undefined' && takeaways) ? takeaways.length : 0 %>)
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
         <button class="nav-link <%= activeTab === 'curriculum' ? 'active' : '' %>" id="tab-curriculum-nav" data-bs-toggle="tab" data-bs-target="#tab-curriculum" type="button" role="tab">
             06 Curriculum
         </button>
@@ -173,6 +178,7 @@
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h5 class="mb-0 text-primary"><i class="bi bi-image me-2"></i>Hero Section Settings</h5>
                     <div class="form-check form-switch fs-5">
+                        <input type="hidden" name="heroEnabled" value="false">
                         <input class="form-check-input" type="checkbox" name="heroEnabled" id="heroEnabled" <%= landingContent.heroEnabled !== false ? 'checked' : '' %>>
                         <label class="form-check-label fs-6 fw-semibold" for="heroEnabled">Hero Section Enabled</label>
                     </div>
@@ -493,6 +499,7 @@
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h5 class="mb-0 text-primary"><i class="bi bi-question-circle me-2"></i>Questions Section Header</h5>
                     <div class="form-check form-switch fs-5">
+                        <input type="hidden" name="questionsEnabled" value="false">
                         <input class="form-check-input" type="checkbox" name="questionsEnabled" id="questionsEnabled" <%= landingContent.questionsEnabled !== false ? 'checked' : '' %>>
                         <label class="form-check-label fs-6 fw-semibold" for="questionsEnabled">Section Enabled</label>
                     </div>
@@ -588,6 +595,7 @@
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h5 class="mb-0 text-primary"><i class="bi bi-patch-question me-2"></i>Why Register Section Settings</h5>
                     <div class="form-check form-switch fs-5">
+                        <input type="hidden" name="whyRegisterEnabled" value="false">
                         <input class="form-check-input" type="checkbox" name="whyRegisterEnabled" id="whyRegisterEnabled" <%= landingContent.whyRegisterEnabled !== false ? 'checked' : '' %>>
                         <label class="form-check-label fs-6 fw-semibold" for="whyRegisterEnabled">Section Enabled</label>
                     </div>
@@ -701,6 +709,108 @@
         </div>
     </div>
 
+    <!-- 05b. LEARNING OUTCOMES (TAKEAWAYS) TAB -->
+    <div class="tab-pane fade <%= activeTab === 'takeaways' ? 'show active' : '' %>" id="tab-takeaways" role="tabpanel">
+        <div class="admin-card mb-4">
+            <form method="POST" action="/admin/courses/<%= course.id %>/landing-page/settings">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <input type="hidden" name="currentTab" value="takeaways">
+
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="mb-0 text-primary"><i class="bi bi-lightbulb me-2"></i>Learning Outcomes Section Settings</h5>
+                    <div class="form-check form-switch fs-5">
+                        <input type="hidden" name="takeawaysEnabled" value="false">
+                        <input class="form-check-input" type="checkbox" name="takeawaysEnabled" id="takeawaysEnabled" <%= landingContent.takeawaysEnabled !== false ? 'checked' : '' %>>
+                        <label class="form-check-label fs-6 fw-semibold" for="takeawaysEnabled">Section Enabled</label>
+                    </div>
+                </div>
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Section Eyebrow</label>
+                        <input type="text" name="takeawaysEyebrow" class="form-control form-control-custom" value="<%= landingContent.takeawaysEyebrow || 'Masterclass Learning Outcomes' %>">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Section Heading</label>
+                        <input type="text" name="takeawaysHeading" class="form-control form-control-custom" value="<%= landingContent.takeawaysHeading || 'What clinicians will learn in this master class' %>">
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label small fw-semibold">Intro Paragraph (optional)</label>
+                        <textarea name="takeawaysDescription" class="form-control form-control-custom" rows="2"><%= landingContent.takeawaysDescription || '' %></textarea>
+                    </div>
+                </div>
+
+                <div class="mt-4 pt-3 border-top">
+                    <button type="submit" class="btn btn-primary px-4">
+                        <i class="bi bi-save me-1"></i> Save Learning Outcomes Settings
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <div class="admin-card">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="mb-0 text-primary"><i class="bi bi-card-checklist me-2"></i>Learning Outcome Cards (<%= takeaways.length %>)</h5>
+                <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#createTakeawayModal">
+                    <i class="bi bi-plus-lg me-1"></i> Add Outcome
+                </button>
+            </div>
+
+            <% if (takeaways.length === 0) { %>
+                <div class="alert alert-secondary mb-0">No learning outcomes added yet. The section is hidden on the public page until at least one is published.</div>
+            <% } else { %>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width:70px;">Order</th>
+                                <th>Title</th>
+                                <th>Description</th>
+                                <th style="width:110px;">Status</th>
+                                <th style="width:180px;" class="text-end">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% takeaways.forEach(function(item, idx) { %>
+                                <tr>
+                                    <td><span class="badge bg-light text-dark border">#<%= item.sortOrder %></span></td>
+                                    <td><strong><%= item.title %></strong></td>
+                                    <td class="small text-muted"><%= item.description %></td>
+                                    <td>
+                                        <span class="badge bg-<%= item.isPublished ? 'success' : 'secondary' %>">
+                                            <%= item.isPublished ? 'Published' : 'Hidden' %>
+                                        </span>
+                                    </td>
+                                    <td class="text-end">
+                                        <div class="btn-group btn-group-sm">
+                                            <form method="POST" action="/admin/courses/<%= course.id %>/landing-page/takeaways/<%= item.id %>/move" class="d-inline">
+                                                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                                <input type="hidden" name="direction" value="up">
+                                                <button type="submit" class="btn btn-outline-secondary btn-sm" title="Move Up" <%= idx === 0 ? 'disabled' : '' %>>↑</button>
+                                            </form>
+                                            <form method="POST" action="/admin/courses/<%= course.id %>/landing-page/takeaways/<%= item.id %>/move" class="d-inline">
+                                                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                                <input type="hidden" name="direction" value="down">
+                                                <button type="submit" class="btn btn-outline-secondary btn-sm" title="Move Down" <%= idx === takeaways.length - 1 ? 'disabled' : '' %>>↓</button>
+                                            </form>
+                                            <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#editTakeawayModal-<%= item.id %>">
+                                                <i class="bi bi-pencil"></i>
+                                            </button>
+                                            <form method="POST" action="/admin/courses/<%= course.id %>/landing-page/takeaways/<%= item.id %>/delete" class="d-inline" data-confirm='Delete this learning outcome?'>
+                                                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                                <button type="submit" class="btn btn-outline-danger btn-sm"><i class="bi bi-trash"></i></button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                            <% }); %>
+                        </tbody>
+                    </table>
+                </div>
+            <% } %>
+        </div>
+    </div>
+
     <!-- 06. CURRICULUM TAB -->
     <div class="tab-pane fade <%= activeTab === 'curriculum' ? 'show active' : '' %>" id="tab-curriculum" role="tabpanel">
         <div class="admin-card">
@@ -711,6 +821,7 @@
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h5 class="mb-0 text-primary"><i class="bi bi-diagram-3 me-2"></i>Curriculum Display Options</h5>
                     <div class="form-check form-switch fs-5">
+                        <input type="hidden" name="curriculumEnabled" value="false">
                         <input class="form-check-input" type="checkbox" name="curriculumEnabled" id="curriculumEnabled" <%= landingContent.curriculumEnabled !== false ? 'checked' : '' %>>
                         <label class="form-check-label fs-6 fw-semibold" for="curriculumEnabled">Section Enabled</label>
                     </div>
@@ -735,6 +846,7 @@
 
                     <div class="col-md-4">
                         <div class="form-check mt-2">
+                            <input type="hidden" name="curriculumShowSessionCount" value="false">
                             <input class="form-check-input" type="checkbox" name="curriculumShowSessionCount" id="curriculumShowSessionCount" <%= landingContent.curriculumShowSessionCount !== false ? 'checked' : '' %>>
                             <label class="form-check-label fw-semibold" for="curriculumShowSessionCount">
                                 Show Published Sessions Metric
@@ -743,6 +855,7 @@
                     </div>
                     <div class="col-md-4">
                         <div class="form-check mt-2">
+                            <input type="hidden" name="curriculumShowTotalDuration" value="false">
                             <input class="form-check-input" type="checkbox" name="curriculumShowTotalDuration" id="curriculumShowTotalDuration" <%= landingContent.curriculumShowTotalDuration !== false ? 'checked' : '' %>>
                             <label class="form-check-label fw-semibold" for="curriculumShowTotalDuration">
                                 Show Total Duration Metric
@@ -751,6 +864,7 @@
                     </div>
                     <div class="col-md-4">
                         <div class="form-check mt-2">
+                            <input type="hidden" name="curriculumShowResourceCount" value="false">
                             <input class="form-check-input" type="checkbox" name="curriculumShowResourceCount" id="curriculumShowResourceCount" <%= landingContent.curriculumShowResourceCount !== false ? 'checked' : '' %>>
                             <label class="form-check-label fw-semibold" for="curriculumShowResourceCount">
                                 Show Resources Included Metric
@@ -760,6 +874,7 @@
 
                     <div class="col-md-6">
                         <div class="form-check">
+                            <input type="hidden" name="curriculumDefaultExpanded" value="false">
                             <input class="form-check-input" type="checkbox" name="curriculumDefaultExpanded" id="curriculumDefaultExpanded" <%= landingContent.curriculumDefaultExpanded !== false ? 'checked' : '' %>>
                             <label class="form-check-label fw-semibold" for="curriculumDefaultExpanded">
                                 Expand first module accordion by default
@@ -768,6 +883,7 @@
                     </div>
                     <div class="col-md-6">
                         <div class="form-check">
+                            <input type="hidden" name="showLessonDuration" value="false">
                             <input class="form-check-input" type="checkbox" name="showLessonDuration" id="showLessonDuration" <%= landingContent.showLessonDuration !== false ? 'checked' : '' %>>
                             <label class="form-check-label fw-semibold" for="showLessonDuration">
                                 Display video duration tags
@@ -776,6 +892,7 @@
                     </div>
                     <div class="col-md-6">
                         <div class="form-check">
+                            <input type="hidden" name="showLockIcon" value="false">
                             <input class="form-check-input" type="checkbox" name="showLockIcon" id="showLockIcon" <%= landingContent.showLockIcon !== false ? 'checked' : '' %>>
                             <label class="form-check-label fw-semibold" for="showLockIcon">
                                 Display lock icon for unenrolled students
@@ -784,6 +901,7 @@
                     </div>
                     <div class="col-md-6">
                         <div class="form-check">
+                            <input type="hidden" name="showPreviewBadge" value="false">
                             <input class="form-check-input" type="checkbox" name="showPreviewBadge" id="showPreviewBadge" <%= landingContent.showPreviewBadge !== false ? 'checked' : '' %>>
                             <label class="form-check-label fw-semibold" for="showPreviewBadge">
                                 Display "Free Preview" pill on preview lessons
@@ -811,6 +929,7 @@
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h5 class="mb-0 text-primary"><i class="bi bi-stars me-2"></i>Highlights Section Settings</h5>
                     <div class="form-check form-switch fs-5">
+                        <input type="hidden" name="highlightsEnabled" value="false">
                         <input class="form-check-input" type="checkbox" name="highlightsEnabled" id="highlightsEnabled" <%= landingContent.highlightsEnabled !== false ? 'checked' : '' %>>
                         <label class="form-check-label fs-6 fw-semibold" for="highlightsEnabled">Section Enabled</label>
                     </div>
@@ -912,6 +1031,7 @@
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h5 class="mb-0 text-primary"><i class="bi bi-credit-card-2-front me-2"></i>Access / Purchase Card Settings</h5>
                     <div class="form-check form-switch fs-5">
+                        <input type="hidden" name="purchaseCardEnabled" value="false">
                         <input class="form-check-input" type="checkbox" name="purchaseCardEnabled" id="purchaseCardEnabled" <%= landingContent.purchaseCardEnabled !== false ? 'checked' : '' %>>
                         <label class="form-check-label fs-6 fw-semibold" for="purchaseCardEnabled">Card Enabled</label>
                     </div>
@@ -960,6 +1080,7 @@
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h5 class="mb-0 text-primary"><i class="bi bi-chat-heart me-2"></i>Reviews Section Settings</h5>
                     <div class="form-check form-switch fs-5">
+                        <input type="hidden" name="reviewsEnabled" value="false">
                         <input class="form-check-input" type="checkbox" name="reviewsEnabled" id="reviewsEnabled" <%= landingContent.reviewsEnabled === true ? 'checked' : '' %>>
                         <label class="form-check-label fs-6 fw-semibold" for="reviewsEnabled">Section Enabled</label>
                     </div>
@@ -1120,12 +1241,14 @@
                                         <div class="row g-2">
                                             <div class="col-6">
                                                 <div class="form-check">
+                                                    <input type="hidden" name="isPublished" value="false">
                                                     <input class="form-check-input" type="checkbox" name="isPublished" id="editRevPub-<%= rev.id %>" <%= rev.isPublished ? 'checked' : '' %>>
                                                     <label class="form-check-label" for="editRevPub-<%= rev.id %>">Published</label>
                                                 </div>
                                             </div>
                                             <div class="col-6">
                                                 <div class="form-check">
+                                                    <input type="hidden" name="isDemo" value="false">
                                                     <input class="form-check-input" type="checkbox" name="isDemo" id="editRevDemo-<%= rev.id %>" <%= rev.isDemo ? 'checked' : '' %>>
                                                     <label class="form-check-label text-warning-emphasis fw-semibold" for="editRevDemo-<%= rev.id %>">
                                                         Demo Review (Preview only)
@@ -1157,6 +1280,7 @@
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h5 class="mb-0 text-primary"><i class="bi bi-columns-gap me-2"></i>Curriculum Comparison Matrix</h5>
                     <div class="form-check form-switch fs-5">
+                        <input type="hidden" name="comparisonEnabled" value="false">
                         <input class="form-check-input" type="checkbox" name="comparisonEnabled" id="comparisonEnabled" <%= landingContent.comparisonEnabled === true ? 'checked' : '' %>>
                         <label class="form-check-label fs-6 fw-semibold" for="comparisonEnabled">Section Enabled</label>
                     </div>
@@ -1257,6 +1381,7 @@
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h5 class="mb-0 text-primary"><i class="bi bi-people me-2"></i>Audience Section Settings</h5>
                     <div class="form-check form-switch fs-5">
+                        <input type="hidden" name="audienceEnabled" value="false">
                         <input class="form-check-input" type="checkbox" name="audienceEnabled" id="audienceEnabled" <%= landingContent.audienceEnabled !== false ? 'checked' : '' %>>
                         <label class="form-check-label fs-6 fw-semibold" for="audienceEnabled">Section Enabled</label>
                     </div>
@@ -1370,6 +1495,7 @@
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h5 class="mb-0 text-primary"><i class="bi bi-signpost-split me-2"></i>How You Get Access Settings</h5>
                     <div class="form-check form-switch fs-5">
+                        <input type="hidden" name="accessSectionEnabled" value="false">
                         <input class="form-check-input" type="checkbox" name="accessSectionEnabled" id="accessSectionEnabled" <%= landingContent.accessSectionEnabled === true ? 'checked' : '' %>>
                         <label class="form-check-label fs-6 fw-semibold" for="accessSectionEnabled">Section Enabled</label>
                     </div>
@@ -1480,6 +1606,7 @@
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h5 class="mb-0 text-primary"><i class="bi bi-person-badge me-2"></i>Meet Your Mentor Section Settings</h5>
                     <div class="form-check form-switch fs-5">
+                        <input type="hidden" name="mentorSectionEnabled" value="false">
                         <input class="form-check-input" type="checkbox" name="mentorSectionEnabled" id="mentorSectionEnabled" <%= landingContent.mentorSectionEnabled !== false ? 'checked' : '' %>>
                         <label class="form-check-label fs-6 fw-semibold" for="mentorSectionEnabled">Section Enabled</label>
                     </div>
@@ -1555,6 +1682,7 @@
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h5 class="mb-0 text-primary"><i class="bi bi-file-earmark-arrow-down me-2"></i>Downloadable Resources Settings</h5>
                     <div class="form-check form-switch fs-5">
+                        <input type="hidden" name="resourcesEnabled" value="false">
                         <input class="form-check-input" type="checkbox" name="resourcesEnabled" id="resourcesEnabled" <%= landingContent.resourcesEnabled !== false ? 'checked' : '' %>>
                         <label class="form-check-label fs-6 fw-semibold" for="resourcesEnabled">Section Enabled</label>
                     </div>
@@ -1606,6 +1734,7 @@
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h5 class="mb-0 text-primary"><i class="bi bi-question-diamond me-2"></i>FAQ Section Settings</h5>
                     <div class="form-check form-switch fs-5">
+                        <input type="hidden" name="faqEnabled" value="false">
                         <input class="form-check-input" type="checkbox" name="faqEnabled" id="faqEnabled" <%= landingContent.faqEnabled !== false ? 'checked' : '' %>>
                         <label class="form-check-label fs-6 fw-semibold" for="faqEnabled">Section Enabled</label>
                     </div>
@@ -1703,6 +1832,7 @@
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h5 class="mb-0 text-primary"><i class="bi bi-award me-2"></i>Social Proof Badge / Callout Settings</h5>
                     <div class="form-check form-switch fs-5">
+                        <input type="hidden" name="socialProofEnabled" value="false">
                         <input class="form-check-input" type="checkbox" name="socialProofEnabled" id="socialProofEnabled" <%= landingContent.socialProofEnabled === true ? 'checked' : '' %>>
                         <label class="form-check-label fs-6 fw-semibold" for="socialProofEnabled">Badge Enabled</label>
                     </div>
@@ -1750,6 +1880,7 @@
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h5 class="mb-0 text-primary"><i class="bi bi-box-arrow-in-right me-2"></i>Final Conversion CTA Section</h5>
                     <div class="form-check form-switch fs-5">
+                        <input type="hidden" name="finalCtaEnabled" value="false">
                         <input class="form-check-input" type="checkbox" name="finalCtaEnabled" id="finalCtaEnabled" <%= landingContent.finalCtaEnabled !== false ? 'checked' : '' %>>
                         <label class="form-check-label fs-6 fw-semibold" for="finalCtaEnabled">Section Enabled</label>
                     </div>
@@ -1809,6 +1940,7 @@
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h5 class="mb-0 text-primary"><i class="bi bi-pin-angle me-2"></i>Floating Bottom Bar Settings</h5>
                     <div class="form-check form-switch fs-5">
+                        <input type="hidden" name="stickyCtaEnabled" value="false">
                         <input class="form-check-input" type="checkbox" name="stickyCtaEnabled" id="stickyCtaEnabled" <%= landingContent.stickyCtaEnabled !== false ? 'checked' : '' %>>
                         <label class="form-check-label fs-6 fw-semibold" for="stickyCtaEnabled">Sticky Bar Enabled</label>
                     </div>
@@ -1974,6 +2106,147 @@
 
 <!-- MODALS -->
 
+<!-- Modal: Add Learning Outcome -->
+<div class="modal fade" id="createTakeawayModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="/admin/courses/<%= course.id %>/landing-page/takeaways">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add Learning Outcome</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Title</label>
+                        <input type="text" name="title" class="form-control" required maxlength="200">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Description</label>
+                        <textarea name="description" class="form-control" rows="3" required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Card Number / Icon Text (optional)</label>
+                        <input type="text" name="icon" class="form-control" maxlength="50" placeholder="e.g. 05">
+                    </div>
+                    <div class="form-check">
+                        <input type="hidden" name="isPublished" value="false">
+                        <input class="form-check-input" type="checkbox" name="isPublished" id="createTakeawayPub" checked>
+                        <label class="form-check-label" for="createTakeawayPub">Published</label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-sm btn-primary">Add Outcome</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit modals for every repeatable landing item. The Edit buttons in each tab
+     target #<prefix>-<id>; each form posts to the matching /edit route and
+     always submits the Published state explicitly (hidden "false" + checkbox). -->
+<%
+const editModalDefs = [
+    { prefix: 'editChipModal', route: 'chips', tab: 'hero', title: 'Edit Highlight Chip', items: typeof heroChips !== 'undefined' ? heroChips : [],
+      fields: [{ n: 'label', l: 'Chip Label', t: 'text', max: 100, req: true }] },
+    { prefix: 'editAccessPlanModal', route: 'access-plans', tab: 'access-plans', title: 'Edit Access Plan', items: typeof accessPlans !== 'undefined' ? accessPlans : [],
+      fields: [
+        { n: 'label', l: 'Plan Label', t: 'text', max: 100, req: true },
+        { n: 'durationDays', l: 'Duration (in Days, blank = Lifetime)', t: 'number' },
+        { n: 'price', l: 'Price (INR)', t: 'number', step: '0.01' },
+        { n: 'salePrice', l: 'Sale Price (optional)', t: 'number', step: '0.01' },
+      ], flags: [{ n: 'isDefault', l: 'Default Selected Plan' }] },
+    { prefix: 'editStatModal', route: 'stats', tab: 'stats', title: 'Edit Quick Stat', items: typeof courseStats !== 'undefined' ? courseStats : [],
+      fields: [
+        { n: 'statType', l: 'Stat Type', t: 'select', opts: ['MANUAL', 'PUBLISHED_VIDEO_COUNT', 'TOTAL_VIDEO_DURATION', 'RESOURCE_COUNT', 'MODULE_COUNT', 'TOPIC_COUNT', 'REVIEW_COUNT'] },
+        { n: 'value', l: 'Stat Value (ignored if AUTO)', t: 'text', max: 100 },
+        { n: 'label', l: 'Stat Label', t: 'text', max: 100, req: true },
+        { n: 'icon', l: 'Bootstrap Icon Class', t: 'text', max: 50 },
+      ] },
+    { prefix: 'editQuestionModal', route: 'questions', tab: 'questions', title: 'Edit Clinical Question', items: typeof questions !== 'undefined' ? questions : [],
+      fields: [{ n: 'question', l: 'Question', t: 'textarea', req: true }] },
+    { prefix: 'editWhyItemModal', route: 'why-register', tab: 'why-register', title: 'Edit Why Register Item', items: typeof whyRegisterItems !== 'undefined' ? whyRegisterItems : [],
+      fields: [
+        { n: 'type', l: 'Column Group', t: 'select', opts: ['WANT', 'GET'], labels: { WANT: 'This course is for you if you want to (Left)', GET: 'What you get (Right)' } },
+        { n: 'title', l: 'Item Title', t: 'text', req: true },
+        { n: 'description', l: 'Description (optional)', t: 'textarea' },
+      ] },
+    { prefix: 'editHighlightModal', route: 'highlights', tab: 'highlights', title: 'Edit Highlight', items: typeof highlights !== 'undefined' ? highlights : [],
+      fields: [
+        { n: 'title', l: 'Highlight Title', t: 'text', req: true },
+        { n: 'description', l: 'Description (optional)', t: 'textarea' },
+      ] },
+    { prefix: 'editAudienceModal', route: 'audience', tab: 'audience', title: 'Edit Audience Item', items: typeof audienceItems !== 'undefined' ? audienceItems : [],
+      fields: [
+        { n: 'type', l: 'Audience Group', t: 'select', opts: ['FOR', 'NOT_FOR'], labels: { FOR: 'Ideal For (Good fit)', NOT_FOR: 'Not For (Probably not for)' } },
+        { n: 'title', l: 'Item Text', t: 'text', req: true },
+      ] },
+    { prefix: 'editFaqModal', route: 'faqs', tab: 'faqs', title: 'Edit Course FAQ', items: typeof faqs !== 'undefined' ? faqs : [],
+      fields: [
+        { n: 'question', l: 'Question', t: 'text', req: true },
+        { n: 'answer', l: 'Answer', t: 'textarea', req: true },
+      ] },
+    { prefix: 'editTakeawayModal', route: 'takeaways', tab: 'takeaways', title: 'Edit Learning Outcome', items: typeof takeaways !== 'undefined' ? takeaways : [],
+      fields: [
+        { n: 'title', l: 'Title', t: 'text', max: 200, req: true },
+        { n: 'description', l: 'Description', t: 'textarea', req: true },
+        { n: 'icon', l: 'Card Number / Icon Text (optional)', t: 'text', max: 50 },
+      ] },
+];
+%>
+<% editModalDefs.forEach(function (def) { (def.items || []).forEach(function (it) { %>
+<div class="modal fade" id="<%= def.prefix %>-<%= it.id %>" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="/admin/courses/<%= course.id %>/landing-page/<%= def.route %>/<%= it.id %>/edit">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <input type="hidden" name="currentTab" value="<%= def.tab %>">
+                <div class="modal-header">
+                    <h5 class="modal-title"><%= def.title %></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <% def.fields.forEach(function (f) { const fid = def.prefix + '-' + it.id + '-' + f.n; const cur = (it[f.n] === null || it[f.n] === undefined) ? '' : String(it[f.n]); %>
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold" for="<%= fid %>"><%= f.l %></label>
+                            <% if (f.t === 'textarea') { %>
+                                <textarea id="<%= fid %>" name="<%= f.n %>" class="form-control" rows="3" <%= f.req ? 'required' : '' %>><%= cur %></textarea>
+                            <% } else if (f.t === 'select') { %>
+                                <select id="<%= fid %>" name="<%= f.n %>" class="form-select">
+                                    <% f.opts.forEach(function (o) { %>
+                                        <option value="<%= o %>" <%= cur === o ? 'selected' : '' %>><%= (f.labels && f.labels[o]) || o %></option>
+                                    <% }); %>
+                                </select>
+                            <% } else { %>
+                                <input id="<%= fid %>" type="<%= f.t %>" name="<%= f.n %>" class="form-control" value="<%= cur %>" <%- f.step ? 'step="' + f.step + '"' : '' %> <%- f.max ? 'maxlength="' + f.max + '"' : '' %> <%= f.req ? 'required' : '' %>>
+                            <% } %>
+                        </div>
+                    <% }); %>
+                    <% (def.flags || []).forEach(function (fl) { %>
+                        <div class="form-check mb-2">
+                            <input type="hidden" name="<%= fl.n %>" value="false">
+                            <input class="form-check-input" type="checkbox" name="<%= fl.n %>" id="<%= def.prefix %>-<%= it.id %>-<%= fl.n %>" <%= it[fl.n] ? 'checked' : '' %>>
+                            <label class="form-check-label" for="<%= def.prefix %>-<%= it.id %>-<%= fl.n %>"><%= fl.l %></label>
+                        </div>
+                    <% }); %>
+                    <div class="form-check">
+                        <input type="hidden" name="isPublished" value="false">
+                        <input class="form-check-input" type="checkbox" name="isPublished" id="<%= def.prefix %>-<%= it.id %>-pub" <%= it.isPublished ? 'checked' : '' %>>
+                        <label class="form-check-label" for="<%= def.prefix %>-<%= it.id %>-pub">Published (uncheck to hide from the public page)</label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-sm btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<% }); }); %>
+
 <!-- Modal: Add Hero Chip -->
 <div class="modal fade" id="createChipModal" tabindex="-1">
     <div class="modal-dialog">
@@ -1990,6 +2263,7 @@
                         <input type="text" name="label" class="form-control" placeholder="e.g. Structured Video Lessons" required maxlength="100">
                     </div>
                     <div class="form-check">
+                        <input type="hidden" name="isPublished" value="false">
                         <input class="form-check-input" type="checkbox" name="isPublished" id="createChipPub" checked>
                         <label class="form-check-label" for="createChipPub">Published</label>
                     </div>
@@ -2033,10 +2307,12 @@
                         </div>
                     </div>
                     <div class="form-check mb-2">
+                        <input type="hidden" name="isDefault" value="false">
                         <input class="form-check-input" type="checkbox" name="isDefault" id="planDef">
                         <label class="form-check-label" for="planDef">Mark as Default Selected Plan</label>
                     </div>
                     <div class="form-check">
+                        <input type="hidden" name="isPublished" value="false">
                         <input class="form-check-input" type="checkbox" name="isPublished" id="planPub" checked>
                         <label class="form-check-label" for="planPub">Published</label>
                     </div>
@@ -2086,6 +2362,7 @@
                         <input type="text" name="icon" class="form-control" value="bi-collection-play" placeholder="e.g. bi-collection-play">
                     </div>
                     <div class="form-check">
+                        <input type="hidden" name="isPublished" value="false">
                         <input class="form-check-input" type="checkbox" name="isPublished" id="statPub" checked>
                         <label class="form-check-label" for="statPub">Published</label>
                     </div>
@@ -2115,6 +2392,7 @@
                         <textarea name="question" class="form-control" rows="3" placeholder="e.g. How do I determine occlusal vertical dimension predictably?" required></textarea>
                     </div>
                     <div class="form-check">
+                        <input type="hidden" name="isPublished" value="false">
                         <input class="form-check-input" type="checkbox" name="isPublished" id="createQPub" checked>
                         <label class="form-check-label" for="createQPub">Published</label>
                     </div>
@@ -2155,6 +2433,7 @@
                         <textarea name="description" class="form-control" rows="2" placeholder="Explanatory subtext"></textarea>
                     </div>
                     <div class="form-check">
+                        <input type="hidden" name="isPublished" value="false">
                         <input class="form-check-input" type="checkbox" name="isPublished" id="whyItemPub" checked>
                         <label class="form-check-label" for="whyItemPub">Published</label>
                     </div>
@@ -2188,6 +2467,7 @@
                         <textarea name="description" class="form-control" rows="2" placeholder="Details of the demonstrated clinical skill"></textarea>
                     </div>
                     <div class="form-check">
+                        <input type="hidden" name="isPublished" value="false">
                         <input class="form-check-input" type="checkbox" name="isPublished" id="hlPub" checked>
                         <label class="form-check-label" for="hlPub">Published</label>
                     </div>
@@ -2246,12 +2526,14 @@
                     <div class="row g-2">
                         <div class="col-6">
                             <div class="form-check">
+                                <input type="hidden" name="isPublished" value="false">
                                 <input class="form-check-input" type="checkbox" name="isPublished" id="revPub" checked>
                                 <label class="form-check-label" for="revPub">Published</label>
                             </div>
                         </div>
                         <div class="col-6">
                             <div class="form-check">
+                                <input type="hidden" name="isDemo" value="false">
                                 <input class="form-check-input" type="checkbox" name="isDemo" id="revDemo">
                                 <label class="form-check-label text-warning-emphasis fw-semibold" for="revDemo">
                                     Demo Review (Preview only)
@@ -2293,6 +2575,7 @@
                         <input type="text" name="badgeText" class="form-control" placeholder="e.g. Recommended">
                     </div>
                     <div class="form-check">
+                        <input type="hidden" name="isRecommended" value="false">
                         <input class="form-check-input" type="checkbox" name="isRecommended" id="colRec">
                         <label class="form-check-label" for="colRec">Highlight as Recommended</label>
                     </div>
@@ -2329,6 +2612,7 @@
                         <input type="text" name="title" class="form-control" placeholder="e.g. General practitioners seeking predictable full mouth rehab workflows" required>
                     </div>
                     <div class="form-check">
+                        <input type="hidden" name="isPublished" value="false">
                         <input class="form-check-input" type="checkbox" name="isPublished" id="audPub" checked>
                         <label class="form-check-label" for="audPub">Published</label>
                     </div>
@@ -2362,6 +2646,7 @@
                         <textarea name="description" class="form-control" rows="2" placeholder="e.g. Complete instant free registration or payment."></textarea>
                     </div>
                     <div class="form-check">
+                        <input type="hidden" name="isPublished" value="false">
                         <input class="form-check-input" type="checkbox" name="isPublished" id="stepPub" checked>
                         <label class="form-check-label" for="stepPub">Published</label>
                     </div>
@@ -2395,6 +2680,7 @@
                         <textarea name="answer" class="form-control" rows="3" placeholder="Clear, accurate answer..." required></textarea>
                     </div>
                     <div class="form-check">
+                        <input type="hidden" name="isPublished" value="false">
                         <input class="form-check-input" type="checkbox" name="isPublished" id="faqPub" checked>
                         <label class="form-check-label" for="faqPub">Published</label>
                     </div>

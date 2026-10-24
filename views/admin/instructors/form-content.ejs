@@ -217,6 +217,7 @@
                                                     <input type="text" name="icon" class="form-control" value="<%= cred.icon || 'bi-check2-circle' %>" placeholder="e.g. bi-check2-circle, bi-award">
                                                 </div>
                                                 <div class="form-check">
+                                                    <input type="hidden" name="isPublished" value="false">
                                                     <input class="form-check-input" type="checkbox" name="isPublished" id="editCredPub-<%= cred.id %>" <%= cred.isPublished ? 'checked' : '' %>>
                                                     <label class="form-check-label" for="editCredPub-<%= cred.id %>">Published (Visible in profile)</label>
                                                 </div>
@@ -260,6 +261,7 @@
                             <input type="text" name="icon" class="form-control" value="bi-check2-circle" placeholder="bi-check2-circle">
                         </div>
                         <div class="form-check">
+                            <input type="hidden" name="isPublished" value="false">
                             <input class="form-check-input" type="checkbox" name="isPublished" id="createCredPub" checked>
                             <label class="form-check-label" for="createCredPub">Published (Visible on site)</label>
                         </div>

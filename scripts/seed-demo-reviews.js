@@ -4,6 +4,11 @@ const { prisma } = require('../src/config/db');
  * Seed 4 obviously fictional, clearly labelled demo reviews for layout & responsive QA.
  * These reviews are flagged with `isDemo: true` and will NEVER be rendered publicly.
  */
+// Only the clearly-labelled demo reviews are (re)written. The course's
+// reviewsEnabled switch is owner-controlled in the admin CMS, so it is only set
+// when the landing row does not exist yet, or when --force is passed.
+const FORCE = process.argv.includes('--force');
+
 async function seedDemoReviews() {
   console.log('=== SEEDING DEMO REVIEWS FOR LANDING PAGE QA ===');
 
@@ -25,11 +30,11 @@ async function seedDemoReviews() {
       courseId: course.id,
       reviewsEnabled: false,
     },
-    update: {
-      reviewsEnabled: false,
-    },
+    update: FORCE ? { reviewsEnabled: false } : {},
   });
-  console.log('Course reviewsEnabled set to FALSE (preferred production state until genuine testimonials exist).');
+  console.log(FORCE
+    ? 'Course reviewsEnabled forced to FALSE (--force).'
+    : 'Course reviewsEnabled left as configured in admin (created as FALSE only if the landing row was missing).');
 
   // The 4 prescribed demo reviews testing different text lengths
   const demoReviews = [
