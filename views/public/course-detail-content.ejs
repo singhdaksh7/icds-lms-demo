@@ -76,7 +76,7 @@ const renderList = (typeof landing !== 'undefined' && landing && Array.isArray(l
 
 // Default access plan or price subtitle label
 const defaultAccessPlan = accessPlansList.find(p => p.isDefault) || accessPlansList[0];
-const effectiveAccessSubtitle = defaultAccessPlan ? defaultAccessPlan.label : (lc.accessLabel || (typeof cd !== 'undefined' && cd.benefit1) || (freeCourse ? 'Self-Paced Access' : '365 Days Access'));
+const effectiveAccessSubtitle = defaultAccessPlan ? defaultAccessPlan.label : (lc.accessLabel || (typeof cd !== 'undefined' && cd.benefit1) || '');
 %>
 <% if (typeof cd !== 'undefined' && cd.benefit1) { %>
     <span class="d-none"><%= cd.benefit1 %></span>
@@ -133,9 +133,7 @@ const effectiveAccessSubtitle = defaultAccessPlan ? defaultAccessPlan.label : (l
                 <section class="hero" id="hero">
                     <div class="wrap hero-inner">
                         <!-- Eyebrow Pill -->
-                        <span class="hero-eyebrow">
-                            <%= lc.heroEyebrow || (course.category ? course.category.name + ' • Pre-Recorded Masterclass' : 'Pre-Recorded Masterclass') %>
-                        </span>
+                        <% if (lc.heroEyebrow) { %><span class="hero-eyebrow"><%= lc.heroEyebrow %></span><% } %>
 
                         <!-- Centered Serif Headline with Accent Highlight -->
                         <h1>
@@ -190,20 +188,20 @@ const effectiveAccessSubtitle = defaultAccessPlan ? defaultAccessPlan.label : (l
                                 <% if (userIsEnrolled) { %>
                                     <a class="btn btn-primary" href="/learn/<%= course.slug %>">
                                         <span>Continue Learning</span>
-                                        <span class="btn-sublabel"><%= effectiveAccessSubtitle %></span>
+                                        <% if (effectiveAccessSubtitle) { %><span class="btn-sublabel"><%= effectiveAccessSubtitle %></span><% } %>
                                     </a>
                                 <% } else if (freeCourse) { %>
                                     <form method="POST" action="/courses/<%= course.slug %>/enroll-free" class="m-0 d-inline-block">
                                         <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
                                         <button type="submit" class="btn btn-primary">
                                             <span><%= lc.heroPrimaryCtaLabel || cd.freeCta || 'Enroll Free' %></span>
-                                            <span class="btn-sublabel"><%= effectiveAccessSubtitle %></span>
+                                            <% if (effectiveAccessSubtitle) { %><span class="btn-sublabel"><%= effectiveAccessSubtitle %></span><% } %>
                                         </button>
                                     </form>
                                 <% } else if (typeof paymentsEnabled !== 'undefined' && paymentsEnabled) { %>
                                     <a class="btn btn-primary" href="/checkout/<%= course.slug %>">
                                         <span><%= lc.heroPrimaryCtaLabel || ('Buy Course – ' + formattedPriceLabel) %></span>
-                                        <span class="btn-sublabel"><%= effectiveAccessSubtitle %></span>
+                                        <% if (effectiveAccessSubtitle) { %><span class="btn-sublabel"><%= effectiveAccessSubtitle %></span><% } %>
                                     </a>
                                 <% } else if (hasPending) { %>
                                     <button class="btn btn-secondary" disabled><%= cd.requestedLabel || 'Request Pending' %></button>
@@ -212,26 +210,26 @@ const effectiveAccessSubtitle = defaultAccessPlan ? defaultAccessPlan.label : (l
                                         <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
                                         <button type="submit" class="btn btn-primary">
                                             <span><%= cd.requestCta || 'Request Enrollment' %></span>
-                                            <span class="btn-sublabel"><%= effectiveAccessSubtitle %></span>
+                                            <% if (effectiveAccessSubtitle) { %><span class="btn-sublabel"><%= effectiveAccessSubtitle %></span><% } %>
                                         </button>
                                     </form>
                                 <% } %>
                             <% } else if (typeof currentUser !== 'undefined' && currentUser && currentUser.role === 'ADMIN') { %>
                                 <a class="btn btn-primary" href="/learn/<%= course.slug %>">
                                     <span>View as Admin</span>
-                                    <span class="btn-sublabel"><%= effectiveAccessSubtitle %></span>
+                                    <% if (effectiveAccessSubtitle) { %><span class="btn-sublabel"><%= effectiveAccessSubtitle %></span><% } %>
                                 </a>
                             <% } else { %>
                                 <a class="btn btn-primary" href="/login?returnTo=<%= encodeURIComponent('/courses/' + course.slug) %>">
                                     <span><%= freeCourse ? (lc.heroPrimaryCtaLabel || cd.loginFreeCta || 'Enroll Free') : ((typeof paymentsEnabled !== 'undefined' && paymentsEnabled) ? (lc.heroPrimaryCtaLabel || ('Buy Course – ' + formattedPriceLabel)) : (cd.loginRequestCta || 'Sign In to Access')) %></span>
-                                    <span class="btn-sublabel"><%= effectiveAccessSubtitle %></span>
+                                    <% if (effectiveAccessSubtitle) { %><span class="btn-sublabel"><%= effectiveAccessSubtitle %></span><% } %>
                                 </a>
                             <% } %>
 
-                            <% if (lc.secondaryCtaLabel !== '') { %>
+                            <% if (lc.secondaryCtaLabel) { %>
                                 <a class="btn btn-secondary" href="<%= lc.secondaryCtaTarget || '#curriculum' %>">
                                     <i class="bi bi-play-circle-fill"></i>
-                                    <span><%= lc.secondaryCtaLabel || 'Watch Preview' %></span>
+                                    <% if (lc.secondaryCtaLabel) { %><span><%= lc.secondaryCtaLabel %></span><% } %>
                                 </a>
                             <% } %>
                         </div>
@@ -280,7 +278,7 @@ const effectiveAccessSubtitle = defaultAccessPlan ? defaultAccessPlan.label : (l
                                 </div>
                                 <div class="quick-stat-card">
                                     <div class="quick-stat-icon"><i class="bi bi-infinity"></i></div>
-                                    <div class="quick-stat-value"><%= freeCourse ? 'Self-Paced' : (lc.accessLabel || '365 Days') %></div>
+                                    <div class="quick-stat-value"><%= lc.accessLabel || (freeCourse ? 'Self-Paced' : 'Full Access') %></div>
                                     <div class="quick-stat-label">Access</div>
                                 </div>
                                 <div class="quick-stat-card">
@@ -320,8 +318,8 @@ const effectiveAccessSubtitle = defaultAccessPlan ? defaultAccessPlan.label : (l
                 <section class="questions-section" id="questions">
                     <div class="wrap">
                         <div class="section-head">
-                            <span class="eyebrow"><%= lc.questionsEyebrow || 'Clinical Fundamentals' %></span>
-                            <h2><%= lc.questionsHeading || 'Questions This Course Will Answer' %></h2>
+                            <% if (lc.questionsEyebrow) { %><span class="eyebrow"><%= lc.questionsEyebrow %></span><% } %>
+                            <% if (lc.questionsHeading) { %><h2><%= lc.questionsHeading %></h2><% } %>
                             <% if (lc.questionsDescription) { %>
                                 <p><%= lc.questionsDescription %></p>
                             <% } %>
@@ -343,8 +341,8 @@ const effectiveAccessSubtitle = defaultAccessPlan ? defaultAccessPlan.label : (l
                 <section class="takeaways-section" id="takeaways" style="background:#ffffff; border-top:1px solid #e2e8f0;">
                     <div class="wrap">
                         <div class="section-head">
-                            <span class="eyebrow"><%= lc.takeawaysEyebrow || 'Masterclass Learning Outcomes' %></span>
-                            <h2><%= lc.takeawaysHeading || 'What clinicians will learn in this master class' %></h2>
+                            <% if (lc.takeawaysEyebrow) { %><span class="eyebrow"><%= lc.takeawaysEyebrow %></span><% } %>
+                            <% if (lc.takeawaysHeading) { %><h2><%= lc.takeawaysHeading %></h2><% } %>
                             <% if (lc.takeawaysDescription) { %>
                                 <p><%= lc.takeawaysDescription %></p>
                             <% } %>
@@ -373,8 +371,8 @@ const effectiveAccessSubtitle = defaultAccessPlan ? defaultAccessPlan.label : (l
                 <section class="why-register-section" id="why-register">
                     <div class="wrap">
                         <div class="section-head">
-                            <span class="eyebrow"><%= lc.whyRegisterEyebrow || 'Why Register For This Course?' %></span>
-                            <h2><%= lc.whyRegisterHeading || 'Master Full Mouth Rehabilitation with Clinical Predictability' %></h2>
+                            <% if (lc.whyRegisterEyebrow) { %><span class="eyebrow"><%= lc.whyRegisterEyebrow %></span><% } %>
+                            <% if (lc.whyRegisterHeading) { %><h2><%= lc.whyRegisterHeading %></h2><% } %>
                             <% if (lc.whyRegisterIntro) { %>
                                 <p><%= lc.whyRegisterIntro %></p>
                             <% } %>
@@ -385,7 +383,7 @@ const effectiveAccessSubtitle = defaultAccessPlan ? defaultAccessPlan.label : (l
                         <% } %>
 
                         <% if (whyRegisterWantList.length > 0) { %>
-                            <h3 class="why-subhead"><%= lc.whyRegisterWantHeading || 'This course is for you if you want to' %></h3>
+                            <% if (lc.whyRegisterWantHeading) { %><h3 class="why-subhead"><%= lc.whyRegisterWantHeading %></h3><% } %>
                             <div class="why-cards-row-3">
                                 <% whyRegisterWantList.forEach(function(item) { %>
                                     <div class="why-card-want">
@@ -402,7 +400,7 @@ const effectiveAccessSubtitle = defaultAccessPlan ? defaultAccessPlan.label : (l
                         <% } %>
 
                         <% if (whyRegisterGetList.length > 0) { %>
-                            <h3 class="why-subhead"><%= lc.whyRegisterGetHeading || 'What you get' %></h3>
+                            <% if (lc.whyRegisterGetHeading) { %><h3 class="why-subhead"><%= lc.whyRegisterGetHeading %></h3><% } %>
                             <div class="why-cards-row-4">
                                 <% whyRegisterGetList.forEach(function(item) { %>
                                     <div class="why-card-get">
@@ -436,8 +434,8 @@ const effectiveAccessSubtitle = defaultAccessPlan ? defaultAccessPlan.label : (l
                 <section id="curriculum" class="curriculum-section">
                     <div class="wrap">
                         <div class="section-head">
-                            <span class="eyebrow"><%= lc.curriculumEyebrow || 'Course Curriculum' %></span>
-                            <h2><%= lc.curriculumHeading || 'Detailed Course Curriculum' %></h2>
+                            <% if (lc.curriculumEyebrow) { %><span class="eyebrow"><%= lc.curriculumEyebrow %></span><% } %>
+                            <% if (lc.curriculumHeading) { %><h2><%= lc.curriculumHeading %></h2><% } %>
                             <% if (lc.curriculumIntro) { %>
                                 <p><%= lc.curriculumIntro %></p>
                             <% } %>
@@ -542,7 +540,7 @@ const effectiveAccessSubtitle = defaultAccessPlan ? defaultAccessPlan.label : (l
                             <% if (hasHighlights) { %>
                                 <div class="curriculum-sticky-side">
                                     <div class="highlights-purchase-card">
-                                        <div class="hl-title"><%= lc.highlightsHeading || 'Highlights' %></div>
+                                        <% if (lc.highlightsHeading) { %><div class="hl-title"><%= lc.highlightsHeading %></div><% } %>
                                         <ul class="highlights-list">
                                             <% highlightsList.forEach(function(hl) { %>
                                                 <li>
@@ -561,26 +559,26 @@ const effectiveAccessSubtitle = defaultAccessPlan ? defaultAccessPlan.label : (l
                                             <% if (userIsEnrolled) { %>
                                                 <a class="btn btn-primary" href="/learn/<%= course.slug %>">
                                                     <span>Continue Learning</span>
-                                                    <span class="btn-sublabel"><%= effectiveAccessSubtitle %></span>
+                                                    <% if (effectiveAccessSubtitle) { %><span class="btn-sublabel"><%= effectiveAccessSubtitle %></span><% } %>
                                                 </a>
                                             <% } else if (freeCourse) { %>
                                                 <form method="POST" action="/courses/<%= course.slug %>/enroll-free" class="m-0">
                                                     <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
                                                     <button type="submit" class="btn btn-primary">
                                                         <span><%= lc.purchaseCardButtonLabel || cd.freeCta || 'Enroll Free' %></span>
-                                                        <span class="btn-sublabel"><%= effectiveAccessSubtitle %></span>
+                                                        <% if (effectiveAccessSubtitle) { %><span class="btn-sublabel"><%= effectiveAccessSubtitle %></span><% } %>
                                                     </button>
                                                 </form>
                                             <% } else if (typeof paymentsEnabled !== 'undefined' && paymentsEnabled) { %>
                                                 <a class="btn btn-primary" href="/checkout/<%= course.slug %>">
                                                     <span><%= lc.purchaseCardButtonLabel || ('Buy Now – ' + formattedPriceLabel) %></span>
-                                                    <span class="btn-sublabel"><%= effectiveAccessSubtitle %></span>
+                                                    <% if (effectiveAccessSubtitle) { %><span class="btn-sublabel"><%= effectiveAccessSubtitle %></span><% } %>
                                                 </a>
                                             <% } %>
                                         <% } else { %>
                                             <a class="btn btn-primary" href="/login?returnTo=<%= encodeURIComponent('/courses/' + course.slug) %>">
                                                 <span><%= freeCourse ? (lc.purchaseCardButtonLabel || cd.loginFreeCta || 'Enroll Free') : (lc.purchaseCardButtonLabel || ('Buy Now – ' + formattedPriceLabel)) %></span>
-                                                <span class="btn-sublabel"><%= effectiveAccessSubtitle %></span>
+                                                <% if (effectiveAccessSubtitle) { %><span class="btn-sublabel"><%= effectiveAccessSubtitle %></span><% } %>
                                             </a>
                                         <% } %>
                                     </div>
@@ -598,9 +596,9 @@ const effectiveAccessSubtitle = defaultAccessPlan ? defaultAccessPlan.label : (l
                 <section class="highlights-section" id="highlights">
                     <div class="wrap">
                         <div class="section-head">
-                            <% const hlHeading = lc.highlightsHeading || 'Course Highlights'; const hlEyebrow = lc.highlightsEyebrow || ''; %>
-                            <% if (hlEyebrow && hlEyebrow.trim().toLowerCase() !== hlHeading.trim().toLowerCase()) { %><span class="eyebrow"><%= hlEyebrow %></span><% } %>
-                            <h2><%= hlHeading %></h2>
+                            <% const hlHeading = lc.highlightsHeading || ''; const hlEyebrow = lc.highlightsEyebrow || ''; %>
+                            <% if (hlEyebrow && (!hlHeading || hlEyebrow.trim().toLowerCase() !== hlHeading.trim().toLowerCase())) { %><span class="eyebrow"><%= hlEyebrow %></span><% } %>
+                            <% if (hlHeading) { %><h2><%= hlHeading %></h2><% } %>
                             <% if (lc.highlightsDescription) { %>
                                 <p><%= lc.highlightsDescription %></p>
                             <% } %>
@@ -631,20 +629,18 @@ const effectiveAccessSubtitle = defaultAccessPlan ? defaultAccessPlan.label : (l
                     <div class="wrap">
                         <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:18px; padding:36px; max-width:920px; margin:0 auto; display:flex; justify-content:space-between; align-items:center; gap:28px; flex-wrap:wrap;">
                             <div>
-                                <span class="eyebrow"><%= lc.purchaseCardEyebrow || 'Full Masterclass Access' %></span>
-                                <h2 style="text-align:left; font-size:28px; margin-bottom:8px;"><%= lc.purchaseCardHeading || 'Enroll in this Masterclass' %></h2>
-                                <p style="font-size:15px; color:#64748b; max-width:540px; margin-bottom:14px;">
-                                    <%= lc.purchaseCardDescription || 'Gain comprehensive access to all modules, clinical demonstrations, and verified clinical documentation.' %>
-                                </p>
+                                <% if (lc.purchaseCardEyebrow) { %><span class="eyebrow"><%= lc.purchaseCardEyebrow %></span><% } %>
+                                <% if (lc.purchaseCardHeading) { %><h2 style="text-align:left; font-size:28px; margin-bottom:8px;"><%= lc.purchaseCardHeading %></h2><% } %>
+                                <% if (lc.purchaseCardDescription) { %><p style="font-size:15px; color:#64748b; max-width:540px; margin-bottom:14px;"><%= lc.purchaseCardDescription %></p><% } %>
                                 <div style="display:flex; flex-direction:column; gap:8px; font-size:14px;">
                                     <div><i class="bi bi-check-circle-fill text-success me-2"></i> All <%= courseStats.publishedLessonCount %> structured clinical video lessons</div>
-                                    <div><i class="bi bi-check-circle-fill text-success me-2"></i> Downloadable clinical case documentation tools</div>
+                                    <% if (courseStats.resourceCount > 0) { %><div><i class="bi bi-check-circle-fill text-success me-2"></i> Downloadable clinical case documentation tools</div><% } %>
                                     <div><i class="bi bi-check-circle-fill text-success me-2"></i> <%= freeCourse ? 'Self-Paced Stream anytime' : 'Stream anytime on mobile, tablet, or desktop' %></div>
                                 </div>
                             </div>
                             <div style="text-align:center; min-width:260px;">
                                 <div style="font-size:36px; font-weight:800; color:#0f172a; margin-bottom:4px;"><%= freeCourse ? 'Free' : formattedPriceLabel %></div>
-                                <div style="font-size:13px; color:#64748b; margin-bottom:18px;"><%= effectiveAccessSubtitle %></div>
+                                <% if (effectiveAccessSubtitle) { %><div style="font-size:13px; color:#64748b; margin-bottom:18px;"><%= effectiveAccessSubtitle %></div><% } %>
                                 <% if (typeof currentUser !== 'undefined' && currentUser && currentUser.role === 'STUDENT') { %>
                                     <% if (userIsEnrolled) { %>
                                         <a class="btn btn-primary w-100" href="/learn/<%= course.slug %>">
@@ -680,8 +676,8 @@ const effectiveAccessSubtitle = defaultAccessPlan ? defaultAccessPlan.label : (l
                 <section class="reviews-section" id="reviews">
                     <div class="wrap">
                         <div class="section-head">
-                            <span class="eyebrow"><%= lc.reviewsEyebrow || 'Dentist Reviews' %></span>
-                            <h2><%= lc.reviewsHeading || 'Reviews From Dentists Who Transformed Their Practice' %></h2>
+                            <% if (lc.reviewsEyebrow) { %><span class="eyebrow"><%= lc.reviewsEyebrow %></span><% } %>
+                            <% if (lc.reviewsHeading) { %><h2><%= lc.reviewsHeading %></h2><% } %>
                             <% if (lc.reviewsIntro) { %>
                                 <p><%= lc.reviewsIntro %></p>
                             <% } %>
@@ -742,8 +738,8 @@ const effectiveAccessSubtitle = defaultAccessPlan ? defaultAccessPlan.label : (l
                 <section class="comparison-section" id="comparison">
                     <div class="wrap">
                         <div class="section-head">
-                            <span class="eyebrow"><%= lc.comparisonEyebrow || 'Curriculum Comparison' %></span>
-                            <h2><%= lc.comparisonHeading || 'Course Comparison' %></h2>
+                            <% if (lc.comparisonEyebrow) { %><span class="eyebrow"><%= lc.comparisonEyebrow %></span><% } %>
+                            <% if (lc.comparisonHeading) { %><h2><%= lc.comparisonHeading %></h2><% } %>
                             <% if (lc.comparisonDescription) { %>
                                 <p><%= lc.comparisonDescription %></p>
                             <% } %>
@@ -781,8 +777,8 @@ const effectiveAccessSubtitle = defaultAccessPlan ? defaultAccessPlan.label : (l
                 <section class="audience-section audience" id="audience">
                     <div class="wrap">
                         <div class="section-head">
-                            <span class="eyebrow"><%= lc.audienceEyebrow || 'Candidate Profile' %></span>
-                            <h2><%= lc.audienceHeading || 'Candidate Suitability' %></h2>
+                            <% if (lc.audienceEyebrow) { %><span class="eyebrow"><%= lc.audienceEyebrow %></span><% } %>
+                            <% if (lc.audienceHeading) { %><h2><%= lc.audienceHeading %></h2><% } %>
                             <% if (lc.audienceIntro) { %>
                                 <p><%= lc.audienceIntro %></p>
                             <% } %>
@@ -791,7 +787,7 @@ const effectiveAccessSubtitle = defaultAccessPlan ? defaultAccessPlan.label : (l
                         <div class="audience-grid">
                             <% if (audienceNotForList.length > 0) { %>
                                 <div class="audience-card audience-card-not-for">
-                                    <h3><%= lc.audienceNotForHeading || 'Who Should Not Take This Course?' %></h3>
+                                    <% if (lc.audienceNotForHeading) { %><h3><%= lc.audienceNotForHeading %></h3><% } %>
                                     <ul class="audience-list">
                                         <% audienceNotForList.forEach(function(item) { %>
                                             <li>
@@ -805,7 +801,7 @@ const effectiveAccessSubtitle = defaultAccessPlan ? defaultAccessPlan.label : (l
 
                             <% if (audienceForList.length > 0) { %>
                                 <div class="audience-card audience-card-ideal-for">
-                                    <h3><%= lc.audienceForHeading || 'Who Is This Course Ideal For?' %></h3>
+                                    <% if (lc.audienceForHeading) { %><h3><%= lc.audienceForHeading %></h3><% } %>
                                     <ul class="audience-list">
                                         <% audienceForList.forEach(function(item) { %>
                                             <li>
@@ -828,8 +824,8 @@ const effectiveAccessSubtitle = defaultAccessPlan ? defaultAccessPlan.label : (l
                 <section class="access-steps-section" id="access-steps">
                     <div class="wrap">
                         <div class="section-head">
-                            <span class="eyebrow"><%= lc.accessEyebrow || 'Access Protocol' %></span>
-                            <h2><%= lc.accessHeading || 'How Will You Get Access To The Course?' %></h2>
+                            <% if (lc.accessEyebrow) { %><span class="eyebrow"><%= lc.accessEyebrow %></span><% } %>
+                            <% if (lc.accessHeading) { %><h2><%= lc.accessHeading %></h2><% } %>
                             <% if (lc.accessDescription) { %>
                                 <p><%= lc.accessDescription %></p>
                             <% } %>
@@ -869,9 +865,9 @@ const effectiveAccessSubtitle = defaultAccessPlan ? defaultAccessPlan.label : (l
                 <section id="resources" style="background:#ffffff; border-top:1px solid #e2e8f0;">
                     <div class="wrap">
                         <div class="section-head">
-                            <span class="eyebrow"><%= lc.resourcesEyebrow || 'Clinical Documentation' %></span>
-                            <h2><%= lc.resourcesHeading || 'Downloadable Clinical Protocols & Tools' %></h2>
-                            <p><%= lc.resourcesIntro || 'Verified clinical protocols, evaluation forms, and documentation tools included with the course.' %></p>
+                            <% if (lc.resourcesEyebrow) { %><span class="eyebrow"><%= lc.resourcesEyebrow %></span><% } %>
+                            <% if (lc.resourcesHeading) { %><h2><%= lc.resourcesHeading %></h2><% } %>
+                            <% if (lc.resourcesIntro) { %><p><%= lc.resourcesIntro %></p><% } %>
                         </div>
                         <div style="max-width:820px; margin:0 auto;">
                             <% safeResources.forEach(function(resItem) { %>
@@ -917,9 +913,9 @@ const effectiveAccessSubtitle = defaultAccessPlan ? defaultAccessPlan.label : (l
                             </div>
                         </div>
                         <div>
-                            <span class="eyebrow"><%= lc.certificateEyebrow || 'E-Certificate' %></span>
-                            <h2><%= lc.certificateHeading || ('Recognize your progress in ' + course.title) %></h2>
-                            <p><%= lc.certificateBody || 'Upon completion of all video lessons and clinical evaluations, you will receive an official verifiable digital Certificate of Completion.' %></p>
+                            <% if (lc.certificateEyebrow) { %><span class="eyebrow"><%= lc.certificateEyebrow %></span><% } %>
+                            <% if (lc.certificateHeading) { %><h2><%= lc.certificateHeading %></h2><% } %>
+                            <% if (lc.certificateBody) { %><p><%= lc.certificateBody %></p><% } %>
                             <% if (lc.certificateNote) { %>
                                 <p style="font-size:13px; color:#94a3b8; margin-top:8px;"><em><%= lc.certificateNote %></em></p>
                             <% } %>
@@ -938,8 +934,8 @@ const effectiveAccessSubtitle = defaultAccessPlan ? defaultAccessPlan.label : (l
                 <section class="mentor-section" id="mentor">
                     <div class="wrap">
                         <div class="section-head">
-                            <span class="eyebrow"><%= lc.mentorEyebrow || (typeof cd !== 'undefined' && cd.instructorHeading) || 'Meet Your Mentor' %></span>
-                            <h2><%- lc.mentorHeading || (typeof cd !== 'undefined' && cd.instructorHeading ? cd.instructorHeading : 'Meet Your <span class="accent-text">Mentor</span>') %></h2>
+                            <% const mentorEyebrowText = lc.mentorEyebrow || (typeof cd !== 'undefined' && cd.instructorHeading) || ''; %><% if (mentorEyebrowText) { %><span class="eyebrow"><%= mentorEyebrowText %></span><% } %>
+                            <% const mentorHeadingText = lc.mentorHeading || (typeof cd !== 'undefined' && cd.instructorHeading) || ''; if (mentorHeadingText) { const mhWords = String(mentorHeadingText).trim().split(/\s+/); const mhLast = mhWords.pop(); %><h2><%= mhWords.join(' ') %><%= mhWords.length ? ' ' : '' %><span class="accent-text"><%= mhLast %></span></h2><% } %>
                         </div>
 
                         <div class="mentor-layout">
@@ -1010,8 +1006,8 @@ const effectiveAccessSubtitle = defaultAccessPlan ? defaultAccessPlan.label : (l
                 <section class="faq-section faq" id="faq">
                     <div class="wrap">
                         <div class="section-head">
-                            <span class="eyebrow"><%= lc.faqEyebrow || 'Questions & Answers' %></span>
-                            <h2><%= lc.faqHeading || 'Frequently Asked Questions' %></h2>
+                            <% if (lc.faqEyebrow) { %><span class="eyebrow"><%= lc.faqEyebrow %></span><% } %>
+                            <% if (lc.faqHeading) { %><h2><%= lc.faqHeading %></h2><% } %>
                             <% if (lc.faqIntro) { %>
                                 <p><%= lc.faqIntro %></p>
                             <% } %>
@@ -1041,14 +1037,16 @@ const effectiveAccessSubtitle = defaultAccessPlan ? defaultAccessPlan.label : (l
                     <div class="wrap">
                         <div class="final-cta-card">
                             <% const realReviewCountProof = (typeof landing !== 'undefined' && landing && landing.realReviewCount) ? landing.realReviewCount : 0; %>
-                            <% if (lc.socialProofEnabled === true && (lc.socialProofValue || realReviewCountProof > 0)) { %>
+                            <% if (lc.socialProofEnabled === true && lc.socialProofValue) { %>
                                 <div class="final-cta-eyebrow">
                                     <i class="bi bi-star-fill text-warning"></i>
-                                    <span><%= lc.socialProofValue || (realReviewCountProof + '+ Five-Star Reviews') %></span>
+                                    <span><%= [lc.socialProofValue, lc.socialProofLabel].filter(Boolean).join(' · ') %></span>
                                 </div>
                             <% } %>
 
-                            <h2><%= lc.finalCtaHeading || ('Ready to Master ' + course.title + '?') %></h2>
+                            <% if (lc.finalCtaEyebrow) { %><div class="final-cta-eyebrow"><span><%= lc.finalCtaEyebrow %></span></div><% } %>
+                            <% if (lc.finalCtaBadgeText) { %><div class="final-cta-eyebrow"><i class="bi bi-patch-check-fill"></i> <span><%= lc.finalCtaBadgeText %></span></div><% } %>
+                            <% if (lc.finalCtaHeading) { %><h2><%= lc.finalCtaHeading %></h2><% } %>
 
                             <% if (lc.finalCtaBody) { %>
                                 <p class="final-cta-desc"><%= lc.finalCtaBody %></p>
@@ -1073,26 +1071,26 @@ const effectiveAccessSubtitle = defaultAccessPlan ? defaultAccessPlan.label : (l
                                     <% if (userIsEnrolled) { %>
                                         <a class="btn btn-primary" href="/learn/<%= course.slug %>">
                                             <span>Continue Learning</span>
-                                            <span class="btn-sublabel"><%= effectiveAccessSubtitle %></span>
+                                            <% if (effectiveAccessSubtitle) { %><span class="btn-sublabel"><%= effectiveAccessSubtitle %></span><% } %>
                                         </a>
                                     <% } else if (freeCourse) { %>
                                         <form method="POST" action="/courses/<%= course.slug %>/enroll-free" class="m-0 d-inline-block">
                                             <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
                                             <button type="submit" class="btn btn-primary">
                                                 <span><%= lc.finalCtaButtonLabel || cd.freeCta || 'Enroll Free' %></span>
-                                                <span class="btn-sublabel"><%= effectiveAccessSubtitle %></span>
+                                                <% if (effectiveAccessSubtitle) { %><span class="btn-sublabel"><%= effectiveAccessSubtitle %></span><% } %>
                                             </button>
                                         </form>
                                     <% } else if (typeof paymentsEnabled !== 'undefined' && paymentsEnabled) { %>
                                         <a class="btn btn-primary" href="/checkout/<%= course.slug %>">
                                             <span><%= lc.finalCtaButtonLabel || ('Buy Course – ' + formattedPriceLabel) %></span>
-                                            <span class="btn-sublabel"><%= effectiveAccessSubtitle %></span>
+                                            <% if (effectiveAccessSubtitle) { %><span class="btn-sublabel"><%= effectiveAccessSubtitle %></span><% } %>
                                         </a>
                                     <% } %>
                                 <% } else { %>
                                     <a class="btn btn-primary" href="/login?returnTo=<%= encodeURIComponent('/courses/' + course.slug) %>">
                                         <span><%= freeCourse ? (lc.finalCtaButtonLabel || cd.loginFreeCta || 'Enroll Free') : (lc.finalCtaButtonLabel || ('Buy Course – ' + formattedPriceLabel)) %></span>
-                                        <span class="btn-sublabel"><%= effectiveAccessSubtitle %></span>
+                                        <% if (effectiveAccessSubtitle) { %><span class="btn-sublabel"><%= effectiveAccessSubtitle %></span><% } %>
                                     </a>
                                 <% } %>
                             </div>
@@ -1118,7 +1116,7 @@ const effectiveAccessSubtitle = defaultAccessPlan ? defaultAccessPlan.label : (l
                         </div>
                     <% } %>
                     <div>
-                        <div class="floating-copy-title"><%= lc.stickyCtaText || 'JOIN NOW TO LEARN MORE' %></div>
+                        <% if (lc.stickyCtaText) { %><div class="floating-copy-title"><%= lc.stickyCtaText %></div><% } %>
                         <div class="floating-copy-sub"><%= course.title %> &bull; <%= freeCourse ? 'Free' : formattedPriceLabel %></div>
                     </div>
                 </div>
@@ -1127,26 +1125,26 @@ const effectiveAccessSubtitle = defaultAccessPlan ? defaultAccessPlan.label : (l
                         <% if (userIsEnrolled) { %>
                             <a class="btn btn-primary" href="/learn/<%= course.slug %>">
                                 <span>Continue Learning</span>
-                                <span class="btn-sublabel"><%= effectiveAccessSubtitle %></span>
+                                <% if (effectiveAccessSubtitle) { %><span class="btn-sublabel"><%= effectiveAccessSubtitle %></span><% } %>
                             </a>
                         <% } else if (freeCourse) { %>
                             <form method="POST" action="/courses/<%= course.slug %>/enroll-free" class="m-0">
                                 <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
                                 <button type="submit" class="btn btn-primary">
                                     <span><%= lc.stickyCtaButtonLabel || cd.freeCta || 'Enroll Free' %></span>
-                                    <span class="btn-sublabel"><%= effectiveAccessSubtitle %></span>
+                                    <% if (effectiveAccessSubtitle) { %><span class="btn-sublabel"><%= effectiveAccessSubtitle %></span><% } %>
                                 </button>
                             </form>
                         <% } else if (typeof paymentsEnabled !== 'undefined' && paymentsEnabled) { %>
                             <a class="btn btn-primary" href="/checkout/<%= course.slug %>">
                                 <span><%= lc.stickyCtaButtonLabel || ('Buy Course – ' + formattedPriceLabel) %></span>
-                                <span class="btn-sublabel"><%= effectiveAccessSubtitle %></span>
+                                <% if (effectiveAccessSubtitle) { %><span class="btn-sublabel"><%= effectiveAccessSubtitle %></span><% } %>
                             </a>
                         <% } %>
                     <% } else { %>
                         <a class="btn btn-primary" href="/login?returnTo=<%= encodeURIComponent('/courses/' + course.slug) %>">
                             <span><%= freeCourse ? (lc.stickyCtaButtonLabel || cd.loginFreeCta || 'Enroll Free') : (lc.stickyCtaButtonLabel || ('Buy Course – ' + formattedPriceLabel)) %></span>
-                            <span class="btn-sublabel"><%= effectiveAccessSubtitle %></span>
+                            <% if (effectiveAccessSubtitle) { %><span class="btn-sublabel"><%= effectiveAccessSubtitle %></span><% } %>
                         </a>
                     <% } %>
                 </div>

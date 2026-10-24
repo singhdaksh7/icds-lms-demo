@@ -618,11 +618,19 @@ async function moveComparisonColumn(req, res, next) {
   }
 }
 
+// Comparison item routes only carry the item id; resolve its column so the
+// service can verify course ownership (item -> column -> course).
+async function comparisonItemColumnId(itemId) {
+  const item = await prisma.courseComparisonItem.findUnique({ where: { id: itemId }, select: { columnId: true } });
+  if (!item) throw new courseLandingService.CourseLandingError('Comparison item not found', 404);
+  return item.columnId;
+}
+
 async function createComparisonItem(req, res, next) {
   try {
     const courseId = parseInt(req.params.courseId, 10);
     const columnId = parseInt(req.params.columnId, 10);
-    await courseLandingService.addComparisonItem(columnId, req.body);
+    await courseLandingService.addComparisonItem(courseId, columnId, req.body);
     req.flashSuccess('Comparison item added.');
     res.redirect(`/admin/courses/${courseId}/landing-page?tab=comparison`);
   } catch (err) {
@@ -635,7 +643,7 @@ async function updateComparisonItem(req, res, next) {
   try {
     const courseId = parseInt(req.params.courseId, 10);
     const itemId = parseInt(req.params.itemId, 10);
-    await courseLandingService.updateComparisonItem(itemId, req.body);
+    await courseLandingService.updateComparisonItem(courseId, await comparisonItemColumnId(itemId), itemId, req.body);
     req.flashSuccess('Comparison item updated.');
     res.redirect(`/admin/courses/${courseId}/landing-page?tab=comparison`);
   } catch (err) {
@@ -648,7 +656,7 @@ async function deleteComparisonItem(req, res, next) {
   try {
     const courseId = parseInt(req.params.courseId, 10);
     const itemId = parseInt(req.params.itemId, 10);
-    await courseLandingService.deleteComparisonItem(itemId);
+    await courseLandingService.deleteComparisonItem(courseId, await comparisonItemColumnId(itemId), itemId);
     req.flashSuccess('Comparison item deleted.');
     res.redirect(`/admin/courses/${courseId}/landing-page?tab=comparison`);
   } catch (err) {
@@ -662,7 +670,7 @@ async function moveComparisonItem(req, res, next) {
     const courseId = parseInt(req.params.courseId, 10);
     const itemId = parseInt(req.params.itemId, 10);
     const direction = req.body.direction === 'down' ? 'down' : 'up';
-    await courseLandingService.moveComparisonItem(itemId, direction);
+    await courseLandingService.moveComparisonItem(courseId, await comparisonItemColumnId(itemId), itemId, direction);
     res.redirect(`/admin/courses/${courseId}/landing-page?tab=comparison`);
   } catch (err) {
     req.flashError(err.message || 'Failed to reorder comparison item.');

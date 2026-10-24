@@ -134,6 +134,11 @@
         </button>
     </li>
     <li class="nav-item" role="presentation">
+        <button class="nav-link <%= activeTab === 'certificate' ? 'active' : '' %>" id="tab-certificate-nav" data-bs-toggle="tab" data-bs-target="#tab-certificate" type="button" role="tab">
+            14b Certificate
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
         <button class="nav-link <%= activeTab === 'faqs' ? 'active' : '' %>" id="tab-faqs-nav" data-bs-toggle="tab" data-bs-target="#tab-faqs" type="button" role="tab">
             15 FAQ (<%= (typeof faqs !== 'undefined' && faqs) ? faqs.length : 0 %>)
         </button>
@@ -201,8 +206,9 @@
                     </div>
 
                     <div class="col-md-6">
-                        <label class="form-label small fw-semibold">Price Subtitle / Access Note</label>
-                        <input type="text" name="priceSubtitle" class="form-control form-control-custom" value="<%= landingContent.priceSubtitle || 'Full Lifetime Access' %>">
+                        <label class="form-label small fw-semibold">Access Label (under the enroll buttons)</label>
+                        <input type="text" name="accessLabel" class="form-control form-control-custom" value="<%= landingContent.accessLabel || '' %>" placeholder="e.g. Self-Paced Access">
+                        <div class="form-text">Optional &mdash; hidden when empty. Course price and enrollment state are automatic.</div>
                     </div>
 
                     <div class="col-12">
@@ -227,7 +233,7 @@
 
                     <div class="col-md-4">
                         <label class="form-label small fw-semibold">Hero Media Strip Caption</label>
-                        <input type="text" name="heroMediaCaption" class="form-control form-control-custom" value="<%= landingContent.heroMediaCaption || '100% Verified Clinical Curriculum' %>">
+                        <input type="text" name="heroMediaCaption" class="form-control form-control-custom" value="<%= landingContent.heroMediaCaption || '' %>" placeholder="Optional — hidden when empty">
                     </div>
 
                     <div class="col-md-3">
@@ -237,7 +243,7 @@
 
                     <div class="col-md-2">
                         <label class="form-label small fw-semibold">Secondary CTA Label</label>
-                        <input type="text" name="secondaryCtaLabel" class="form-control form-control-custom" value="<%= landingContent.secondaryCtaLabel || 'Explore Curriculum' %>">
+                        <input type="text" name="secondaryCtaLabel" class="form-control form-control-custom" value="<%= landingContent.secondaryCtaLabel || '' %>" placeholder="Optional — hidden when empty">
                     </div>
 
                     <div class="col-md-3">
@@ -508,11 +514,15 @@
                 <div class="row g-3">
                     <div class="col-md-6">
                         <label class="form-label small fw-semibold">Section Eyebrow</label>
-                        <input type="text" name="questionsEyebrow" class="form-control form-control-custom" value="<%= landingContent.questionsEyebrow || 'Clinical Fundamentals' %>">
+                        <input type="text" name="questionsEyebrow" class="form-control form-control-custom" value="<%= landingContent.questionsEyebrow || '' %>" placeholder="Optional — hidden when empty">
                     </div>
                     <div class="col-md-6">
                         <label class="form-label small fw-semibold">Section Heading</label>
-                        <input type="text" name="questionsHeading" class="form-control form-control-custom" value="<%= landingContent.questionsHeading || 'Questions This Course Will Answer' %>">
+                        <input type="text" name="questionsHeading" class="form-control form-control-custom" value="<%= landingContent.questionsHeading || '' %>" placeholder="Optional — hidden when empty">
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label small fw-semibold">Section Description</label>
+                        <textarea name="questionsDescription" class="form-control form-control-custom" rows="2" placeholder="Optional &mdash; hidden when empty"><%= landingContent.questionsDescription || '' %></textarea>
                     </div>
                 </div>
 
@@ -604,11 +614,11 @@
                 <div class="row g-3">
                     <div class="col-md-6">
                         <label class="form-label small fw-semibold">Section Eyebrow</label>
-                        <input type="text" name="whyRegisterEyebrow" class="form-control form-control-custom" value="<%= landingContent.whyRegisterEyebrow || 'Why Register For This Course?' %>">
+                        <input type="text" name="whyRegisterEyebrow" class="form-control form-control-custom" value="<%= landingContent.whyRegisterEyebrow || '' %>" placeholder="Optional — hidden when empty">
                     </div>
                     <div class="col-md-6">
                         <label class="form-label small fw-semibold">Section Heading</label>
-                        <input type="text" name="whyRegisterHeading" class="form-control form-control-custom" value="<%= landingContent.whyRegisterHeading || 'Master Full Mouth Rehabilitation with Clinical Predictability' %>">
+                        <input type="text" name="whyRegisterHeading" class="form-control form-control-custom" value="<%= landingContent.whyRegisterHeading || '' %>" placeholder="Optional — hidden when empty">
                     </div>
                     <div class="col-12">
                         <label class="form-label small fw-semibold">Intro Paragraph</label>
@@ -620,11 +630,11 @@
                     </div>
                     <div class="col-md-6">
                         <label class="form-label small fw-semibold">Left Column Heading (Want)</label>
-                        <input type="text" name="whyRegisterWantHeading" class="form-control form-control-custom" value="<%= landingContent.whyRegisterWantHeading || 'This course is for you if you want to:' %>">
+                        <input type="text" name="whyRegisterWantHeading" class="form-control form-control-custom" value="<%= landingContent.whyRegisterWantHeading || '' %>" placeholder="Optional — hidden when empty">
                     </div>
                     <div class="col-md-6">
                         <label class="form-label small fw-semibold">Right Column Heading (Get)</label>
-                        <input type="text" name="whyRegisterGetHeading" class="form-control form-control-custom" value="<%= landingContent.whyRegisterGetHeading || 'What you get:' %>">
+                        <input type="text" name="whyRegisterGetHeading" class="form-control form-control-custom" value="<%= landingContent.whyRegisterGetHeading || '' %>" placeholder="Optional — hidden when empty">
                     </div>
                     <div class="col-12">
                         <label class="form-label small fw-semibold">Closing Bold Statement</label>
@@ -728,11 +738,11 @@
                 <div class="row g-3">
                     <div class="col-md-6">
                         <label class="form-label small fw-semibold">Section Eyebrow</label>
-                        <input type="text" name="takeawaysEyebrow" class="form-control form-control-custom" value="<%= landingContent.takeawaysEyebrow || 'Masterclass Learning Outcomes' %>">
+                        <input type="text" name="takeawaysEyebrow" class="form-control form-control-custom" value="<%= landingContent.takeawaysEyebrow || '' %>" placeholder="Optional — hidden when empty">
                     </div>
                     <div class="col-md-6">
                         <label class="form-label small fw-semibold">Section Heading</label>
-                        <input type="text" name="takeawaysHeading" class="form-control form-control-custom" value="<%= landingContent.takeawaysHeading || 'What clinicians will learn in this master class' %>">
+                        <input type="text" name="takeawaysHeading" class="form-control form-control-custom" value="<%= landingContent.takeawaysHeading || '' %>" placeholder="Optional — hidden when empty">
                     </div>
                     <div class="col-12">
                         <label class="form-label small fw-semibold">Intro Paragraph (optional)</label>
@@ -833,7 +843,7 @@
                 <div class="row g-3">
                     <div class="col-md-6">
                         <label class="form-label small fw-semibold">Curriculum Eyebrow</label>
-                        <input type="text" name="curriculumEyebrow" class="form-control form-control-custom" value="<%= landingContent.curriculumEyebrow || 'Course Curriculum' %>">
+                        <input type="text" name="curriculumEyebrow" class="form-control form-control-custom" value="<%= landingContent.curriculumEyebrow || '' %>" placeholder="Optional — hidden when empty">
                     </div>
                     <div class="col-md-6">
                         <label class="form-label small fw-semibold">Curriculum Section Heading</label>
@@ -938,11 +948,11 @@
                 <div class="row g-3">
                     <div class="col-md-6">
                         <label class="form-label small fw-semibold">Section Eyebrow</label>
-                        <input type="text" name="highlightsEyebrow" class="form-control form-control-custom" value="<%= landingContent.highlightsEyebrow || 'Course Highlights' %>">
+                        <input type="text" name="highlightsEyebrow" class="form-control form-control-custom" value="<%= landingContent.highlightsEyebrow || '' %>" placeholder="Optional — hidden when empty">
                     </div>
                     <div class="col-md-6">
                         <label class="form-label small fw-semibold">Section Heading</label>
-                        <input type="text" name="highlightsHeading" class="form-control form-control-custom" value="<%= landingContent.highlightsHeading || 'Course Highlights' %>">
+                        <input type="text" name="highlightsHeading" class="form-control form-control-custom" value="<%= landingContent.highlightsHeading || '' %>" placeholder="Optional — hidden when empty">
                     </div>
                     <div class="col-12">
                         <label class="form-label small fw-semibold">Section Description</label>
@@ -1045,11 +1055,11 @@
                 <div class="row g-3">
                     <div class="col-md-6">
                         <label class="form-label small fw-semibold">Card Eyebrow</label>
-                        <input type="text" name="purchaseCardEyebrow" class="form-control form-control-custom" value="<%= landingContent.purchaseCardEyebrow || 'Full Masterclass Access' %>">
+                        <input type="text" name="purchaseCardEyebrow" class="form-control form-control-custom" value="<%= landingContent.purchaseCardEyebrow || '' %>" placeholder="Optional — hidden when empty">
                     </div>
                     <div class="col-md-6">
                         <label class="form-label small fw-semibold">Card Heading</label>
-                        <input type="text" name="purchaseCardHeading" class="form-control form-control-custom" value="<%= landingContent.purchaseCardHeading || 'Enroll in this Masterclass' %>">
+                        <input type="text" name="purchaseCardHeading" class="form-control form-control-custom" value="<%= landingContent.purchaseCardHeading || '' %>" placeholder="Optional — hidden when empty">
                     </div>
                     <div class="col-12">
                         <label class="form-label small fw-semibold">Card Description</label>
@@ -1094,11 +1104,11 @@
                 <div class="row g-3">
                     <div class="col-md-6">
                         <label class="form-label small fw-semibold">Section Eyebrow</label>
-                        <input type="text" name="reviewsEyebrow" class="form-control form-control-custom" value="<%= landingContent.reviewsEyebrow || 'Student Reviews' %>">
+                        <input type="text" name="reviewsEyebrow" class="form-control form-control-custom" value="<%= landingContent.reviewsEyebrow || '' %>" placeholder="Optional — hidden when empty">
                     </div>
                     <div class="col-md-6">
                         <label class="form-label small fw-semibold">Section Heading</label>
-                        <input type="text" name="reviewsHeading" class="form-control form-control-custom" value="<%= landingContent.reviewsHeading || 'Reviews from clinicians who transformed their practice' %>">
+                        <input type="text" name="reviewsHeading" class="form-control form-control-custom" value="<%= landingContent.reviewsHeading || '' %>" placeholder="Optional — hidden when empty">
                     </div>
                     <div class="col-12">
                         <label class="form-label small fw-semibold">Section Intro (optional)</label>
@@ -1294,11 +1304,11 @@
                 <div class="row g-3">
                     <div class="col-md-6">
                         <label class="form-label small fw-semibold">Section Eyebrow</label>
-                        <input type="text" name="comparisonEyebrow" class="form-control form-control-custom" value="<%= landingContent.comparisonEyebrow || 'Curriculum Comparison' %>">
+                        <input type="text" name="comparisonEyebrow" class="form-control form-control-custom" value="<%= landingContent.comparisonEyebrow || '' %>" placeholder="Optional — hidden when empty">
                     </div>
                     <div class="col-md-6">
                         <label class="form-label small fw-semibold">Section Heading</label>
-                        <input type="text" name="comparisonHeading" class="form-control form-control-custom" value="<%= landingContent.comparisonHeading || 'Choose the level that fits your practice' %>">
+                        <input type="text" name="comparisonHeading" class="form-control form-control-custom" value="<%= landingContent.comparisonHeading || '' %>" placeholder="Optional — hidden when empty">
                     </div>
                     <div class="col-12">
                         <label class="form-label small fw-semibold">Section Description (optional)</label>
@@ -1338,6 +1348,18 @@
                                         <% if (col.isRecommended) { %>
                                             <span class="badge bg-primary">Recommended</span>
                                         <% } %>
+                                        <span class="badge bg-<%= col.isPublished ? 'success' : 'secondary' %>"><%= col.isPublished ? 'Published' : 'Hidden' %></span>
+                                        <form method="POST" action="/admin/courses/<%= course.id %>/landing-page/comparison-columns/<%= col.id %>/move" class="d-inline">
+                                            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                            <input type="hidden" name="direction" value="up">
+                                            <button type="submit" class="btn btn-outline-secondary btn-sm p-1" title="Move Up" <%= idx === 0 ? 'disabled' : '' %>>&uarr;</button>
+                                        </form>
+                                        <form method="POST" action="/admin/courses/<%= course.id %>/landing-page/comparison-columns/<%= col.id %>/move" class="d-inline">
+                                            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                            <input type="hidden" name="direction" value="down">
+                                            <button type="submit" class="btn btn-outline-secondary btn-sm p-1" title="Move Down" <%= idx === comparisonColumns.length - 1 ? 'disabled' : '' %>>&darr;</button>
+                                        </form>
+                                        <button type="button" class="btn btn-outline-primary btn-sm p-1" data-bs-toggle="modal" data-bs-target="#editComparisonColumnModal-<%= col.id %>" title="Edit Column"><i class="bi bi-pencil"></i></button>
                                         <form method="POST" action="/admin/courses/<%= course.id %>/landing-page/comparison-columns/<%= col.id %>/delete" class="d-inline" data-confirm='Delete this comparison column?'>
                                             <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                                             <button type="submit" class="btn btn-outline-danger btn-sm p-1" title="Delete Column"><i class="bi bi-trash"></i></button>
@@ -1347,13 +1369,26 @@
 
                                 <div class="small mb-2"><strong>Feature Checklist (<%= col.items ? col.items.length : 0 %>):</strong></div>
                                 <ul class="list-group list-group-flush mb-3 small">
-                                    <% (col.items || []).forEach(function(cItem) { %>
+                                    <% (col.items || []).forEach(function(cItem, iIdx) { %>
                                         <li class="list-group-item d-flex justify-content-between align-items-center px-0 py-1 bg-transparent">
-                                            <span>✓ <%= cItem.text %></span>
+                                            <span><%= cItem.isPublished ? '✓' : '✕' %> <%= cItem.text %> <% if (!cItem.isPublished) { %><span class="badge bg-secondary">Hidden</span><% } %></span>
+                                            <span class="d-inline-flex gap-1 align-items-center">
+                                            <form method="POST" action="/admin/courses/<%= course.id %>/landing-page/comparison-items/<%= cItem.id %>/move" class="d-inline">
+                                                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                                <input type="hidden" name="direction" value="up">
+                                                <button type="submit" class="btn btn-link p-0" style="font-size:11px;" title="Move Up" <%= iIdx === 0 ? 'disabled' : '' %>>&uarr;</button>
+                                            </form>
+                                            <form method="POST" action="/admin/courses/<%= course.id %>/landing-page/comparison-items/<%= cItem.id %>/move" class="d-inline">
+                                                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                                <input type="hidden" name="direction" value="down">
+                                                <button type="submit" class="btn btn-link p-0" style="font-size:11px;" title="Move Down" <%= iIdx === col.items.length - 1 ? 'disabled' : '' %>>&darr;</button>
+                                            </form>
+                                            <button type="button" class="btn btn-link p-0" style="font-size:11px;" data-bs-toggle="modal" data-bs-target="#editComparisonItemModal-<%= cItem.id %>" title="Edit"><i class="bi bi-pencil"></i></button>
                                             <form method="POST" action="/admin/courses/<%= course.id %>/landing-page/comparison-items/<%= cItem.id %>/delete" class="d-inline" data-confirm='Delete feature item?'>
                                                 <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                                                 <button type="submit" class="btn btn-link text-danger p-0 ms-2" style="font-size:11px;">✕</button>
                                             </form>
+                                            </span>
                                         </li>
                                     <% }); %>
                                 </ul>
@@ -1390,11 +1425,11 @@
                 <div class="row g-3">
                     <div class="col-md-6">
                         <label class="form-label small fw-semibold">Section Eyebrow</label>
-                        <input type="text" name="audienceEyebrow" class="form-control form-control-custom" value="<%= landingContent.audienceEyebrow || 'Candidate Profile' %>">
+                        <input type="text" name="audienceEyebrow" class="form-control form-control-custom" value="<%= landingContent.audienceEyebrow || '' %>" placeholder="Optional — hidden when empty">
                     </div>
                     <div class="col-md-6">
                         <label class="form-label small fw-semibold">Section Heading</label>
-                        <input type="text" name="audienceHeading" class="form-control form-control-custom" value="<%= landingContent.audienceHeading || 'Is this online Master Class right for you?' %>">
+                        <input type="text" name="audienceHeading" class="form-control form-control-custom" value="<%= landingContent.audienceHeading || '' %>" placeholder="Optional — hidden when empty">
                     </div>
                     <div class="col-12">
                         <label class="form-label small fw-semibold">Section Intro (optional)</label>
@@ -1402,11 +1437,11 @@
                     </div>
                     <div class="col-md-6">
                         <label class="form-label small fw-semibold">Who Is This Course Ideal For? (Heading)</label>
-                        <input type="text" name="audienceForHeading" class="form-control form-control-custom" value="<%= landingContent.audienceForHeading || 'Who Is This Course Ideal For?' %>">
+                        <input type="text" name="audienceForHeading" class="form-control form-control-custom" value="<%= landingContent.audienceForHeading || '' %>" placeholder="Optional — hidden when empty">
                     </div>
                     <div class="col-md-6">
                         <label class="form-label small fw-semibold">Who Should Not Take This Course? (Heading)</label>
-                        <input type="text" name="audienceNotForHeading" class="form-control form-control-custom" value="<%= landingContent.audienceNotForHeading || 'Who Should Not Take This Course?' %>">
+                        <input type="text" name="audienceNotForHeading" class="form-control form-control-custom" value="<%= landingContent.audienceNotForHeading || '' %>" placeholder="Optional — hidden when empty">
                     </div>
                 </div>
 
@@ -1504,11 +1539,11 @@
                 <div class="row g-3">
                     <div class="col-md-6">
                         <label class="form-label small fw-semibold">Section Eyebrow</label>
-                        <input type="text" name="accessEyebrow" class="form-control form-control-custom" value="<%= landingContent.accessEyebrow || 'Access Protocol' %>">
+                        <input type="text" name="accessEyebrow" class="form-control form-control-custom" value="<%= landingContent.accessEyebrow || '' %>" placeholder="Optional — hidden when empty">
                     </div>
                     <div class="col-md-6">
                         <label class="form-label small fw-semibold">Section Heading</label>
-                        <input type="text" name="accessHeading" class="form-control form-control-custom" value="<%= landingContent.accessHeading || 'How will you get access to the course?' %>">
+                        <input type="text" name="accessHeading" class="form-control form-control-custom" value="<%= landingContent.accessHeading || '' %>" placeholder="Optional — hidden when empty">
                     </div>
                     <div class="col-12">
                         <label class="form-label small fw-semibold">Section Description</label>
@@ -1581,6 +1616,9 @@
                                                 <input type="hidden" name="direction" value="down">
                                                 <button type="submit" class="btn btn-outline-secondary btn-sm" title="Move Down" <%= idx === accessSteps.length - 1 ? 'disabled' : '' %>>↓</button>
                                             </form>
+                                            <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#editAccessStepModal-<%= step.id %>">
+                                                <i class="bi bi-pencil"></i>
+                                            </button>
                                             <form method="POST" action="/admin/courses/<%= course.id %>/landing-page/access-steps/<%= step.id %>/delete" class="d-inline" data-confirm='Delete step?'>
                                                 <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                                                 <button type="submit" class="btn btn-outline-danger btn-sm"><i class="bi bi-trash"></i></button>
@@ -1605,6 +1643,7 @@
 
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h5 class="mb-0 text-primary"><i class="bi bi-person-badge me-2"></i>Meet Your Mentor Section Settings</h5>
+                    <span class="badge bg-light text-dark border ms-2">Name, photo, bio &amp; credentials: uses Instructor profile</span>
                     <div class="form-check form-switch fs-5">
                         <input type="hidden" name="mentorSectionEnabled" value="false">
                         <input class="form-check-input" type="checkbox" name="mentorSectionEnabled" id="mentorSectionEnabled" <%= landingContent.mentorSectionEnabled !== false ? 'checked' : '' %>>
@@ -1615,7 +1654,7 @@
                 <div class="row g-3">
                     <div class="col-md-6">
                         <label class="form-label small fw-semibold">Section Eyebrow</label>
-                        <input type="text" name="mentorEyebrow" class="form-control form-control-custom" value="<%= landingContent.mentorEyebrow || 'Meet Your Mentor' %>">
+                        <input type="text" name="mentorEyebrow" class="form-control form-control-custom" value="<%= landingContent.mentorEyebrow || '' %>" placeholder="Optional — hidden when empty">
                     </div>
                     <div class="col-md-6">
                         <label class="form-label small fw-semibold">Section Heading Override (defaults to instructor name)</label>
@@ -1691,11 +1730,11 @@
                 <div class="row g-3">
                     <div class="col-md-6">
                         <label class="form-label small fw-semibold">Section Eyebrow</label>
-                        <input type="text" name="resourcesEyebrow" class="form-control form-control-custom" value="<%= landingContent.resourcesEyebrow || 'Clinical Documentation' %>">
+                        <input type="text" name="resourcesEyebrow" class="form-control form-control-custom" value="<%= landingContent.resourcesEyebrow || '' %>" placeholder="Optional — hidden when empty">
                     </div>
                     <div class="col-md-6">
                         <label class="form-label small fw-semibold">Section Heading</label>
-                        <input type="text" name="resourcesHeading" class="form-control form-control-custom" value="<%= landingContent.resourcesHeading || 'Downloadable clinical protocols & tools' %>">
+                        <input type="text" name="resourcesHeading" class="form-control form-control-custom" value="<%= landingContent.resourcesHeading || '' %>" placeholder="Optional — hidden when empty">
                     </div>
                     <div class="col-12">
                         <label class="form-label small fw-semibold">Section Description</label>
@@ -1724,6 +1763,47 @@
         </div>
     </div>
 
+    <!-- 14b. CERTIFICATE TAB -->
+    <div class="tab-pane fade <%= activeTab === 'certificate' ? 'show active' : '' %>" id="tab-certificate" role="tabpanel">
+        <div class="admin-card">
+            <form method="POST" action="/admin/courses/<%= course.id %>/landing-page/settings">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <input type="hidden" name="currentTab" value="certificate">
+
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="mb-0 text-primary"><i class="bi bi-award me-2"></i>E-Certificate Section</h5>
+                    <div class="form-check form-switch fs-5">
+                        <input type="hidden" name="certificateSectionEnabled" value="false">
+                        <input class="form-check-input" type="checkbox" name="certificateSectionEnabled" id="certificateSectionEnabled" <%= landingContent.certificateSectionEnabled === true ? 'checked' : '' %>>
+                        <label class="form-check-label fs-6 fw-semibold" for="certificateSectionEnabled">Section Enabled</label>
+                    </div>
+                </div>
+                <div class="small text-muted mb-3">Off by default. Only enable if this course really issues a certificate. The certificate preview card (institute name, course title) is automatic.</div>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Section Eyebrow</label>
+                        <input type="text" name="certificateEyebrow" class="form-control form-control-custom" value="<%= landingContent.certificateEyebrow || '' %>" placeholder="Optional &mdash; hidden when empty">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Section Heading</label>
+                        <input type="text" name="certificateHeading" class="form-control form-control-custom" value="<%= landingContent.certificateHeading || '' %>" placeholder="Optional &mdash; hidden when empty">
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label small fw-semibold">Body</label>
+                        <textarea name="certificateBody" class="form-control form-control-custom" rows="3" placeholder="Optional &mdash; hidden when empty"><%= landingContent.certificateBody || '' %></textarea>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label small fw-semibold">Footnote</label>
+                        <input type="text" name="certificateNote" class="form-control form-control-custom" value="<%= landingContent.certificateNote || '' %>" placeholder="Optional &mdash; hidden when empty">
+                    </div>
+                </div>
+                <div class="mt-4 pt-3 border-top">
+                    <button type="submit" class="btn btn-primary px-4"><i class="bi bi-save me-1"></i> Save Certificate Settings</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- 15. FAQ TAB -->
     <div class="tab-pane fade <%= activeTab === 'faqs' ? 'show active' : '' %>" id="tab-faqs" role="tabpanel">
         <div class="admin-card mb-4">
@@ -1743,11 +1823,15 @@
                 <div class="row g-3">
                     <div class="col-md-6">
                         <label class="form-label small fw-semibold">Section Eyebrow</label>
-                        <input type="text" name="faqEyebrow" class="form-control form-control-custom" value="<%= landingContent.faqEyebrow || 'Questions & Answers' %>">
+                        <input type="text" name="faqEyebrow" class="form-control form-control-custom" value="<%= landingContent.faqEyebrow || '' %>" placeholder="Optional — hidden when empty">
                     </div>
                     <div class="col-md-6">
                         <label class="form-label small fw-semibold">Section Heading</label>
-                        <input type="text" name="faqHeading" class="form-control form-control-custom" value="<%= landingContent.faqHeading || 'Frequently asked course questions' %>">
+                        <input type="text" name="faqHeading" class="form-control form-control-custom" value="<%= landingContent.faqHeading || '' %>" placeholder="Optional — hidden when empty">
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label small fw-semibold">Section Intro</label>
+                        <textarea name="faqIntro" class="form-control form-control-custom" rows="2" placeholder="Optional &mdash; hidden when empty"><%= landingContent.faqIntro || '' %></textarea>
                     </div>
                 </div>
 
@@ -1857,7 +1941,7 @@
                     </div>
                     <div class="col-md-4">
                         <label class="form-label small fw-semibold">Badge Label</label>
-                        <input type="text" name="socialProofLabel" class="form-control form-control-custom" value="<%= landingContent.socialProofLabel || 'Verified Clinician Reviews' %>">
+                        <input type="text" name="socialProofLabel" class="form-control form-control-custom" value="<%= landingContent.socialProofLabel || '' %>" placeholder="Optional — hidden when empty">
                     </div>
                 </div>
 
@@ -1889,7 +1973,7 @@
                 <div class="row g-3">
                     <div class="col-md-6">
                         <label class="form-label small fw-semibold">Eyebrow</label>
-                        <input type="text" name="finalCtaEyebrow" class="form-control form-control-custom" value="<%= landingContent.finalCtaEyebrow || 'Start Learning Today' %>">
+                        <input type="text" name="finalCtaEyebrow" class="form-control form-control-custom" value="<%= landingContent.finalCtaEyebrow || '' %>" placeholder="Optional — hidden when empty">
                     </div>
                     <div class="col-md-6">
                         <label class="form-label small fw-semibold">Heading Override</label>
@@ -1901,15 +1985,15 @@
                     </div>
                     <div class="col-md-4">
                         <label class="form-label small fw-semibold">Bullet Point 1</label>
-                        <input type="text" name="finalCtaLine1" class="form-control form-control-custom" value="<%= landingContent.finalCtaLine1 || 'Instant online streaming access' %>">
+                        <input type="text" name="finalCtaLine1" class="form-control form-control-custom" value="<%= landingContent.finalCtaLine1 || '' %>" placeholder="Optional — hidden when empty">
                     </div>
                     <div class="col-md-4">
                         <label class="form-label small fw-semibold">Bullet Point 2</label>
-                        <input type="text" name="finalCtaLine2" class="form-control form-control-custom" value="<%= landingContent.finalCtaLine2 || 'Structured, evidence-based clinical curriculum' %>">
+                        <input type="text" name="finalCtaLine2" class="form-control form-control-custom" value="<%= landingContent.finalCtaLine2 || '' %>" placeholder="Optional — hidden when empty">
                     </div>
                     <div class="col-md-4">
                         <label class="form-label small fw-semibold">Bullet Point 3</label>
-                        <input type="text" name="finalCtaLine3" class="form-control form-control-custom" value="<%= landingContent.finalCtaLine3 || 'Verified clinical documentation tools included' %>">
+                        <input type="text" name="finalCtaLine3" class="form-control form-control-custom" value="<%= landingContent.finalCtaLine3 || '' %>" placeholder="Optional — hidden when empty">
                     </div>
                     <div class="col-md-6">
                         <label class="form-label small fw-semibold">Custom Button Label (optional)</label>
@@ -1917,7 +2001,7 @@
                     </div>
                     <div class="col-md-6">
                         <label class="form-label small fw-semibold">Reassurance Badge Text</label>
-                        <input type="text" name="finalCtaBadgeText" class="form-control form-control-custom" value="<%= landingContent.finalCtaBadgeText || '✓ 100% Free · Full Access' %>">
+                        <input type="text" name="finalCtaBadgeText" class="form-control form-control-custom" value="<%= landingContent.finalCtaBadgeText || '' %>" placeholder="Optional — hidden when empty">
                     </div>
                 </div>
 
@@ -1952,7 +2036,7 @@
                 <div class="row g-3">
                     <div class="col-md-6">
                         <label class="form-label small fw-semibold">Secondary / Tagline Text</label>
-                        <input type="text" name="stickyCtaText" class="form-control form-control-custom" value="<%= landingContent.stickyCtaText || 'Full Lifetime Access' %>">
+                        <input type="text" name="stickyCtaText" class="form-control form-control-custom" value="<%= landingContent.stickyCtaText || '' %>" placeholder="Optional — hidden when empty">
                         <div class="form-text">Shown next to the price (e.g. "Full Lifetime Access" or "Immediate Streaming").</div>
                     </div>
                     <div class="col-md-6">
@@ -2188,6 +2272,21 @@ const editModalDefs = [
         { n: 'question', l: 'Question', t: 'text', req: true },
         { n: 'answer', l: 'Answer', t: 'textarea', req: true },
       ] },
+    { prefix: 'editAccessStepModal', route: 'access-steps', tab: 'access-steps', title: 'Edit Access Step', items: typeof accessSteps !== 'undefined' ? accessSteps : [],
+      fields: [
+        { n: 'title', l: 'Step Title', t: 'text', max: 200, req: true },
+        { n: 'description', l: 'Description (optional)', t: 'textarea' },
+        { n: 'icon', l: 'Icon (optional)', t: 'text', max: 50 },
+      ] },
+    { prefix: 'editComparisonColumnModal', route: 'comparison-columns', tab: 'comparison', title: 'Edit Comparison Column', items: typeof comparisonColumns !== 'undefined' ? comparisonColumns : [],
+      fields: [
+        { n: 'title', l: 'Column Title', t: 'text', max: 200, req: true },
+        { n: 'subtitle', l: 'Subtitle (optional)', t: 'text', max: 200 },
+        { n: 'badgeText', l: 'Badge Text (optional)', t: 'text', max: 100 },
+      ], flags: [{ n: 'isRecommended', l: 'Highlight as Recommended' }] },
+    { prefix: 'editComparisonItemModal', route: 'comparison-items', tab: 'comparison', title: 'Edit Feature Item',
+      items: (typeof comparisonColumns !== 'undefined' ? comparisonColumns : []).reduce(function (acc, c) { return acc.concat(c.items || []); }, []),
+      fields: [{ n: 'text', l: 'Feature Text', t: 'text', max: 300, req: true }] },
     { prefix: 'editTakeawayModal', route: 'takeaways', tab: 'takeaways', title: 'Edit Learning Outcome', items: typeof takeaways !== 'undefined' ? takeaways : [],
       fields: [
         { n: 'title', l: 'Title', t: 'text', max: 200, req: true },

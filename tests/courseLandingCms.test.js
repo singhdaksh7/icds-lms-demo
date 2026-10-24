@@ -20,7 +20,7 @@ test('getDefaultLandingSettings sets certificateSectionEnabled to strictly FALSE
   assert.equal(defaults.certificateSectionEnabled, false, 'Certificate section MUST be OFF by default');
   assert.equal(defaults.curriculumEnabled, true);
   assert.equal(defaults.aboutEnabled, true);
-  assert.equal(defaults.priceSubtitle, 'Full Lifetime Access');
+  assert.equal(defaults.priceSubtitle, '', 'no invented marketing copy in defaults');
 });
 
 // --- 2. Landing Settings Upsert & Validation ---

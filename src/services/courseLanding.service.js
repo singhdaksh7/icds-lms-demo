@@ -212,60 +212,54 @@ async function getAdminLandingData(courseId) {
 }
 
 /**
- * Default fallback landing settings object when no DB row exists yet
+ * Starting values for a course that has no landing row yet. Structural flags
+ * only: marketing copy is NEVER invented here. Every text field starts empty
+ * and its section/element stays hidden on the public page until the owner
+ * writes it in Admin -> Courses -> Edit Course -> Landing Page.
  */
 function getDefaultLandingSettings(course) {
+  const empty = [
+    'heroEyebrow', 'heroTitleOverride', 'heroAccentText', 'heroDescription', 'heroMediaUrl', 'heroMediaCaption',
+    'heroPrimaryCtaLabel', 'secondaryCtaLabel', 'priceSubtitle', 'accessLabel',
+    'whyRegisterEyebrow', 'whyRegisterHeading', 'whyRegisterIntro', 'whyRegisterEmphasisText',
+    'whyRegisterWantHeading', 'whyRegisterGetHeading', 'whyRegisterClosingText',
+    'highlightsEyebrow', 'highlightsHeading', 'highlightsDescription',
+    'aboutEyebrow', 'aboutHeading', 'aboutBody',
+    'takeawaysEyebrow', 'takeawaysHeading', 'takeawaysDescription',
+    'sneakPeekEyebrow', 'sneakPeekHeading', 'sneakPeekDescription', 'sneakPeekMediaUrl',
+    'questionsEyebrow', 'questionsHeading', 'questionsDescription',
+    'curriculumEyebrow', 'curriculumHeading', 'curriculumIntro',
+    'purchaseCardEyebrow', 'purchaseCardHeading', 'purchaseCardDescription', 'purchaseCardButtonLabel',
+    'comparisonEyebrow', 'comparisonHeading', 'comparisonDescription',
+    'accessEyebrow', 'accessHeading', 'accessDescription', 'accessMediaUrl',
+    'socialProofValue', 'socialProofLabel',
+    'reviewsEyebrow', 'reviewsHeading', 'reviewsIntro',
+    'mentorEyebrow', 'mentorHeading',
+    'certificateEyebrow', 'certificateHeading', 'certificateBody', 'certificateNote',
+    'audienceEyebrow', 'audienceHeading', 'audienceIntro', 'audienceForHeading', 'audienceNotForHeading',
+    'resourcesEyebrow', 'resourcesHeading', 'resourcesIntro',
+    'faqEyebrow', 'faqHeading', 'faqIntro',
+    'finalCtaEyebrow', 'finalCtaHeading', 'finalCtaBody', 'finalCtaButtonLabel', 'finalCtaBadgeText',
+    'finalCtaLine1', 'finalCtaLine2', 'finalCtaLine3',
+    'stickyCtaText', 'stickyCtaButtonLabel',
+  ];
+  const defaults = {};
+  for (const key of empty) defaults[key] = '';
   return {
-    heroEyebrow: course.category ? `${course.category.name} • Online Certificate Course` : 'Online Certificate Course',
-    heroTitleOverride: '',
-    heroAccentText: '',
-    heroDescription: course.shortDescription || course.description || '',
-    heroMediaType: 'THUMBNAIL',
-    heroMediaUrl: '',
-    heroMediaCaption: '100% Verified Clinical Curriculum',
-    secondaryCtaLabel: 'Explore Curriculum',
+    ...defaults,
     secondaryCtaTarget: '#curriculum',
-    priceSubtitle: 'Full Lifetime Access',
-    accessLabel: '',
+    heroMediaType: 'THUMBNAIL',
+    accessMediaType: 'NONE',
+    socialProofMode: 'AUTO',
 
+    heroEnabled: true,
     whyRegisterEnabled: true,
-    whyRegisterEyebrow: 'Why Register For This Course?',
-    whyRegisterHeading: 'Master Full Mouth Rehabilitation with Clinical Predictability',
-    whyRegisterIntro: 'Full mouth rehabilitation requires a structured approach to occlusal diagnostics, vertical dimension determination, and systematic clinical execution.',
-    whyRegisterEmphasisText: 'Gain the confidence to evaluate, plan, and execute complex full mouth cases systematically.',
-    whyRegisterWantHeading: 'This course is for you if you want to:',
-    whyRegisterGetHeading: 'What you get:',
-    whyRegisterClosingText: 'Take your restorative dentistry skills to the master level.',
-
     highlightsEnabled: true,
-    highlightsEyebrow: 'Course Highlights',
-    highlightsHeading: 'Course Highlights',
-    highlightsDescription: 'Key pillars and clinical skills covered in this masterclass.',
-
     aboutEnabled: true,
-    aboutEyebrow: course.category ? course.category.name : 'Clinical Fundamentals',
-    aboutHeading: 'About This Masterclass',
-    aboutBody: course.description || '',
-
     takeawaysEnabled: true,
-    takeawaysEyebrow: 'Masterclass Learning Outcomes',
-    takeawaysHeading: 'What clinicians will learn in this master class',
-    takeawaysDescription: '',
-
     sneakPeekEnabled: true,
-    sneakPeekEyebrow: 'A Sneak Peek',
-    sneakPeekHeading: 'See the learning experience before you enroll',
-    sneakPeekDescription: 'Watch this clinical preview to experience the depth, clarity, and systematic presentation style of the course.',
-    sneakPeekMediaUrl: '',
-
     questionsEnabled: true,
-    questionsEyebrow: 'Clinical Fundamentals',
-    questionsHeading: 'Core clinical questions this masterclass helps you answer',
-
     curriculumEnabled: true,
-    curriculumEyebrow: 'Course Curriculum',
-    curriculumHeading: 'Structured modules for dentists',
-    curriculumIntro: 'Learn the essential clinical workflow through structured modules covering occlusal foundations, centric relation, facebow transfer, articulators, vertical dimension, and comprehensive case planning.',
     curriculumDefaultExpanded: true,
     showLessonDuration: true,
     showLockIcon: true,
@@ -273,69 +267,19 @@ function getDefaultLandingSettings(course) {
     curriculumShowSessionCount: true,
     curriculumShowTotalDuration: true,
     curriculumShowResourceCount: true,
-
     purchaseCardEnabled: true,
-    purchaseCardEyebrow: 'Full Masterclass Access',
-    purchaseCardHeading: 'Enroll in this Masterclass',
-    purchaseCardDescription: 'Gain comprehensive access to all modules, clinical demonstrations, and verified clinical documentation.',
-    purchaseCardButtonLabel: '',
-
     comparisonEnabled: false,
-    comparisonEyebrow: 'Curriculum Comparison',
-    comparisonHeading: 'Choose the level that fits your practice',
-    comparisonDescription: 'Compare course depth, demonstrated procedures, and access terms.',
-
     accessSectionEnabled: false,
-    accessEyebrow: 'Access Protocol',
-    accessHeading: 'How will you get access to the course?',
-    accessDescription: 'Simple, direct steps to start streaming lessons immediately.',
-    accessMediaType: 'NONE',
-    accessMediaUrl: '',
     accessStepsEnabled: true,
-
     socialProofEnabled: false,
-    socialProofMode: 'AUTO',
-    socialProofValue: '',
-    socialProofLabel: 'Verified Clinician Reviews',
-
     reviewsEnabled: false, // Critical: OFF by default unless genuine testimonials exist!
-    reviewsEyebrow: 'Student Reviews',
-    reviewsHeading: 'Reviews from dentists who transformed their practice with this masterclass',
-    reviewsIntro: '',
-
     mentorSectionEnabled: true,
-    mentorEyebrow: 'Meet Your Mentor',
-    mentorHeading: 'Learn from an Experienced Clinician',
-
     certificateSectionEnabled: false, // Critical: OFF by default!
-    certificateEyebrow: 'E-Certificate',
-    certificateHeading: 'Recognize your progress in this course',
-    certificateBody: 'Upon completion of all video lessons and clinical evaluations, you will receive an official verifiable digital Certificate of Completion recognizing your mastery and commitment to advancing clinical patient care.',
-    certificateNote: 'Certificate issued digitally after verified curriculum completion.',
-
     audienceEnabled: true,
-    audienceEyebrow: 'Candidate Profile',
-    audienceHeading: 'Is this online Master Class right for you?',
-    audienceForHeading: 'Good fit for',
-    audienceNotForHeading: 'Probably not for',
-
+    resourcesEnabled: true,
     faqEnabled: true,
-    faqEyebrow: 'Questions & Answers',
-    faqHeading: 'Frequently asked course questions',
-
     finalCtaEnabled: true,
-    finalCtaEyebrow: 'Start Learning Today',
-    finalCtaHeading: `Enroll in ${course.title}`,
-    finalCtaBody: 'Immediate online access to all structured video lessons, clinical demonstrations, and downloadable forms.',
-    finalCtaButtonLabel: '',
-    finalCtaBadgeText: '✓ 100% Free · Full Access',
-    finalCtaLine1: 'Instant online streaming access',
-    finalCtaLine2: 'Structured, evidence-based clinical curriculum',
-    finalCtaLine3: 'Verified clinical documentation tools included',
-
     stickyCtaEnabled: true,
-    stickyCtaText: 'Full Lifetime Access',
-    stickyCtaButtonLabel: '',
   };
 }
 
@@ -515,6 +459,7 @@ async function getPublicLandingData(courseId, courseStatsContext = {}, options =
     realAverageRating,
     accessPlans,
     courseStats,
+    stats: courseStats,
     comparisonColumns,
     accessSteps,
     landingSections,
@@ -547,7 +492,7 @@ async function upsertLandingSettings(courseId, payload) {
     heroMediaUrl: cleanString(payload.heroMediaUrl, 500),
     heroMediaCaption: cleanString(payload.heroMediaCaption, 255),
     heroPrimaryCtaLabel: cleanString(payload.heroPrimaryCtaLabel, 100),
-    secondaryCtaLabel: cleanString(payload.secondaryCtaLabel, 100) || 'Explore Curriculum',
+    secondaryCtaLabel: cleanString(payload.secondaryCtaLabel, 100),
     secondaryCtaTarget: cleanString(payload.secondaryCtaTarget, 255) || '#curriculum',
     priceSubtitle: cleanString(payload.priceSubtitle, 100),
     accessLabel: cleanString(payload.accessLabel, 100),
@@ -557,13 +502,13 @@ async function upsertLandingSettings(courseId, payload) {
     whyRegisterHeading: cleanString(payload.whyRegisterHeading, 255),
     whyRegisterIntro: cleanString(payload.whyRegisterIntro, 5000),
     whyRegisterEmphasisText: cleanString(payload.whyRegisterEmphasisText, 5000),
-    whyRegisterWantHeading: cleanString(payload.whyRegisterWantHeading, 255) || 'This course is for you if you want to:',
-    whyRegisterGetHeading: cleanString(payload.whyRegisterGetHeading, 255) || 'What you get:',
+    whyRegisterWantHeading: cleanString(payload.whyRegisterWantHeading, 255),
+    whyRegisterGetHeading: cleanString(payload.whyRegisterGetHeading, 255),
     whyRegisterClosingText: cleanString(payload.whyRegisterClosingText, 5000),
 
     highlightsEnabled: cleanBool(payload.highlightsEnabled, true),
-    highlightsEyebrow: cleanString(payload.highlightsEyebrow, 100) || 'Course Highlights',
-    highlightsHeading: cleanString(payload.highlightsHeading, 255) || 'Course Highlights',
+    highlightsEyebrow: cleanString(payload.highlightsEyebrow, 100),
+    highlightsHeading: cleanString(payload.highlightsHeading, 255),
     highlightsDescription: cleanString(payload.highlightsDescription, 5000),
 
     aboutEnabled: cleanBool(payload.aboutEnabled, true),
@@ -585,6 +530,7 @@ async function upsertLandingSettings(courseId, payload) {
     questionsEnabled: cleanBool(payload.questionsEnabled, true),
     questionsEyebrow: cleanString(payload.questionsEyebrow, 100),
     questionsHeading: cleanString(payload.questionsHeading, 255),
+    questionsDescription: cleanString(payload.questionsDescription, 5000),
 
     curriculumEnabled: cleanBool(payload.curriculumEnabled, true),
     curriculumEyebrow: cleanString(payload.curriculumEyebrow, 100),
@@ -640,8 +586,8 @@ async function upsertLandingSettings(courseId, payload) {
     audienceEnabled: cleanBool(payload.audienceEnabled, true),
     audienceEyebrow: cleanString(payload.audienceEyebrow, 100),
     audienceHeading: cleanString(payload.audienceHeading, 255),
-    audienceForHeading: cleanString(payload.audienceForHeading, 100) || 'Good fit for',
-    audienceNotForHeading: cleanString(payload.audienceNotForHeading, 100) || 'Probably not for',
+    audienceForHeading: cleanString(payload.audienceForHeading, 100),
+    audienceNotForHeading: cleanString(payload.audienceNotForHeading, 100),
     audienceIntro: cleanString(payload.audienceIntro, 5000),
 
     resourcesEnabled: cleanBool(payload.resourcesEnabled, true),
@@ -652,6 +598,7 @@ async function upsertLandingSettings(courseId, payload) {
     faqEnabled: cleanBool(payload.faqEnabled, true),
     faqEyebrow: cleanString(payload.faqEyebrow, 100),
     faqHeading: cleanString(payload.faqHeading, 255),
+    faqIntro: cleanString(payload.faqIntro, 5000),
 
     finalCtaEnabled: cleanBool(payload.finalCtaEnabled, true),
     finalCtaEyebrow: cleanString(payload.finalCtaEyebrow, 100),

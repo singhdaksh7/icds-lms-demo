@@ -729,6 +729,7 @@ model CourseLandingContent {
   questionsEnabled           Boolean  @default(true)
   questionsEyebrow           String?  @db.VarChar(100)
   questionsHeading           String?  @db.VarChar(255)
+  questionsDescription       String?  @db.Text
 
   // Curriculum display settings
   curriculumEnabled          Boolean  @default(true)
@@ -768,6 +769,7 @@ model CourseLandingContent {
   faqEnabled                 Boolean  @default(true)
   faqEyebrow                 String?  @default("Questions & Answers") @db.VarChar(100)
   faqHeading                 String?  @default("Frequently asked course questions") @db.VarChar(255)
+  faqIntro                   String?  @db.Text
 
   // Final CTA card
   finalCtaEnabled            Boolean  @default(true)
