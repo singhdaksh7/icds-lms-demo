@@ -134,8 +134,8 @@ router.post('/courses/:courseId/landing-page/access-steps/:stepId/edit', doubleC
 router.post('/courses/:courseId/landing-page/access-steps/:stepId/delete', doubleCsrfProtection, courseLandingController.deleteAccessStep);
 router.post('/courses/:courseId/landing-page/access-steps/:stepId/move', doubleCsrfProtection, courseLandingController.moveAccessStep);
 
-router.post('/courses/:courseId/landing-page/sections/:sectionId/toggle', doubleCsrfProtection, courseLandingController.toggleSection);
-router.post('/courses/:courseId/landing-page/sections/:sectionId/move', doubleCsrfProtection, courseLandingController.moveSection);
+router.post('/courses/:courseId/landing-page/sections/:sectionKey/toggle', doubleCsrfProtection, courseLandingController.toggleSection);
+router.post('/courses/:courseId/landing-page/sections/:sectionKey/move', doubleCsrfProtection, courseLandingController.moveSection);
 
 // --- Homepage CMS: banners + reviews ------------------------------------------
 // Banner multipart parsing runs BEFORE CSRF so the token in the multipart body

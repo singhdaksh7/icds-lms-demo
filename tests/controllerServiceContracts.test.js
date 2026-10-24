@@ -60,24 +60,31 @@ test('section order: toggle and move work by section key (and persist rows on fi
   const mkRes = () => { const r = { redirected: null, redirect(u) { r.redirected = u; } }; return r; };
   const mkReq = (params, body = {}) => ({ params: { courseId: '5', ...params }, body, flash: [], flashSuccess() {}, flashError(m) { this.flash.push(m); } });
   try {
-    let req = mkReq({ sectionId: 'FAQ' });
+    let req = mkReq({ sectionKey: 'FAQ' });
     await controller.toggleSection(req, mkRes());
     assert.deepEqual(req.flash, []);
     assert.equal(rows.find((r) => r.sectionKey === 'FAQ').isEnabled, false, 'first toggle disables an enabled section');
-    await controller.toggleSection(mkReq({ sectionId: 'FAQ' }), mkRes());
+    await controller.toggleSection(mkReq({ sectionKey: 'FAQ' }), mkRes());
     assert.equal(rows.find((r) => r.sectionKey === 'FAQ').isEnabled, true);
 
     const before = rows.slice().sort((a, b) => a.sortOrder - b.sortOrder).map((r) => r.sectionKey);
-    req = mkReq({ sectionId: 'STATS' }, { direction: 'up' });
+    req = mkReq({ sectionKey: 'STATS' }, { direction: 'up' });
     await controller.moveSection(req, mkRes());
     assert.deepEqual(req.flash, []);
     const after = rows.slice().sort((a, b) => a.sortOrder - b.sortOrder).map((r) => r.sectionKey);
     assert.deepEqual(after.slice(0, 2), [before[1], before[0]], 'STATS moved above HERO');
 
-    req = mkReq({ sectionId: 'NOT_A_SECTION' });
+    req = mkReq({ sectionKey: 'NOT_A_SECTION' });
     await controller.toggleSection(req, mkRes());
     assert.equal(req.flash.length, 1, 'unknown section is rejected');
   } finally {
     prisma.courseLandingSection = orig;
   }
+});
+
+test('section order routes carry the section KEY and are not subject to the numeric-id param guard', () => {
+  const routes = fs.readFileSync(path.join(root, 'src/routes/admin.routes.js'), 'utf8');
+  assert.match(routes, /landing-page\/sections\/:sectionKey\/toggle/);
+  assert.match(routes, /landing-page\/sections\/:sectionKey\/move/);
+  assert.ok(!/landing-page\/sections\/:sectionId/.test(routes), ':sectionId is forced numeric by router.param and would 404 every key');
 });

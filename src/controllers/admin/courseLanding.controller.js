@@ -755,7 +755,7 @@ async function moveAccessStep(req, res, next) {
 // The route param is the section KEY (HERO, FAQ, ...), never a row id: a course with no saved
 // section rows would otherwise be shown made-up ids.
 function sectionKeyFrom(req) {
-  const key = String(req.params.sectionId || '').toUpperCase();
+  const key = String(req.params.sectionKey || '').toUpperCase();
   if (!courseLandingService.DEFAULT_SECTION_ORDER.includes(key)) throw new courseLandingService.CourseLandingError('Unknown section.', 404);
   return key;
 }
