@@ -642,6 +642,12 @@ async function upsertLandingSettings(courseId, payload) {
     audienceHeading: cleanString(payload.audienceHeading, 255),
     audienceForHeading: cleanString(payload.audienceForHeading, 100) || 'Good fit for',
     audienceNotForHeading: cleanString(payload.audienceNotForHeading, 100) || 'Probably not for',
+    audienceIntro: cleanString(payload.audienceIntro, 5000),
+
+    resourcesEnabled: cleanBool(payload.resourcesEnabled, true),
+    resourcesEyebrow: cleanString(payload.resourcesEyebrow, 100),
+    resourcesHeading: cleanString(payload.resourcesHeading, 255),
+    resourcesIntro: cleanString(payload.resourcesIntro, 5000),
 
     faqEnabled: cleanBool(payload.faqEnabled, true),
     faqEyebrow: cleanString(payload.faqEyebrow, 100),

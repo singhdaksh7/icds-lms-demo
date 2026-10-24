@@ -341,3 +341,46 @@ test('seed-fmr-landing-content does not overwrite or delete existing CMS content
     restores.reverse().forEach((r) => r());
   }
 });
+
+// ---------------------------------------------------------------------------
+// Every field the landing editor submits must be persisted
+// ---------------------------------------------------------------------------
+test('every landing settings form field has a service mapping and a Prisma column', () => {
+  const fs = require('node:fs');
+  const root = path.join(__dirname, '..');
+  const view = fs.readFileSync(path.join(root, 'views/admin/courses/landing-page-content.ejs'), 'utf8');
+  const svc = fs.readFileSync(path.join(root, 'src/services/courseLanding.service.js'), 'utf8');
+  const schema = fs.readFileSync(path.join(root, 'prisma/schema.prisma'), 'utf8');
+  const model = schema.match(/model CourseLandingContent \{([\s\S]*?)\n\}/)[1];
+  const columns = new Set([...model.matchAll(/^\s+(\w+)\s+\S+/gm)].map((m) => m[1]));
+  const mapped = new Set([...svc.matchAll(/payload\.(\w+)/g)].map((m) => m[1]));
+  const names = new Set();
+  for (const f of view.matchAll(/<form[^>]*action="[^"]*landing-page\/settings"[\s\S]*?<\/form>/g)) {
+    for (const m of f[0].matchAll(/name="(\w+)"/g)) names.add(m[1]);
+  }
+  names.delete('_csrf');
+  names.delete('currentTab');
+  assert.ok(names.size > 50);
+  assert.deepEqual([...names].filter((n) => !mapped.has(n)), [], 'submitted but dropped by the service');
+  assert.deepEqual([...names].filter((n) => !columns.has(n)), [], 'submitted but no Prisma column');
+});
+
+test('audienceIntro and resources settings are saved and can be disabled', async () => {
+  let captured;
+  const restore = swap(prisma.courseLandingContent, 'upsert', async ({ update }) => { captured = update; return {}; });
+  try {
+    await landing.upsertLandingSettings(5, {
+      audienceIntro: ' QA intro ',
+      resourcesEnabled: ['false'],
+      resourcesEyebrow: 'Docs',
+      resourcesHeading: 'QA heading',
+      resourcesIntro: 'QA resources intro',
+    });
+    assert.equal(captured.audienceIntro, 'QA intro');
+    assert.equal(captured.resourcesEnabled, false);
+    assert.equal(captured.resourcesHeading, 'QA heading');
+    assert.equal(captured.resourcesIntro, 'QA resources intro');
+  } finally {
+    restore();
+  }
+});

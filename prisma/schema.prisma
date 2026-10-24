@@ -756,6 +756,13 @@ model CourseLandingContent {
   audienceHeading            String?  @db.VarChar(255)
   audienceForHeading         String?  @default("Good fit for") @db.VarChar(100)
   audienceNotForHeading      String?  @default("Probably not for") @db.VarChar(100)
+  audienceIntro              String?  @db.Text
+
+  // Downloadable resources section display settings
+  resourcesEnabled           Boolean  @default(true)
+  resourcesEyebrow           String?  @db.VarChar(100)
+  resourcesHeading           String?  @db.VarChar(255)
+  resourcesIntro             String?  @db.Text
 
   // FAQ section
   faqEnabled                 Boolean  @default(true)
