@@ -116,6 +116,8 @@ function selectHomeReviews(rows, settings, { includeDemo = false, limit = HOME_R
   let list = (Array.isArray(rows) ? rows : []).filter((r) => {
     if (!r || !r.isPublished) return false;
     const pub = tv.toPublicTestimonial(r);
+    // Demo video testimonials are Admin-Preview only - never public, not even in demo-showcase mode.
+    if (r.isDemo && pub.hasVideo) return false;
     return pub.hasVideo || (pub.reviewType !== 'VIDEO' && pub.hasQuote);
   });
   if (!includeDemo) list = list.filter((r) => !r.isDemo);

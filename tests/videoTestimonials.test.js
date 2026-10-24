@@ -322,8 +322,10 @@ test('homepage reviews: video cards render beside text cards and use the same re
   assert.match(html, /class="home-review-video" data-testimonial-video data-kind="hosted" data-id="2"/);
   assert.match(html, /testimonial-player\.js/);
   assert.ok(!/autoplay/i.test(html));
-  const demo = homeReviews.selectHomeReviews(rows, { sourceMode: 'ALL_APPROVED' }, { includeDemo: true });
-  assert.ok(demo.some((r) => r.id === 4), 'demo only appears when explicitly included (showcase)');
+  const showcase = homeReviews.selectHomeReviews(rows, { sourceMode: 'ALL_APPROVED' }, { includeDemo: true });
+  assert.ok(!showcase.some((r) => r.id === 4), 'a demo VIDEO review is never public, even in demo-showcase mode');
+  const demoText = homeReviews.selectHomeReviews([{ ...rv(9, { isDemo: true, quote: 'demo text' }), course: { title: 'C', slug: 'c' } }], { sourceMode: 'ALL_APPROVED' }, { includeDemo: true });
+  assert.equal(demoText.length, 1, 'existing text-demo showcase behaviour is unchanged');
 });
 
 // ---------------------------------------------------------------------------
@@ -343,7 +345,7 @@ test('video-source endpoint: only published, genuine, testimonial-prefixed video
   };
   const restores = [
     swap(prisma.courseTestimonial, 'findUnique', async ({ where }) => rows[where.id] || null),
-    swap(prisma.siteSetting, 'findUnique', async () => null),
+    swap(prisma.siteSetting, 'findUnique', async () => ({ value: 'true' })), // demo-showcase switch ON must not matter
     swap(videoStorageSettings, 'getR2ConfigOrNull', async () => ({ bucket: 'b', accountId: 'a', accessKeyId: 'k', secretAccessKey: 's' })),
     swap(r2, 'signedGetUrl', async (_cfg, key) => { signed.push(key); return { url: 'https://acct.r2.cloudflarestorage.com/signed', expiresInSeconds: 600 }; }),
   ];
@@ -359,7 +361,7 @@ test('video-source endpoint: only published, genuine, testimonial-prefixed video
     assert.equal(ok.headers['Cache-Control'], 'private, no-store, max-age=0');
     assert.ok(!('key' in ok.body) && !JSON.stringify(ok.body).includes('courses/'));
     assert.equal((await call(2)).code, 404, 'hidden review');
-    assert.equal((await call(3)).code, 404, 'demo review, anonymous');
+    assert.equal((await call(3)).code, 404, 'demo review, anonymous (even with the showcase switch on)');
     assert.equal((await call(3, { role: 'STUDENT' })).code, 404, 'demo review, student');
     assert.equal((await call(3, { role: 'ADMIN' })).code, 200, 'demo review, Admin preview');
     assert.equal((await call(4)).code, 404, 'protected lesson key must never be signed here');
@@ -390,4 +392,12 @@ test('Admin review forms are multipart with type, upload, link, thumbnail and ex
   assert.equal((html.match(/enctype="multipart\/form-data"/g) || []).length >= 2, true);
   for (const needle of ['name="reviewType"', 'name="video"', 'name="videoUrl"', 'name="thumbnail"', 'name="removeVideo"', 'Hosted video uploaded']) assert.ok(html.includes(needle), needle);
   assert.match(html, /<option value="TEXT_VIDEO" selected>/);
+});
+
+test('course controller strips demo VIDEO reviews even in demo-showcase mode (source guard)', () => {
+  const src = fs.readFileSync(path.join(root, 'src/controllers/course.controller.js'), 'utf8');
+  const i = src.indexOf('Demo VIDEO testimonials');
+  assert.ok(i > 0);
+  assert.match(src.slice(i, i + 400), /filter\(\(t\) => !\(t\.isDemo && t\.hasVideo\)\)/);
+  assert.ok(src.indexOf('filter((t) => !(t.isDemo && t.hasVideo))') < src.indexOf('isDemo: false'), 'filter runs before demo marking is removed');
 });
