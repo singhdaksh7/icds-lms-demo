@@ -20,7 +20,13 @@
                     <% for (let s = 1; s <= 5; s++) { %><i class="bi <%= s <= r.rating ? 'bi-star-fill' : 'bi-star' %>" aria-hidden="true"></i><% } %>
                 </div>
                 <% } %>
-                <blockquote class="home-review-quote">&ldquo;<%= r.quote %>&rdquo;</blockquote>
+                <% if (r.hasVideo) { %>
+                <button type="button" class="home-review-video" data-testimonial-video data-kind="<%= r.videoKind %>" data-id="<%= r.id %>"<% if (r.embedUrl) { %> data-embed="<%= r.embedUrl %>"<% } %> data-title="<%= r.reviewerName %>" aria-label="Play video review from <%= r.reviewerName %>">
+                    <% if (r.videoThumbnailUrl) { %><img src="<%= r.videoThumbnailUrl %>" alt="" loading="lazy"><% } else { %><span class="home-review-poster" aria-hidden="true"><i class="bi bi-camera-video"></i></span><% } %>
+                    <span class="home-review-play" aria-hidden="true"><i class="bi bi-play-fill"></i></span>
+                </button>
+                <% } %>
+                <% if (r.quote) { %><blockquote class="home-review-quote">&ldquo;<%= r.quote %>&rdquo;</blockquote><% } %>
                 <figcaption class="home-review-person">
                     <% if (r.avatarUrl) { %>
                         <img class="home-review-avatar" src="<%= r.avatarUrl %>" alt="" loading="lazy" width="48" height="48">
@@ -37,6 +43,7 @@
             </figure>
             <% }); %>
         </div>
+        <% if (hrList.some(function (r) { return r.hasVideo; })) { %><script src="/js/testimonial-player.js" defer></script><% } %>
     </div>
 </section>
 <% } %>

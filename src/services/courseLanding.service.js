@@ -1,5 +1,6 @@
 const { prisma } = require('../config/db');
 const { parseFormBool } = require('../lib/formBool');
+const tv = require('../lib/testimonialVideo');
 
 class CourseLandingError extends Error {
   constructor(message, statusCode = 400) {
@@ -454,7 +455,7 @@ async function getPublicLandingData(courseId, courseStatsContext = {}, options =
     whyRegisterWant: whyRegisterItems.filter((item) => item.type === 'WANT'),
     whyRegisterGet: whyRegisterItems.filter((item) => item.type === 'GET'),
     highlights,
-    testimonials,
+    testimonials: testimonials.map(tv.toPublicTestimonial),
     realReviewCount,
     realAverageRating,
     accessPlans,
@@ -971,24 +972,66 @@ async function moveHighlight(courseId, highlightId, direction) {
 // 8. Reviews / Testimonials
 // ============================================================================
 
-async function addTestimonial(courseId, { reviewerName, reviewerDesignation, reviewerLocation, quote, rating = 5, avatarUrl, initials, sortOrder = 0, isPublished = true, isDemo = false }) {
-  if (!reviewerName || !String(reviewerName).trim()) throw new CourseLandingError('Reviewer name is required');
-  if (!quote || !String(quote).trim()) throw new CourseLandingError('Testimonial quote is required');
+function cleanInitials(initials, reviewerName) {
+  const raw = initials ? String(initials).trim().slice(0, 10) : '';
+  return raw || String(reviewerName).trim().split(/\s+/).map((w) => w[0]).join('').slice(0, 3).toUpperCase() || null;
+}
+
+// Resolves + validates the video-related inputs. `current` is the stored row (update) or null (create).
+function resolveVideoFields(courseId, current, input) {
+  const currentType = (current && current.reviewType) || 'TEXT';
+  const type = input.reviewType !== undefined ? tv.normalizeType(input.reviewType, currentType) : currentType;
+  let videoObjectKey = current ? current.videoObjectKey : null;
+  let videoUrl = current ? current.videoUrl : null;
+  let videoThumbnailUrl = current ? current.videoThumbnailUrl : null;
+
+  if (input.removeVideo !== undefined && parseFormBool(input.removeVideo)) {
+    videoObjectKey = null;
+    videoUrl = null;
+  }
+  if (input.videoUrl !== undefined) {
+    const r = tv.normalizeExternalVideoUrl(input.videoUrl);
+    if (!r.ok) throw new CourseLandingError(r.error);
+    if (r.value) { videoUrl = r.value; videoObjectKey = null; } else if (String(input.videoUrl).trim() === '' && !input.videoObjectKey) { videoUrl = null; }
+  }
+  if (input.videoObjectKey) {
+    videoObjectKey = String(input.videoObjectKey);
+    videoUrl = null;
+  }
+  if (input.videoThumbnailUrl !== undefined) {
+    const t = tv.normalizeThumbnailUrl(input.videoThumbnailUrl);
+    if (!t.ok) throw new CourseLandingError(t.error);
+    videoThumbnailUrl = t.value;
+  }
+  if (input.removeThumbnail !== undefined && parseFormBool(input.removeThumbnail)) videoThumbnailUrl = null;
+
+  // A plain text review carries no video.
+  if (type === 'TEXT') { videoObjectKey = null; videoUrl = null; videoThumbnailUrl = null; }
+  return { type, videoObjectKey, videoUrl, videoThumbnailUrl };
+}
+
+async function addTestimonial(courseId, input) {
+  const { reviewerName, reviewerDesignation, reviewerLocation, quote, rating = 5, avatarUrl, initials, sortOrder = 0, isPublished = true, isDemo = false } = input;
+  const v = resolveVideoFields(courseId, null, input);
+  const errors = tv.validateTestimonial({ reviewType: v.type, reviewerName, quote, videoObjectKey: v.videoObjectKey, videoUrl: v.videoUrl }, courseId);
+  if (errors.length) throw new CourseLandingError(errors[0]);
   const count = await prisma.courseTestimonial.count({ where: { courseId } });
   const cleanRating = Math.max(1, Math.min(5, parseInt(rating, 10) || 5));
-  const rawInitials = initials ? String(initials).trim().slice(0, 10) : '';
-  const fallbackInitials = rawInitials || String(reviewerName).trim().split(/\s+/).map((w) => w[0]).join('').slice(0, 3).toUpperCase();
 
   return prisma.courseTestimonial.create({
     data: {
       courseId,
+      reviewType: v.type,
       reviewerName: String(reviewerName).trim().slice(0, 255),
       reviewerDesignation: reviewerDesignation ? String(reviewerDesignation).trim().slice(0, 255) : null,
       reviewerLocation: reviewerLocation ? String(reviewerLocation).trim().slice(0, 255) : null,
-      quote: String(quote).trim(),
+      quote: quote ? String(quote).trim() : '',
       rating: cleanRating,
       avatarUrl: avatarUrl ? String(avatarUrl).trim().slice(0, 500) : null,
-      initials: fallbackInitials || null,
+      initials: cleanInitials(initials, reviewerName),
+      videoUrl: v.videoUrl,
+      videoObjectKey: v.videoObjectKey,
+      videoThumbnailUrl: v.videoThumbnailUrl,
       sortOrder: Number(sortOrder) || count * 10 + 10,
       isPublished: cleanBoolValue(isPublished),
       isDemo: cleanBoolValue(isDemo),
@@ -996,20 +1039,31 @@ async function addTestimonial(courseId, { reviewerName, reviewerDesignation, rev
   });
 }
 
-async function updateTestimonial(courseId, testimonialId, { reviewerName, reviewerDesignation, reviewerLocation, quote, rating, avatarUrl, initials, isPublished, isDemo }) {
+async function updateTestimonial(courseId, testimonialId, input) {
+  const { reviewerName, reviewerDesignation, reviewerLocation, quote, rating, avatarUrl, initials, isPublished, isDemo } = input;
   const item = await prisma.courseTestimonial.findUnique({ where: { id: testimonialId } });
   if (!item) throw new CourseLandingError('Testimonial not found', 404);
   if (item.courseId !== courseId) throw new CourseLandingError('Testimonial does not belong to this course', 403);
 
+  const v = resolveVideoFields(courseId, item, input);
+  const finalName = reviewerName !== undefined ? reviewerName : item.reviewerName;
+  const finalQuote = quote !== undefined ? quote : item.quote;
+  const errors = tv.validateTestimonial({ reviewType: v.type, reviewerName: finalName, quote: finalQuote, videoObjectKey: v.videoObjectKey, videoUrl: v.videoUrl }, courseId);
+  if (errors.length) throw new CourseLandingError(errors[0]);
+
   const cleanRating = rating !== undefined ? Math.max(1, Math.min(5, parseInt(rating, 10) || 5)) : undefined;
 
-  return prisma.courseTestimonial.update({
+  const updated = await prisma.courseTestimonial.update({
     where: { id: testimonialId },
     data: {
+      reviewType: v.type,
+      videoObjectKey: v.videoObjectKey,
+      videoUrl: v.videoUrl,
+      videoThumbnailUrl: v.videoThumbnailUrl,
       ...(reviewerName !== undefined ? { reviewerName: String(reviewerName).trim().slice(0, 255) } : {}),
       ...(reviewerDesignation !== undefined ? { reviewerDesignation: reviewerDesignation ? String(reviewerDesignation).trim().slice(0, 255) : null } : {}),
       ...(reviewerLocation !== undefined ? { reviewerLocation: reviewerLocation ? String(reviewerLocation).trim().slice(0, 255) : null } : {}),
-      ...(quote !== undefined ? { quote: String(quote).trim() } : {}),
+      ...(quote !== undefined ? { quote: quote ? String(quote).trim() : '' } : {}),
       ...(cleanRating !== undefined ? { rating: cleanRating } : {}),
       ...(avatarUrl !== undefined ? { avatarUrl: avatarUrl ? String(avatarUrl).trim().slice(0, 500) : null } : {}),
       ...(initials !== undefined ? { initials: initials ? String(initials).trim().slice(0, 10) : null } : {}),
@@ -1017,13 +1071,18 @@ async function updateTestimonial(courseId, testimonialId, { reviewerName, review
       ...(isDemo !== undefined ? { isDemo: cleanBoolValue(isDemo) } : {}),
     },
   });
+  // Tell the caller which stored files are no longer referenced so it can delete them.
+  const orphanedKey = item.videoObjectKey && item.videoObjectKey !== v.videoObjectKey ? item.videoObjectKey : null;
+  const orphanedThumb = item.videoThumbnailUrl && item.videoThumbnailUrl !== v.videoThumbnailUrl ? item.videoThumbnailUrl : null;
+  return Object.assign(updated, { orphanedVideoKey: orphanedKey, orphanedThumbnailUrl: orphanedThumb });
 }
 
 async function deleteTestimonial(courseId, testimonialId) {
   const item = await prisma.courseTestimonial.findUnique({ where: { id: testimonialId } });
   if (!item) throw new CourseLandingError('Testimonial not found', 404);
   if (item.courseId !== courseId) throw new CourseLandingError('Testimonial does not belong to this course', 403);
-  return prisma.courseTestimonial.delete({ where: { id: testimonialId } });
+  await prisma.courseTestimonial.delete({ where: { id: testimonialId } });
+  return Object.assign(item, { orphanedVideoKey: item.videoObjectKey || null, orphanedThumbnailUrl: item.videoThumbnailUrl || null });
 }
 
 async function moveTestimonial(courseId, testimonialId, direction) {

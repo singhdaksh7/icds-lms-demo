@@ -889,6 +889,12 @@ model CourseHighlight {
   @@map("course_highlights")
 }
 
+enum TestimonialType {
+  TEXT
+  VIDEO
+  TEXT_VIDEO
+}
+
 model CourseTestimonial {
   id                  Int      @id @default(autoincrement())
   courseId            Int
@@ -902,6 +908,15 @@ model CourseTestimonial {
   sortOrder           Int      @default(0)
   isPublished         Boolean  @default(true)
   isDemo              Boolean  @default(false)
+  // TEXT = quote only, VIDEO = video (quote optional), TEXT_VIDEO = both required.
+  // Hosted videos live in R2 under a dedicated testimonials/ key prefix and are
+  // delivered through a public-safe signed URL endpoint; videoUrl is an approved
+  // external (YouTube/Vimeo) link. Exactly one of the two is set for video types.
+  reviewType          TestimonialType @default(TEXT)
+  videoUrl            String?  @db.VarChar(500)
+  videoObjectKey      String?  @db.VarChar(255)
+  videoThumbnailUrl   String?  @db.VarChar(500)
+  videoDurationSeconds Int?
   // Homepage reviews: real = isPublished && !isDemo. featuredOnHome picks rows
   // for sourceMode FEATURED; homeSortOrder orders them on the homepage.
   featuredOnHome      Boolean  @default(false)

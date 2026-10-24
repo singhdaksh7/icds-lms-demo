@@ -41,7 +41,7 @@ class SignatureCheck extends Transform {
   }
 }
 
-// `req` must carry: r2UploadConfig, r2CourseId, r2LessonId ('new' or number).
+// `req` must carry: r2UploadConfig plus either r2KeyBuilder(ext) or r2CourseId + r2LessonId ('new' or number).
 function createR2Storage() {
   return {
     _handleFile(req, file, cb) {
@@ -51,7 +51,7 @@ function createR2Storage() {
         const contentType = mimeTypeFor(ext);
         if (!contentType) throw new Error('Unsupported video file type. Only .mp4 and .webm are allowed.');
         if (!req.r2UploadConfig) throw new Error('Cloudflare R2 is not configured.');
-        key = r2.buildObjectKey(req.r2CourseId, req.r2LessonId, ext);
+        key = typeof req.r2KeyBuilder === 'function' ? req.r2KeyBuilder(ext) : r2.buildObjectKey(req.r2CourseId, req.r2LessonId, ext);
 
         const check = new SignatureCheck(ext);
         file.stream.on('error', (err) => check.destroy(err));

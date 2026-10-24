@@ -692,21 +692,34 @@ const effectiveAccessSubtitle = defaultAccessPlan ? defaultAccessPlan.label : (l
 
                         <div class="reviews-grid">
                             <% testimonialsList.forEach(function(rev) { %>
-                                <div class="review-card <%= rev.isDemo ? 'review-card-demo' : '' %>" style="<%= rev.isDemo ? 'border:1px dashed #cbd5e1; position:relative;' : '' %>">
+                                <div class="review-card <%= rev.hasVideo ? 'review-card-video' : '' %> <%= rev.isDemo ? 'review-card-demo' : '' %>" style="<%= rev.isDemo ? 'border:1px dashed #cbd5e1; position:relative;' : '' %>">
                                     <% if (rev.isDemo) { %>
                                         <div style="position:absolute; top:14px; right:14px;">
                                             <span class="badge" style="background:#fef3c7; color:#92400e; font-size:10px; font-weight:700; letter-spacing:0.5px; border-radius:4px; padding:3px 7px;">DEMO REVIEW</span>
                                         </div>
                                     <% } %>
+                                    <% if (rev.hasVideo) { %>
+                                        <button type="button" class="review-video-thumb" data-testimonial-video data-kind="<%= rev.videoKind %>" data-id="<%= rev.id %>"<% if (rev.embedUrl) { %> data-embed="<%= rev.embedUrl %>"<% } %> data-title="<%= rev.reviewerName %>" aria-label="Play video review from <%= rev.reviewerName %>">
+                                            <% if (rev.videoThumbnailUrl) { %>
+                                                <img src="<%= rev.videoThumbnailUrl %>" alt="" loading="lazy">
+                                            <% } else { %>
+                                                <span class="review-video-poster" aria-hidden="true"><i class="bi bi-camera-video"></i></span>
+                                            <% } %>
+                                            <span class="review-video-play" aria-hidden="true"><i class="bi bi-play-fill"></i></span>
+                                        </button>
+                                    <% } else if (rev.hasQuote !== false) { %>
                                     <div class="review-quote-mark">“</div>
+                                    <% } %>
                                     <div class="review-stars">
                                         <% for (let s = 1; s <= (rev.rating || 5); s++) { %>
                                             <i class="bi bi-star-fill"></i>
                                         <% } %>
                                     </div>
+                                    <% if (rev.hasQuote !== false && rev.quote) { %>
                                     <blockquote class="review-quote">
                                         "<%= rev.quote %>"
                                     </blockquote>
+                                    <% } %>
                                     <div class="reviewer-meta">
                                         <div class="reviewer-avatar">
                                             <% if (rev.avatarUrl) { %>
@@ -727,6 +740,9 @@ const effectiveAccessSubtitle = defaultAccessPlan ? defaultAccessPlan.label : (l
                                 </div>
                             <% }); %>
                         </div>
+                        <% if (testimonialsList.some(function (r) { return r.hasVideo; })) { %>
+                            <script src="/js/testimonial-player.js" defer></script>
+                        <% } %>
                     </div>
                 </section>
             <% } %>

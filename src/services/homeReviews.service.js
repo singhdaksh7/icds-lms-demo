@@ -1,4 +1,5 @@
 const { prisma } = require('../config/db');
+const tv = require('../lib/testimonialVideo');
 
 const KEYS = {
   enabled: 'homeReviews.enabled',
@@ -110,7 +111,13 @@ const num = (v) => (Number.isFinite(Number(v)) ? Number(v) : 0);
 // Pure: filter + order + shape testimonial rows for the homepage.
 function selectHomeReviews(rows, settings, { includeDemo = false, limit = HOME_REVIEW_LIMIT } = {}) {
   const mode = settings && SOURCE_MODES.includes(settings.sourceMode) ? settings.sourceMode : DEFAULTS.sourceMode;
-  let list = (Array.isArray(rows) ? rows : []).filter((r) => r && r.isPublished && r.quote && String(r.quote).trim());
+  // A review needs something to show: a quote (TEXT), or a playable video (VIDEO / TEXT_VIDEO).
+  // A TEXT_VIDEO whose video is unplayable still shows as a plain quote.
+  let list = (Array.isArray(rows) ? rows : []).filter((r) => {
+    if (!r || !r.isPublished) return false;
+    const pub = tv.toPublicTestimonial(r);
+    return pub.hasVideo || (pub.reviewType !== 'VIDEO' && pub.hasQuote);
+  });
   if (!includeDemo) list = list.filter((r) => !r.isDemo);
   if (mode === 'FEATURED') {
     list = list.filter((r) => r.featuredOnHome);
@@ -118,9 +125,16 @@ function selectHomeReviews(rows, settings, { includeDemo = false, limit = HOME_R
   } else {
     list.sort((a, b) => num(a.sortOrder) - num(b.sortOrder) || num(b.id) - num(a.id));
   }
-  return list.slice(0, limit).map((r) => ({
+  return list.slice(0, limit).map((r) => {
+    const pub = tv.toPublicTestimonial(r);
+    return {
     id: r.id,
-    quote: String(r.quote).trim(),
+    reviewType: pub.reviewType,
+    hasVideo: pub.hasVideo,
+    videoKind: pub.videoKind,
+    embedUrl: pub.embedUrl,
+    videoThumbnailUrl: pub.videoThumbnailUrl || '',
+    quote: r.quote ? String(r.quote).trim() : '',
     rating: Math.min(5, Math.max(0, Math.round(num(r.rating)))),
     reviewerName: r.reviewerName,
     reviewerDesignation: r.reviewerDesignation || '',
@@ -130,7 +144,8 @@ function selectHomeReviews(rows, settings, { includeDemo = false, limit = HOME_R
     isDemo: Boolean(r.isDemo),
     courseTitle: r.course ? r.course.title : '',
     courseSlug: r.course ? r.course.slug : '',
-  }));
+    };
+  });
 }
 
 function initialsFrom(name) {

@@ -1600,3 +1600,18 @@
     padding: 44px 20px;
   }
 }
+
+/* ---------- Video testimonials (reviews section) ---------- */
+.course-landing-page .review-video-thumb {
+  position: relative; display: block; width: 100%; aspect-ratio: 16 / 9; padding: 0; margin-bottom: 14px; border: 0; border-radius: 12px; overflow: hidden;
+  cursor: pointer; background: linear-gradient(135deg, #0b1320, #1e3a5f);
+}
+.course-landing-page .review-video-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.course-landing-page .review-video-poster { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: rgba(255, 255, 255, .35); font-size: 52px; }
+.course-landing-page .review-video-play {
+  position: absolute; left: 50%; top: 50%; width: 56px; height: 56px; margin: -28px 0 0 -28px; display: flex; align-items: center; justify-content: center;
+  border-radius: 50%; background: rgba(255, 255, 255, .95); color: #0b1320; font-size: 30px; box-shadow: 0 8px 24px rgba(0, 0, 0, .35); transition: transform .2s ease;
+}
+.course-landing-page .review-video-thumb:hover .review-video-play, .course-landing-page .review-video-thumb:focus-visible .review-video-play { transform: scale(1.08); }
+.course-landing-page .review-video-thumb:focus-visible { outline: 3px solid #8ab4ff; outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { .course-landing-page .review-video-play { transition: none; } }

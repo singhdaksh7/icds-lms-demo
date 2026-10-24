@@ -32,8 +32,24 @@ const OBJECT_KEY_RE = /^courses\/\d{1,10}\/lessons\/(?:\d{1,10}|new)\/[0-9a-f]{8
 // courses/<courseId|slug>/resources/<uuid|filename>.<ext>
 const RESOURCE_KEY_RE = /^courses\/(?:\d{1,10}|[a-z0-9_-]+)\/resources\/[a-zA-Z0-9_.-]+\.(?:pdf|zip|docx?|xlsx?|png|jpe?g)$/i;
 
+// courses/<courseId>/testimonials/<testimonialId|new>/<uuid>.<mp4|webm> - PUBLIC marketing
+// videos. A separate prefix so they can never be mistaken for (or served as) protected
+// lesson videos: the testimonial delivery path signs ONLY this shape.
+const TESTIMONIAL_KEY_RE = /^courses\/\d{1,10}\/testimonials\/(?:\d{1,10}|new)\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.(?:mp4|webm)$/;
+
+function isTestimonialObjectKey(key) {
+  return typeof key === 'string' && key.length <= 200 && TESTIMONIAL_KEY_RE.test(key);
+}
+
 function isOwnedObjectKey(key) {
-  return typeof key === 'string' && key.length <= 200 && (OBJECT_KEY_RE.test(key) || RESOURCE_KEY_RE.test(key));
+  return typeof key === 'string' && key.length <= 200 && (OBJECT_KEY_RE.test(key) || RESOURCE_KEY_RE.test(key) || TESTIMONIAL_KEY_RE.test(key));
+}
+
+function buildTestimonialObjectKey(courseId, testimonialId, extension) {
+  if (!Number.isInteger(courseId) || courseId < 1) throw new Error('Invalid course id.');
+  if (testimonialId !== 'new' && (!Number.isInteger(testimonialId) || testimonialId < 1)) throw new Error('Invalid testimonial id.');
+  if (extension !== '.mp4' && extension !== '.webm') throw new Error('Unsupported video extension.');
+  return `courses/${courseId}/testimonials/${testimonialId}/${crypto.randomUUID()}${extension}`;
 }
 
 // Keys are always server-generated; the uploaded filename is never used.
@@ -222,6 +238,8 @@ function describeError(err) {
 module.exports = {
   SIGNED_URL_TTL_SECONDS,
   isOwnedObjectKey,
+  isTestimonialObjectKey,
+  buildTestimonialObjectKey,
   buildObjectKey,
   buildResourceObjectKey,
   endpointFor,

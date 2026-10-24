@@ -401,15 +401,38 @@ async function moveHighlight(req, res, next) {
 }
 
 // 8. Testimonials / Reviews
+// Builds the service payload from the (multipart) review form. Checkbox pairs arrive as
+// ["false","on"] / "false" and are parsed explicitly; uploaded media becomes safe references.
+function testimonialPayload(req) {
+  const { parseFormBool } = require('../../lib/formBool');
+  const imageStorage = require('../../lib/imageStorage');
+  const payload = { ...req.body };
+  if (payload.formSubmitted) {
+    payload.isPublished = parseFormBool(payload.isPublished, false);
+    payload.isDemo = parseFormBool(payload.isDemo, false);
+  }
+  const files = req.files || {};
+  if (files.video && files.video[0] && files.video[0].r2Key) payload.videoObjectKey = files.video[0].r2Key;
+  if (files.thumbnail && files.thumbnail[0]) payload.videoThumbnailUrl = imageStorage.publicUrlFor(files.thumbnail[0].filename);
+  return payload;
+}
+
+function adoptTestimonialMedia(req) {
+  if (req.testimonialMediaAdopted) req.testimonialMediaAdopted = { video: true, thumbnail: true };
+}
+
+async function cleanupOrphans(row) {
+  if (!row) return;
+  const imageStorage = require('../../lib/imageStorage');
+  if (row.orphanedVideoKey) await require('../../lib/testimonialVideo').deleteHostedVideo(row.orphanedVideoKey);
+  if (row.orphanedThumbnailUrl) imageStorage.deleteIfOwned(row.orphanedThumbnailUrl);
+}
+
 async function createTestimonial(req, res, next) {
   try {
     const courseId = parseInt(req.params.courseId, 10);
-    const payload = { ...req.body };
-    if (payload.formSubmitted) {
-      payload.isPublished = !!payload.isPublished;
-      payload.isDemo = !!payload.isDemo;
-    }
-    await courseLandingService.addTestimonial(courseId, payload);
+    await courseLandingService.addTestimonial(courseId, testimonialPayload(req));
+    adoptTestimonialMedia(req);
     req.flashSuccess('Review / Testimonial added.');
     res.redirect(`/admin/courses/${courseId}/landing-page?tab=reviews`);
   } catch (err) {
@@ -422,12 +445,9 @@ async function updateTestimonial(req, res, next) {
   try {
     const courseId = parseInt(req.params.courseId, 10);
     const testimonialId = parseInt(req.params.testimonialId, 10);
-    const payload = { ...req.body };
-    if (payload.formSubmitted) {
-      payload.isPublished = !!payload.isPublished;
-      payload.isDemo = !!payload.isDemo;
-    }
-    await courseLandingService.updateTestimonial(courseId, testimonialId, payload);
+    const row = await courseLandingService.updateTestimonial(courseId, testimonialId, testimonialPayload(req));
+    adoptTestimonialMedia(req);
+    await cleanupOrphans(row);
     req.flashSuccess('Review / Testimonial updated.');
     res.redirect(`/admin/courses/${courseId}/landing-page?tab=reviews`);
   } catch (err) {
@@ -440,7 +460,8 @@ async function deleteTestimonial(req, res, next) {
   try {
     const courseId = parseInt(req.params.courseId, 10);
     const testimonialId = parseInt(req.params.testimonialId, 10);
-    await courseLandingService.deleteTestimonial(courseId, testimonialId);
+    const row = await courseLandingService.deleteTestimonial(courseId, testimonialId);
+    await cleanupOrphans(row);
     req.flashSuccess('Review / Testimonial deleted.');
     res.redirect(`/admin/courses/${courseId}/landing-page?tab=reviews`);
   } catch (err) {

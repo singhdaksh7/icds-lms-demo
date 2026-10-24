@@ -2219,3 +2219,14 @@
         }
 
 
+
+/* ---------- Testimonial video modal (course page + homepage) ---------- */
+html.tv-modal-open { overflow: hidden; }
+.tv-modal { position: fixed; inset: 0; z-index: 2000; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgba(8, 10, 24, .82); }
+.tv-modal-box { position: relative; width: min(960px, 100%); }
+.tv-modal-stage { position: relative; width: 100%; aspect-ratio: 16 / 9; background: #000; border-radius: 14px; overflow: hidden; display: flex; align-items: center; justify-content: center; box-shadow: 0 24px 60px rgba(0, 0, 0, .5); }
+.tv-modal-stage video, .tv-modal-stage iframe { width: 100%; height: 100%; border: 0; background: #000; }
+.tv-modal-msg { color: #e5e7eb; margin: 0; padding: 24px; text-align: center; font-size: 15px; }
+.tv-modal-close { position: absolute; top: -14px; right: -6px; z-index: 2; width: 38px; height: 38px; border: 0; border-radius: 50%; background: #fff; color: #111; font-size: 24px; line-height: 1; cursor: pointer; box-shadow: 0 6px 18px rgba(0, 0, 0, .35); }
+.tv-modal-close:focus-visible { outline: 3px solid #8ab4ff; outline-offset: 2px; }
+@media (max-width: 575.98px) { .tv-modal { padding: 10px; } .tv-modal-close { top: -12px; right: 2px; } }

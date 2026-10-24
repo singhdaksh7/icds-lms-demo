@@ -1166,6 +1166,7 @@
                                     </td>
                                     <td>
                                         <strong><%= rev.reviewerName %></strong>
+                                        <% if (rev.reviewType && rev.reviewType !== 'TEXT') { %><span class="badge bg-info text-dark ms-1"><i class="bi bi-camera-video me-1"></i><%= rev.reviewType === 'VIDEO' ? 'Video' : 'Text + Video' %></span><% } %>
                                         <% if (rev.isDemo) { %>
                                             <div class="small text-muted fst-italic">Demo / QA Preview</div>
                                         <% } %>
@@ -1210,7 +1211,7 @@
                     <div class="modal fade" id="editTestimonialModal-<%= rev.id %>" tabindex="-1">
                         <div class="modal-dialog">
                             <div class="modal-content">
-                                <form method="POST" action="/admin/courses/<%= course.id %>/landing-page/reviews/<%= rev.id %>/edit">
+                                <form method="POST" action="/admin/courses/<%= course.id %>/landing-page/reviews/<%= rev.id %>/edit" enctype="multipart/form-data">
                                     <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                                     <input type="hidden" name="formSubmitted" value="1">
                                     <div class="modal-header">
@@ -1245,8 +1246,37 @@
                                             </div>
                                         </div>
                                         <div class="mb-3">
-                                            <label class="form-label small fw-semibold">Quote / Feedback</label>
-                                            <textarea name="quote" class="form-control" rows="3" required><%= rev.quote %></textarea>
+                                            <label class="form-label small fw-semibold" for="editRevType-<%= rev.id %>">Review Type</label>
+                                            <select name="reviewType" id="editRevType-<%= rev.id %>" class="form-select">
+                                                <option value="TEXT" <%= rev.reviewType === 'TEXT' || !rev.reviewType ? 'selected' : '' %>>Text Review (quote required)</option>
+                                                <option value="VIDEO" <%= rev.reviewType === 'VIDEO' ? 'selected' : '' %>>Video Review (video required, quote optional)</option>
+                                                <option value="TEXT_VIDEO" <%= rev.reviewType === 'TEXT_VIDEO' ? 'selected' : '' %>>Text + Video (video and quote required)</option>
+                                            </select>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label small fw-semibold">Quote / Feedback <span class="text-muted fw-normal">(required for Text and Text + Video)</span></label>
+                                            <textarea name="quote" class="form-control" rows="3"><%= rev.quote %></textarea>
+                                        </div>
+                                        <div class="border rounded p-2 mb-3 bg-light">
+                                            <div class="small fw-semibold mb-2"><i class="bi bi-camera-video me-1"></i>Video (Video and Text + Video reviews)</div>
+                                            <% if (rev.videoObjectKey) { %><div class="small text-success mb-2"><i class="bi bi-cloud-check me-1"></i>Hosted video uploaded. Uploading a new file replaces it.</div><% } else if (rev.videoUrl) { %><div class="small text-success mb-2"><i class="bi bi-link-45deg me-1"></i>External video link set.</div><% } %>
+                                            <label class="form-label small fw-semibold" for="editRev<%= rev.id %>Video">Upload video <span class="text-muted fw-normal">(MP4 or WebM, stored privately in Cloudflare R2)</span></label>
+                                            <input type="file" name="video" id="editRev<%= rev.id %>Video" class="form-control form-control-sm mb-2" accept=".mp4,.webm,video/mp4,video/webm">
+                                            <label class="form-label small fw-semibold" for="editRev<%= rev.id %>VideoUrl">&hellip;or YouTube / Vimeo link</label>
+                                            <input type="url" name="videoUrl" id="editRev<%= rev.id %>VideoUrl" class="form-control form-control-sm" value="<%= rev.videoUrl || '' %>" placeholder="https://www.youtube.com/watch?v=&hellip;" maxlength="500">
+                                            <div class="form-text">Optional &mdash; use either an upload or a link. Hidden on the public page for Text reviews.</div>
+                                            <label class="form-label small fw-semibold mt-2" for="editRev<%= rev.id %>Thumb">Thumbnail <span class="text-muted fw-normal">(optional JPG/PNG/WEBP &mdash; a default poster is used when empty)</span></label>
+                                            <input type="file" name="thumbnail" id="editRev<%= rev.id %>Thumb" class="form-control form-control-sm" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp">
+                                            <div class="form-check mt-2">
+                                                <input type="hidden" name="removeVideo" value="false">
+                                                <input class="form-check-input" type="checkbox" name="removeVideo" id="editRevRmVid-<%= rev.id %>">
+                                                <label class="form-check-label small" for="editRevRmVid-<%= rev.id %>">Remove current video</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input type="hidden" name="removeThumbnail" value="false">
+                                                <input class="form-check-input" type="checkbox" name="removeThumbnail" id="editRevRmThumb-<%= rev.id %>">
+                                                <label class="form-check-label small" for="editRevRmThumb-<%= rev.id %>">Remove current thumbnail</label>
+                                            </div>
                                         </div>
                                         <div class="row g-2">
                                             <div class="col-6">
@@ -2584,7 +2614,7 @@ const editModalDefs = [
 <div class="modal fade" id="createTestimonialModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
-            <form method="POST" action="/admin/courses/<%= course.id %>/landing-page/reviews">
+            <form method="POST" action="/admin/courses/<%= course.id %>/landing-page/reviews" enctype="multipart/form-data">
                 <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                 <input type="hidden" name="formSubmitted" value="1">
                 <div class="modal-header">
@@ -2619,9 +2649,29 @@ const editModalDefs = [
                         </div>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label small fw-semibold">Quote / Feedback</label>
-                        <textarea name="quote" class="form-control" rows="3" placeholder="Real feedback from clinician" required></textarea>
+                                            <label class="form-label small fw-semibold" for="createRevType">Review Type</label>
+                                            <select name="reviewType" id="createRevType" class="form-select">
+                                                <option value="TEXT" selected>Text Review (quote required)</option>
+                                                <option value="VIDEO" >Video Review (video required, quote optional)</option>
+                                                <option value="TEXT_VIDEO" >Text + Video (video and quote required)</option>
+                                            </select>
+                                        </div>
+                                        <div class="mb-3">
+                        <label class="form-label small fw-semibold">Quote / Feedback <span class="text-muted fw-normal">(required for Text and Text + Video)</span></label>
+                        <textarea name="quote" class="form-control" rows="3" placeholder="Real feedback from clinician"></textarea>
                     </div>
+                                        <div class="border rounded p-2 mb-3 bg-light">
+                                            <div class="small fw-semibold mb-2"><i class="bi bi-camera-video me-1"></i>Video (Video and Text + Video reviews)</div>
+                                            
+                                            <label class="form-label small fw-semibold" for="createRevVideo">Upload video <span class="text-muted fw-normal">(MP4 or WebM, stored privately in Cloudflare R2)</span></label>
+                                            <input type="file" name="video" id="createRevVideo" class="form-control form-control-sm mb-2" accept=".mp4,.webm,video/mp4,video/webm">
+                                            <label class="form-label small fw-semibold" for="createRevVideoUrl">&hellip;or YouTube / Vimeo link</label>
+                                            <input type="url" name="videoUrl" id="createRevVideoUrl" class="form-control form-control-sm" value="" placeholder="https://www.youtube.com/watch?v=&hellip;" maxlength="500">
+                                            <div class="form-text">Optional &mdash; use either an upload or a link. Hidden on the public page for Text reviews.</div>
+                                            <label class="form-label small fw-semibold mt-2" for="createRevThumb">Thumbnail <span class="text-muted fw-normal">(optional JPG/PNG/WEBP &mdash; a default poster is used when empty)</span></label>
+                                            <input type="file" name="thumbnail" id="createRevThumb" class="form-control form-control-sm" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp">
+                                            
+                                        </div>
                     <div class="row g-2">
                         <div class="col-6">
                             <div class="form-check">

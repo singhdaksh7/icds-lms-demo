@@ -39,6 +39,7 @@ const homeBannerController = require('../controllers/admin/homeBanner.controller
 const homeReviewsController = require('../controllers/admin/homeReviews.controller');
 const founderAdminController = require('../controllers/admin/founder.controller');
 const { uploadBannerImages } = require('../middleware/bannerUpload.middleware');
+const { uploadTestimonialMedia } = require('../middleware/testimonialMedia.middleware');
 
 const curriculumController = require('../controllers/admin/curriculum.controller');
 const courseLandingController = require('../controllers/admin/courseLanding.controller');
@@ -102,8 +103,9 @@ router.post('/courses/:courseId/landing-page/highlights/:highlightId/edit', doub
 router.post('/courses/:courseId/landing-page/highlights/:highlightId/delete', doubleCsrfProtection, courseLandingController.deleteHighlight);
 router.post('/courses/:courseId/landing-page/highlights/:highlightId/move', doubleCsrfProtection, courseLandingController.moveHighlight);
 
-router.post('/courses/:courseId/landing-page/reviews', doubleCsrfProtection, courseLandingController.createTestimonial);
-router.post('/courses/:courseId/landing-page/reviews/:testimonialId/edit', doubleCsrfProtection, courseLandingController.updateTestimonial);
+// Review forms are multipart (optional video + thumbnail); parsed BEFORE CSRF so the body token is readable.
+router.post('/courses/:courseId/landing-page/reviews', uploadTestimonialMedia(), doubleCsrfProtection, courseLandingController.createTestimonial);
+router.post('/courses/:courseId/landing-page/reviews/:testimonialId/edit', uploadTestimonialMedia(), doubleCsrfProtection, courseLandingController.updateTestimonial);
 router.post('/courses/:courseId/landing-page/reviews/:testimonialId/delete', doubleCsrfProtection, courseLandingController.deleteTestimonial);
 router.post('/courses/:courseId/landing-page/reviews/:testimonialId/move', doubleCsrfProtection, courseLandingController.moveTestimonial);
 
