@@ -1,0 +1,202 @@
+<%
+    const T = appearanceView.theme;
+    const ap = appearanceView.appearance;
+    const colorGroups = [
+        { title: 'Brand', fields: [['primaryColor', 'Primary'], ['secondaryColor', 'Secondary (dark brand)'], ['accentColor', 'Accent']] },
+        { title: 'Page & surfaces', fields: [['pageBackground', 'Page background'], ['surfaceColor', 'Card surface'], ['alternateSurfaceColor', 'Alternate section surface'], ['borderColor', 'Borders']] },
+        { title: 'Text', fields: [['headingColor', 'Headings'], ['bodyTextColor', 'Body text'], ['mutedTextColor', 'Muted text']] },
+        { title: 'Buttons', fields: [['buttonBackground', 'Button background'], ['buttonTextColor', 'Button text'], ['buttonHoverBackground', 'Button hover background'], ['buttonHoverTextColor', 'Button hover text']] },
+        { title: 'Hero', fields: [['heroBackground', 'Hero background'], ['heroTextColor', 'Hero text'], ['heroAccentColor', 'Hero accent']] },
+        { title: 'Stats band', fields: [['statsBackground', 'Stats background'], ['statsAccentColor', 'Stats numbers']] },
+        { title: 'Status, glow & gradient', fields: [['successColor', 'Success'], ['dangerColor', 'Danger'], ['glowColor', 'Hero glow'], ['gradientStart', 'Accent gradient start'], ['gradientEnd', 'Accent gradient end']] },
+    ];
+    const presetPayload = {};
+    T.PRESET_ORDER.forEach((k) => { presetPayload[k] = T.presetValues(k); });
+    const allFontFamilies = [];
+    Object.values(T.HEADING_FONTS).concat(Object.values(T.BODY_FONTS)).forEach((f) => {
+        if (f.google && allFontFamilies.indexOf(f.google) === -1) allFontFamilies.push(f.google);
+    });
+    const previewStyle = T.toStyleAttr(T.buildCssVars(ap));
+    const currentPresetLabel = ap.themePreset === 'custom' ? 'Custom' : (T.PRESETS[ap.themePreset] ? T.PRESETS[ap.themePreset].label : 'Custom');
+%>
+<link rel="stylesheet" href="/css/course-landing.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=<%= allFontFamilies.join('&family=') %>&display=swap">
+
+<div class="admin-card">
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-2">
+        <div>
+            <h5 class="mb-1 text-primary"><i class="bi bi-palette me-2"></i>Landing Page Appearance</h5>
+            <p class="small text-muted mb-0">
+                Visual theme for <strong><%= course.title %></strong> only. Other courses, the homepage and the founder page are not affected.
+                <% if (!appearanceView.hasRow) { %><span class="badge bg-secondary ms-1">No saved theme yet &mdash; showing FMR Navy</span><% } %>
+            </p>
+        </div>
+        <a href="/admin/courses/<%= course.id %>/landing-page/preview" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-primary">
+            <i class="bi bi-box-arrow-up-right me-1"></i> Open Course Preview
+        </a>
+    </div>
+
+    <form method="POST" action="/admin/courses/<%= course.id %>/landing-page/appearance" id="appearanceForm"
+          data-presets="<%= JSON.stringify(presetPayload) %>">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <input type="hidden" name="themePreset" id="appearanceThemePreset" value="<%= ap.themePreset %>">
+
+        <div class="mt-3 mb-4">
+            <div class="small fw-semibold mb-2">Theme presets <span class="text-muted fw-normal">&mdash; current: <strong id="appearancePresetLabel"><%= currentPresetLabel %></strong></span></div>
+            <div class="d-flex flex-wrap gap-2" id="appearancePresetButtons">
+                <% T.PRESET_ORDER.forEach((key) => { const p = T.PRESETS[key]; %>
+                    <button type="button" class="btn btn-sm btn-outline-secondary d-flex align-items-center gap-2" data-preset="<%= key %>" title="<%= p.description %>">
+                        <span class="d-inline-flex" aria-hidden="true">
+                            <span style="width:14px;height:14px;border-radius:50% 0 0 50%;background:<%= p.heroBackground %>;"></span><span style="width:14px;height:14px;background:<%= p.primaryColor %>;"></span><span style="width:14px;height:14px;border-radius:0 50% 50% 0;background:<%= p.accentColor %>;"></span>
+                        </span>
+                        <%= p.label %>
+                    </button>
+                <% }); %>
+                <button type="button" class="btn btn-sm btn-outline-secondary" data-preset="custom" title="Keep the current values and edit them freely"><i class="bi bi-sliders me-1"></i>Custom</button>
+            </div>
+            <div class="form-text">Picking a preset fills every field below and updates the preview. Nothing is saved until you press <strong>Save Appearance</strong>; you can override any field afterwards.</div>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-lg-6">
+                <% colorGroups.forEach((group) => { %>
+                    <fieldset class="mb-3">
+                        <legend class="small fw-bold text-uppercase text-muted" style="font-size:11px; letter-spacing:.05em;"><%= group.title %></legend>
+                        <div class="row g-2">
+                            <% group.fields.forEach(([field, label]) => { %>
+                                <div class="col-sm-6">
+                                    <label class="form-label small mb-1" for="ap-<%= field %>"><%= label %></label>
+                                    <div class="input-group input-group-sm">
+                                        <input type="color" class="form-control form-control-color" data-color-picker="<%= field %>" value="<%= ap[field] %>" title="Pick colour" aria-label="<%= label %> colour picker">
+                                        <input type="text" class="form-control font-monospace" id="ap-<%= field %>" name="<%= field %>" data-color-hex="<%= field %>" value="<%= ap[field] %>" maxlength="7" pattern="#[0-9a-fA-F]{6}" spellcheck="false" autocomplete="off">
+                                        <span class="input-group-text p-0" style="width:34px;" aria-hidden="true"><span data-color-swatch="<%= field %>" style="display:block;width:100%;height:100%;border-radius:0 .25rem .25rem 0;background:<%= ap[field] %>;"></span></span>
+                                    </div>
+                                    <div class="small text-danger" data-color-error="<%= field %>" hidden>Use a HEX colour like #1a2b3c</div>
+                                </div>
+                            <% }); %>
+                        </div>
+                    </fieldset>
+                <% }); %>
+
+                <fieldset class="mb-3">
+                    <legend class="small fw-bold text-uppercase text-muted" style="font-size:11px; letter-spacing:.05em;">Typography &amp; shape</legend>
+                    <div class="row g-2">
+                        <div class="col-sm-6">
+                            <label class="form-label small mb-1" for="ap-headingFont">Heading font</label>
+                            <select class="form-select form-select-sm" id="ap-headingFont" name="headingFont">
+                                <% Object.keys(T.HEADING_FONTS).forEach((k) => { %><option value="<%= k %>" <%= ap.headingFont === k ? 'selected' : '' %>><%= T.HEADING_FONTS[k].label %></option><% }); %>
+                            </select>
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="form-label small mb-1" for="ap-bodyFont">Body font</label>
+                            <select class="form-select form-select-sm" id="ap-bodyFont" name="bodyFont">
+                                <% Object.keys(T.BODY_FONTS).forEach((k) => { %><option value="<%= k %>" <%= ap.bodyFont === k ? 'selected' : '' %>><%= T.BODY_FONTS[k].label %></option><% }); %>
+                            </select>
+                        </div>
+                        <div class="col-sm-4">
+                            <label class="form-label small mb-1" for="ap-cardRadius">Card style</label>
+                            <select class="form-select form-select-sm" id="ap-cardRadius" name="cardRadius">
+                                <% Object.keys(T.CARD_RADII).forEach((k) => { %><option value="<%= k %>" <%= ap.cardRadius === k ? 'selected' : '' %>><%= T.CARD_RADIUS_LABELS[k] %></option><% }); %>
+                            </select>
+                        </div>
+                        <div class="col-sm-4">
+                            <label class="form-label small mb-1" for="ap-buttonRadius">Button style</label>
+                            <select class="form-select form-select-sm" id="ap-buttonRadius" name="buttonRadius">
+                                <% Object.keys(T.BUTTON_RADII).forEach((k) => { %><option value="<%= k %>" <%= ap.buttonRadius === k ? 'selected' : '' %>><%= T.BUTTON_RADIUS_LABELS[k] %></option><% }); %>
+                            </select>
+                        </div>
+                        <div class="col-sm-4">
+                            <label class="form-label small mb-1" for="ap-shadowStrength">Shadow</label>
+                            <select class="form-select form-select-sm" id="ap-shadowStrength" name="shadowStrength">
+                                <% Object.keys(T.SHADOWS).forEach((k) => { %><option value="<%= k %>" <%= ap.shadowStrength === k ? 'selected' : '' %>><%= T.SHADOW_LABELS[k] %></option><% }); %>
+                            </select>
+                        </div>
+                    </div>
+                </fieldset>
+            </div>
+
+            <div class="col-lg-6">
+                <div class="position-sticky" style="top:16px;">
+                    <div class="small fw-bold text-uppercase text-muted mb-2" style="font-size:11px; letter-spacing:.05em;">Live preview</div>
+                    <div class="border rounded overflow-hidden" id="appearancePreviewFrame">
+                        <div class="course-landing-page" id="appearancePreview" style="<%= previewStyle %>">
+                            <div class="hero" style="padding:26px 22px 54px;">
+                                <div class="hero-eyebrow" style="margin-bottom:14px;"><span class="dot"></span>Sample eyebrow</div>
+                                <h1 style="font-size:28px;">A clear course heading with <em>accent</em></h1>
+                                <p class="hero-subtitle" style="font-size:14px; margin:12px 0 16px;">This paragraph shows how supporting copy reads on the hero background.</p>
+                                <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                                    <span class="btn btn-primary" style="min-height:42px; padding:0 20px; font-size:14px;">Enrol now</span>
+                                    <span class="btn btn-secondary" style="min-height:42px; padding:0 20px; font-size:14px;">Explore</span>
+                                </div>
+                            </div>
+                            <div class="quick-stats-card-container" style="margin:-30px 18px 0; position:relative; z-index:2; padding:16px 10px;">
+                                <div class="quick-stats-grid" style="grid-template-columns:repeat(3,1fr);">
+                                    <div class="quick-stat-col"><div class="quick-stat-val" style="font-size:24px;">12</div><div class="quick-stat-lbl" style="font-size:12px;">Sessions</div></div>
+                                    <div class="quick-stat-col"><div class="quick-stat-val" style="font-size:24px;">7h</div><div class="quick-stat-lbl" style="font-size:12px;">Runtime</div></div>
+                                    <div class="quick-stat-col"><div class="quick-stat-val" style="font-size:24px;">1</div><div class="quick-stat-lbl" style="font-size:12px;">Handout</div></div>
+                                </div>
+                            </div>
+                            <div style="background:var(--course-surface-alt); padding:24px 18px 22px; margin-top:-14px; padding-top:38px;">
+                                <h2 style="font-size:22px; margin-bottom:8px;">Section heading</h2>
+                                <p style="font-size:14px; margin-bottom:14px;">Body copy sits on the page background, with muted supporting text.</p>
+                                <div class="qcard" style="margin-bottom:10px;">
+                                    <div class="qcard-num">1</div>
+                                    <div class="qcard-text">A card on the surface colour with border, radius and shadow</div>
+                                </div>
+                                <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+                                    <span class="aud-pill" style="background:var(--course-success-soft); color:var(--course-success); font-size:12px; font-weight:700; border-radius:999px; padding:4px 12px;">Success</span>
+                                    <span class="aud-pill" style="background:var(--course-danger-soft); color:var(--course-danger); font-size:12px; font-weight:700; border-radius:999px; padding:4px 12px;">Danger</span>
+                                    <span class="btn btn-secondary-light" style="min-height:34px; padding:0 14px; font-size:13px;">Secondary</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-3" id="appearanceContrast" aria-live="polite">
+                        <div class="small fw-bold text-uppercase text-muted mb-1" style="font-size:11px; letter-spacing:.05em;">Accessibility (contrast)</div>
+                        <ul class="list-unstyled small mb-0" id="appearanceContrastList"></ul>
+                        <div class="form-text">Warnings are advisory. A save is only refused when text is practically unreadable (below 2:1).</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-4 pt-3 border-top d-flex flex-wrap align-items-center gap-2">
+            <button type="submit" class="btn btn-primary px-4"><i class="bi bi-save me-1"></i> Save Appearance</button>
+            <span class="small text-muted" id="appearanceDirty" hidden><i class="bi bi-dot"></i> Unsaved changes</span>
+        </div>
+    </form>
+
+    <hr class="my-4">
+
+    <div class="row g-3">
+        <div class="col-md-6">
+            <div class="small fw-semibold mb-2">Reset</div>
+            <div class="d-flex flex-wrap gap-2">
+                <form method="POST" action="/admin/courses/<%= course.id %>/landing-page/appearance/reset-preset" data-confirm="Reset all colours, fonts and shapes to the current preset? Your manual changes will be lost.">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                    <button type="submit" class="btn btn-sm btn-outline-secondary" <%= (ap.themePreset === 'custom' || !appearanceView.hasRow) ? 'disabled' : '' %>><i class="bi bi-arrow-counterclockwise me-1"></i> Reset to Preset</button>
+                </form>
+                <form method="POST" action="/admin/courses/<%= course.id %>/landing-page/appearance/reset-default" data-confirm="Reset this course's appearance to the default theme (Clinical White)? Your current theme will be replaced.">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                    <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-arrow-repeat me-1"></i> Reset to Default</button>
+                </form>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="small fw-semibold mb-2">Copy appearance from another course</div>
+            <form method="POST" action="/admin/courses/<%= course.id %>/landing-page/appearance/copy" class="d-flex gap-2" data-confirm="Copy the selected course's appearance onto this course? Only colours, fonts and shapes are copied &mdash; no content, lessons, prices, reviews or curriculum.">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <select name="sourceCourseId" class="form-select form-select-sm" required aria-label="Course to copy appearance from">
+                    <option value="">Select a course&hellip;</option>
+                    <% appearanceView.copySources.forEach((c) => { %><option value="<%= c.id %>"><%= c.title %></option><% }); %>
+                </select>
+                <button type="submit" class="btn btn-sm btn-outline-primary text-nowrap"><i class="bi bi-copy me-1"></i> Copy</button>
+            </form>
+            <div class="form-text">Copies appearance only &mdash; never content, lessons, price, reviews, curriculum or enrollments.</div>
+        </div>
+    </div>
+</div>
+
+<script src="/js/course-appearance-theme.js" defer></script>
+<script src="/js/admin-appearance.js" defer></script>

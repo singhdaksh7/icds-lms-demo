@@ -83,6 +83,7 @@ const effectiveAccessSubtitle = defaultAccessPlan ? defaultAccessPlan.label : (l
     <span class="d-none"><%= cd.benefit1 %></span>
 <% } %>
 <link rel="stylesheet" href="/css/course-landing.css">
+<% if (typeof courseTheme !== 'undefined' && courseTheme && courseTheme.fontsUrl) { %><link rel="stylesheet" href="<%= courseTheme.fontsUrl %>"><% } %>
 
 <% if (typeof isPreview !== 'undefined' && isPreview) { %>
     <!-- Admin Preview Notification Bar -->
@@ -100,7 +101,7 @@ const effectiveAccessSubtitle = defaultAccessPlan ? defaultAccessPlan.label : (l
     </aside>
 <% } %>
 
-<div class="course-landing-page fmr-reference-theme">
+<div class="course-landing-page fmr-reference-theme"<% if (typeof courseTheme !== 'undefined' && courseTheme) { %> style="<%= courseTheme.styleAttr %>"<% } %>>
     <main>
         <div class="course-top-header">
             <% if (cd.backLabel) { %>
@@ -427,7 +428,7 @@ const effectiveAccessSubtitle = defaultAccessPlan ? defaultAccessPlan.label : (l
                                     <div>
                                         <strong><%= item.title %></strong>
                                         <% if (item.description) { %>
-                                            <div style="font-size:13.5px; color:#5b6a86; margin-top:4px;"><%= item.description %></div>
+                                            <div style="font-size:13.5px; color:var(--course-muted); margin-top:4px;"><%= item.description %></div>
                                         <% } %>
                                     </div>
                                 </div>
@@ -567,7 +568,7 @@ const effectiveAccessSubtitle = defaultAccessPlan ? defaultAccessPlan.label : (l
                                             </button>
                                             <div class="module-body" id="mod-body-<%= mod.id %>">
                                                 <% if (mod.description) { %>
-                                                    <p style="padding:14px 26px 0; font-size:13.5px; color:#5b6a86;"><%= mod.description %></p>
+                                                    <p style="padding:14px 26px 0; font-size:13.5px; color:var(--course-muted);"><%= mod.description %></p>
                                                 <% } %>
 
                                                 <% modTopics.forEach(function(topic) { 
@@ -597,7 +598,7 @@ const effectiveAccessSubtitle = defaultAccessPlan ? defaultAccessPlan.label : (l
                                                                                 Preview
                                                                             </a>
                                                                         <% } else if (userIsEnrolled) { %>
-                                                                            <a href="/learn/<%= course.slug %>/<%= lesson.slug %>" class="btn btn-sm btn-secondary-light" style="padding:4px 12px; font-size:12px; color:#10b981 !important;">
+                                                                            <a href="/learn/<%= course.slug %>/<%= lesson.slug %>" class="btn btn-sm btn-secondary-light" style="padding:4px 12px; font-size:12px; color:var(--course-success) !important;">
                                                                                 Watch
                                                                             </a>
                                                                         <% } else if (lc.showLockIcon !== false) { %>
@@ -655,22 +656,22 @@ const effectiveAccessSubtitle = defaultAccessPlan ? defaultAccessPlan.label : (l
             <!-- 07. PURCHASE / ACCESS BOX                                -->
             <!-- ======================================================== -->
             <% if (sectionKey === 'PURCHASE' && lc.purchaseCardEnabled !== false) { %>
-                <section class="purchase-card-section" id="purchase" style="background:#ffffff; border-top:1px solid #dfe8f7;">
+                <section class="purchase-card-section" id="purchase" style="background:var(--course-surface); border-top:1px solid var(--course-border);">
                     <div class="wrap">
-                        <div style="background:#f7faff; border:1px solid #dfe8f7; border-radius:20px; padding:40px; max-width:940px; margin:0 auto; display:flex; justify-content:space-between; align-items:center; gap:32px; flex-wrap:wrap;">
+                        <div style="background:var(--course-surface-alt); border:1px solid var(--course-border); border-radius:calc(var(--course-card-radius) + 4px); padding:40px; max-width:940px; margin:0 auto; display:flex; justify-content:space-between; align-items:center; gap:32px; flex-wrap:wrap;">
                             <div>
                                 <% if (lc.purchaseCardEyebrow) { %><span class="eyebrow"><%= lc.purchaseCardEyebrow %></span><% } %>
                                 <% if (lc.purchaseCardHeading) { %><h2 style="font-size:30px; margin-top:8px; margin-bottom:8px;"><%= lc.purchaseCardHeading %></h2><% } %>
-                                <% if (lc.purchaseCardDescription) { %><p style="font-size:15px; color:#5b6a86; max-width:540px; margin-bottom:16px;"><%= lc.purchaseCardDescription %></p><% } %>
-                                <div style="display:flex; flex-direction:column; gap:8px; font-size:14px; color:#1b2745;">
+                                <% if (lc.purchaseCardDescription) { %><p style="font-size:15px; color:var(--course-muted); max-width:540px; margin-bottom:16px;"><%= lc.purchaseCardDescription %></p><% } %>
+                                <div style="display:flex; flex-direction:column; gap:8px; font-size:14px; color:var(--course-text);">
                                     <div><i class="bi bi-check-circle-fill text-success me-2"></i> All <%= courseStats.publishedLessonCount %> structured clinical video lessons</div>
                                     <% if (courseStats.resourceCount > 0) { %><div><i class="bi bi-check-circle-fill text-success me-2"></i> Downloadable clinical case documentation forms</div><% } %>
                                     <div><i class="bi bi-check-circle-fill text-success me-2"></i> <%= freeCourse ? 'Self-Paced Stream anytime' : 'Stream anytime on mobile, tablet, or desktop' %></div>
                                 </div>
                             </div>
                             <div style="text-align:center; min-width:260px;">
-                                <div style="font-family:'Fraunces', serif; font-size:36px; font-weight:700; color:#0a1330; margin-bottom:4px;"><%= freeCourse ? 'Free' : formattedPriceLabel %></div>
-                                <% if (effectiveAccessSubtitle) { %><div style="font-size:13px; color:#5b6a86; margin-bottom:18px;"><%= effectiveAccessSubtitle %></div><% } %>
+                                <div style="font-family:var(--course-heading-font); font-size:36px; font-weight:700; color:var(--course-secondary); margin-bottom:4px;"><%= freeCourse ? 'Free' : formattedPriceLabel %></div>
+                                <% if (effectiveAccessSubtitle) { %><div style="font-size:13px; color:var(--course-muted); margin-bottom:18px;"><%= effectiveAccessSubtitle %></div><% } %>
                                 <% if (typeof currentUser !== 'undefined' && currentUser && currentUser.role === 'STUDENT') { %>
                                     <% if (userIsEnrolled) { %>
                                         <a class="btn btn-primary w-100" href="/learn/<%= course.slug %>">
@@ -722,7 +723,7 @@ const effectiveAccessSubtitle = defaultAccessPlan ? defaultAccessPlan.label : (l
 
                         <div class="reviews-grid">
                             <% testimonialsList.forEach(function(rev) { %>
-                                <div class="review-card <%= rev.hasVideo ? 'review-card-video' : '' %> <%= rev.isDemo ? 'review-card-demo' : '' %>" style="<%= rev.isDemo ? 'border:1px dashed #cbd5e1; position:relative;' : '' %>">
+                                <div class="review-card <%= rev.hasVideo ? 'review-card-video' : '' %> <%= rev.isDemo ? 'review-card-demo' : '' %>" style="<%= rev.isDemo ? 'border:1px dashed var(--course-border-strong); position:relative;' : '' %>">
                                     <% if (rev.isDemo) { %>
                                         <div style="position:absolute; top:14px; right:14px;">
                                             <span class="badge" style="background:#fef3c7; color:#92400e; font-size:10px; font-weight:700; letter-spacing:0.5px; border-radius:4px; padding:3px 7px;">DEMO REVIEW</span>
@@ -779,7 +780,7 @@ const effectiveAccessSubtitle = defaultAccessPlan ? defaultAccessPlan.label : (l
             <!-- 09. COMPARISON (Strictly Hidden If Not Configured)       -->
             <!-- ======================================================== -->
             <% if (sectionKey === 'COMPARISON' && lc.comparisonEnabled === true && comparisonColumnsList.length > 0) { %>
-                <section class="comparison-section" id="comparison" style="background:#f7faff; border-top:1px solid #dfe8f7;">
+                <section class="comparison-section" id="comparison" style="background:var(--course-surface-alt); border-top:1px solid var(--course-border);">
                     <div class="wrap">
                         <div class="section-head">
                             <% if (lc.comparisonEyebrow) { %><span class="eyebrow"><%= lc.comparisonEyebrow %></span><% } %>
@@ -789,15 +790,15 @@ const effectiveAccessSubtitle = defaultAccessPlan ? defaultAccessPlan.label : (l
 
                         <div class="comparison-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:28px; max-width:880px; margin:0 auto;">
                             <% comparisonColumnsList.forEach(function(col) { %>
-                                <div class="comparison-col <%= col.isRecommended ? 'comparison-col-recommended' : 'comparison-col-standard' %>" style="background:#ffffff; border:1px solid #dfe8f7; border-radius:20px; padding:36px; box-shadow:0 6px 20px rgba(10,19,48,0.04);">
+                                <div class="comparison-col <%= col.isRecommended ? 'comparison-col-recommended' : 'comparison-col-standard' %>" style="background:var(--course-surface); border:1px solid var(--course-border); border-radius:calc(var(--course-card-radius) + 4px); padding:36px; box-shadow:var(--course-shadow);">
                                     <% if (col.badgeText || col.isRecommended) { %>
-                                        <div class="badge bg-primary mb-3" style="font-size:11px; padding:6px 12px; border-radius:999px;"><%= col.badgeText || 'Recommended' %></div>
+                                        <div class="badge mb-3" style="background:var(--course-primary); color:var(--course-button-text); font-size:11px; padding:6px 12px; border-radius:999px;"><%= col.badgeText || 'Recommended' %></div>
                                     <% } %>
                                     <h3 style="font-size:22px; margin-bottom:16px;"><%= col.title %></h3>
                                     <ul class="comparison-checklist" style="list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:12px;">
                                         <% (col.items || []).forEach(function(cItem) { %>
                                             <li style="display:flex; align-items:center; gap:10px; font-size:14.5px;">
-                                                <i class="bi bi-check-circle-fill text-primary"></i>
+                                                <i class="bi bi-check-circle-fill" style="color:var(--course-primary);"></i>
                                                 <span><%= cItem.text %></span>
                                             </li>
                                         <% }); %>
@@ -888,7 +889,7 @@ const effectiveAccessSubtitle = defaultAccessPlan ? defaultAccessPlan.label : (l
 
                         <% if (lc.accessMediaType === 'VIDEO' && lc.accessMediaUrl) { %>
                             <div class="mt-4 text-center">
-                                <div style="max-width:720px; margin:0 auto; border-radius:14px; overflow:hidden;">
+                                <div style="max-width:720px; margin:0 auto; border-radius:calc(var(--course-card-radius) - 2px); overflow:hidden;">
                                     <div class="ratio ratio-16x9">
                                         <iframe src="<%= lc.accessMediaUrl %>" title="Access Guide" allowfullscreen></iframe>
                                     </div>
@@ -903,7 +904,7 @@ const effectiveAccessSubtitle = defaultAccessPlan ? defaultAccessPlan.label : (l
             <!-- 12. DOWNLOADABLE CLINICAL RESOURCES                       -->
             <!-- ======================================================== -->
             <% if (sectionKey === 'RESOURCES' && lc.resourcesEnabled !== false && safeResources.length > 0) { %>
-                <section id="resources" style="background:#ffffff; border-top:1px solid #dfe8f7;">
+                <section id="resources" style="background:var(--course-surface); border-top:1px solid var(--course-border);">
                     <div class="wrap">
                         <div class="section-head">
                             <% if (lc.resourcesEyebrow) { %><span class="eyebrow"><%= lc.resourcesEyebrow %></span><% } %>
@@ -943,13 +944,13 @@ const effectiveAccessSubtitle = defaultAccessPlan ? defaultAccessPlan.label : (l
 
             <!-- Certificate Section (Critical: OFF by default, rendered ONLY if certificateSectionEnabled === true) -->
             <% if (lc.certificateSectionEnabled === true && sectionKey === 'CERTIFICATE') { %>
-                <section class="certificate-section" id="certificate" style="background:#f7faff; border-top:1px solid #dfe8f7;">
+                <section class="certificate-section" id="certificate" style="background:var(--course-surface-alt); border-top:1px solid var(--course-border);">
                     <div class="wrap" style="display:grid; grid-template-columns:1fr 1fr; gap:40px; align-items:center;">
-                        <div class="certificate-mockup" style="background:linear-gradient(135deg, #0b1320, #1e293b); border:3px solid #d4af37; border-radius:16px; padding:32px; color:#ffffff; text-align:center;">
-                            <div style="color:#d4af37; font-size:18px; font-weight:700; margin-bottom:8px;">Institute of Cosmetology &amp; Dental Sciences</div>
-                            <div style="font-size:13px; color:#94a3b8; margin-bottom:12px;">Certificate of Clinical Masterclass Completion</div>
+                        <div class="certificate-mockup" style="background:linear-gradient(135deg, var(--course-secondary), var(--course-secondary-dark)); border:3px solid var(--course-accent); border-radius:var(--course-card-radius); padding:32px; color:var(--course-hero-text); text-align:center;">
+                            <div style="color:var(--course-accent); font-size:18px; font-weight:700; margin-bottom:8px;">Institute of Cosmetology &amp; Dental Sciences</div>
+                            <div style="font-size:13px; color:color-mix(in srgb, var(--course-hero-text) 65%, transparent); margin-bottom:12px;">Certificate of Clinical Masterclass Completion</div>
                             <div style="font-size:20px; font-weight:700; margin-bottom:14px;"><%= course.title %></div>
-                            <div class="certificate-mockup-footer" style="font-size:11px; color:#cbd5e1; border-top:1px solid rgba(212,175,55,0.3); padding-top:12px;">
+                            <div class="certificate-mockup-footer" style="font-size:11px; color:color-mix(in srgb, var(--course-hero-text) 80%, transparent); border-top:1px solid color-mix(in srgb, var(--course-accent) 30%, transparent); padding-top:12px;">
                                 Official Verifiable Clinical Credential &bull; ICDS Academic Board
                             </div>
                         </div>
@@ -958,7 +959,7 @@ const effectiveAccessSubtitle = defaultAccessPlan ? defaultAccessPlan.label : (l
                             <% if (lc.certificateHeading) { %><h2><%= lc.certificateHeading %></h2><% } %>
                             <% if (lc.certificateBody) { %><p><%= lc.certificateBody %></p><% } %>
                             <% if (lc.certificateNote) { %>
-                                <p style="font-size:13px; color:#94a3b8; margin-top:8px;"><em><%= lc.certificateNote %></em></p>
+                                <p style="font-size:13px; color:color-mix(in srgb, var(--course-hero-text) 65%, transparent); margin-top:8px;"><em><%= lc.certificateNote %></em></p>
                             <% } %>
                         </div>
                     </div>
@@ -1029,7 +1030,7 @@ const effectiveAccessSubtitle = defaultAccessPlan ? defaultAccessPlan.label : (l
                                                 <div>
                                                     <strong><%= cred.title %></strong>
                                                     <% if (cred.description) { %>
-                                                        <div style="font-size:13px; color:#5b6a86; margin-top:2px;"><%= cred.description %></div>
+                                                        <div style="font-size:13px; color:var(--course-muted); margin-top:2px;"><%= cred.description %></div>
                                                     <% } %>
                                                 </div>
                                             </li>

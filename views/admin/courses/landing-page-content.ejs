@@ -168,6 +168,11 @@
             20 SEO / Social Preview
         </button>
     </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link <%= activeTab === 'appearance' ? 'active' : '' %>" id="tab-appearance-nav" data-bs-toggle="tab" data-bs-target="#tab-appearance" type="button" role="tab">
+            <i class="bi bi-palette me-1"></i> 21 Appearance
+        </button>
+    </li>
 </ul>
 
 <!-- Tabs Content -->
@@ -2214,6 +2219,11 @@
                 </div>
             </div>
         </div>
+    </div>
+
+    <!-- 21. APPEARANCE TAB (per-course theme) -->
+    <div class="tab-pane fade <%= activeTab === 'appearance' ? 'show active' : '' %>" id="tab-appearance" role="tabpanel">
+        <% if (typeof appearanceView !== 'undefined' && appearanceView) { %><%- include('appearance-tab', locals) %><% } %>
     </div>
 
 </div>

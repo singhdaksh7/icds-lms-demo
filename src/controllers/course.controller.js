@@ -8,6 +8,7 @@ const { getCoursePurchasePrice } = require('../lib/pricing');
 const { LEVELS } = require('../validators/course.validator');
 const site = require('../config/site');
 const courseLandingService = require('../services/courseLanding.service');
+const courseAppearanceService = require('../services/courseAppearance.service');
 const { buildSeo, pageSeoText, absoluteUrl, PUBLIC_ROBOTS } = require('../lib/seo');
 
 async function listCourses(req, res, next) {
@@ -110,12 +111,13 @@ async function getCourseDetail(req, res, next) {
     const price = getCoursePurchasePrice(course);
     const curriculumService = require('../services/curriculum.service');
     const demoShowcase = await require('../services/homeReviews.service').isDemoShowcaseEnabled();
-    const [curriculum, stats, resources, globalFaqs, landing] = await Promise.all([
+    const [curriculum, stats, resources, globalFaqs, landing, courseTheme] = await Promise.all([
       curriculumService.getPublishedCurriculum(course.id),
       curriculumService.getPublicCourseStats(course.id),
       curriculumService.listResourcesForCourse(course.id, { publishedOnly: true }),
       prisma.faq.findMany({ where: { isActive: true }, orderBy: { sortOrder: 'asc' }, take: 6 }),
       courseLandingService.getPublicLandingData(course.id, { includeDemo: demoShowcase }),
+      courseAppearanceService.getRenderTheme(course.id),
     ]);
     if (landing) {
       landing.demoShowcase = demoShowcase;
@@ -155,6 +157,7 @@ async function getCourseDetail(req, res, next) {
       resources,
       faqs: (landing && landing.faqs) ? landing.faqs : [],
       landing,
+      courseTheme,
       isEnrolled,
       hasPendingRequest,
       isFree,

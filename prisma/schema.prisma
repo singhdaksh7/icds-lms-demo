@@ -240,6 +240,7 @@ model Course {
   comparisonColumns  CourseComparisonColumn[]
   accessSteps        CourseAccessStep[]
   landingSections    CourseLandingSection[]
+  landingAppearance  CourseLandingAppearance?
 
   @@index([categoryId])
   @@index([instructorId])
@@ -1117,6 +1118,65 @@ model CourseLandingSection {
   @@map("course_landing_sections")
 }
 
+// ---------------------------------------------------------------------------
+// Per-course landing page appearance (theme). One row per course; every value
+// is validated against allowlists in src/lib/courseAppearance.js before it is
+// stored and rendered as --course-* CSS custom properties. Only the course
+// landing page reads this - never the homepage / founder pages.
+// Future: section-level overrides can hang off this row (e.g. a nullable
+// JSON column or a child table keyed by sectionKey) without touching callers,
+// because rendering always goes through resolveCourseAppearance().
+// ---------------------------------------------------------------------------
+model CourseLandingAppearance {
+  id       Int @id @default(autoincrement())
+  courseId Int @unique
+
+  themePreset String? @db.VarChar(40)
+
+  primaryColor          String @default("#2b6cf0") @db.VarChar(9)
+  secondaryColor        String @default("#0a1330") @db.VarChar(9)
+  accentColor           String @default("#f2b33d") @db.VarChar(9)
+  pageBackground        String @default("#f7faff") @db.VarChar(9)
+  surfaceColor          String @default("#ffffff") @db.VarChar(9)
+  alternateSurfaceColor String @default("#f7faff") @db.VarChar(9)
+  headingColor          String @default("#0f1b33") @db.VarChar(9)
+  bodyTextColor         String @default("#1b2745") @db.VarChar(9)
+  mutedTextColor        String @default("#5b6a86") @db.VarChar(9)
+  borderColor           String @default("#dfe8f7") @db.VarChar(9)
+
+  buttonBackground      String @default("#2b6cf0") @db.VarChar(9)
+  buttonTextColor       String @default("#ffffff") @db.VarChar(9)
+  buttonHoverBackground String @default("#2b6cf0") @db.VarChar(9)
+  buttonHoverTextColor  String @default("#ffffff") @db.VarChar(9)
+
+  heroBackground  String @default("#0a1330") @db.VarChar(9)
+  heroTextColor   String @default("#ffffff") @db.VarChar(9)
+  heroAccentColor String @default("#f2b33d") @db.VarChar(9)
+
+  statsBackground  String @default("#ffffff") @db.VarChar(9)
+  statsAccentColor String @default("#0a1330") @db.VarChar(9)
+
+  successColor String @default("#14a066") @db.VarChar(9)
+  dangerColor  String @default("#e11d48") @db.VarChar(9)
+  glowColor    String @default("#172d69") @db.VarChar(9)
+
+  gradientStart String @default("#2b6cf0") @db.VarChar(9)
+  gradientEnd   String @default("#9b5cf0") @db.VarChar(9)
+
+  cardRadius     String @default("rounded") @db.VarChar(20)
+  buttonRadius   String @default("soft") @db.VarChar(20)
+  shadowStrength String @default("subtle") @db.VarChar(20)
+
+  headingFont String @default("Fraunces") @db.VarChar(40)
+  bodyFont    String @default("Inter") @db.VarChar(40)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@map("course_landing_appearances")
+}
 
 
 // ---------------------------------------------------------------------------

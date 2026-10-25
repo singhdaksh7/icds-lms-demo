@@ -2,6 +2,7 @@ const { prisma } = require('../config/db');
 const { generateUniqueSlug } = require('../lib/slug');
 const imageStorage = require('../lib/imageStorage');
 const { buildPagination } = require('../lib/pagination');
+const { defaultAppearanceData } = require('./courseAppearance.service');
 
 const LEVELS = ['BEGINNER', 'INTERMEDIATE', 'ADVANCED'];
 const MAX_SEARCH_LENGTH = 100;
@@ -191,6 +192,8 @@ async function createCourse(values) {
       featured: values.featured,
       duration: values.duration || null,
       publishedAt: values.status === 'PUBLISHED' ? new Date() : null,
+      // Every new course starts with its own default landing theme (Clinical White).
+      landingAppearance: { create: defaultAppearanceData() },
     },
   });
 }

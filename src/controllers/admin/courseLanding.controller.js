@@ -1,13 +1,16 @@
 const courseLandingService = require('../../services/courseLanding.service');
 const { prisma } = require('../../config/db');
 const curriculumService = require('../../services/curriculum.service');
+const courseAppearanceService = require('../../services/courseAppearance.service');
 
 async function getLandingEditor(req, res, next) {
   try {
     const courseId = parseInt(req.params.courseId, 10);
     const data = await courseLandingService.getAdminLandingData(courseId);
+    const appearanceView = await courseAppearanceService.getAdminView(courseId);
 
     res.render('admin/courses/landing-page', {
+      appearanceView,
       pageTitle: `Landing Page: ${data.course.title} | Admin`,
       metaDescription: `Manage dynamic marketing and landing content for ${data.course.title}`,
       activeNav: 'courses',
@@ -815,6 +818,8 @@ async function previewLanding(req, res, next) {
       curriculumService.listResourcesForCourse(course.id, { publishedOnly: false }),
     ]);
     const landing = await courseLandingService.getPublicLandingData(course.id, stats, { includeDemo: true });
+    // Preview renders with the course's saved appearance, exactly like the public page.
+    const courseTheme = await courseAppearanceService.getRenderTheme(course.id);
 
     const price = Number(course.price) || 0;
     const isFree = price === 0;
@@ -838,6 +843,7 @@ async function previewLanding(req, res, next) {
       resources,
       faqs: (landing && landing.faqs) ? landing.faqs : [],
       landing,
+      courseTheme,
       isEnrolled: false,
       hasPendingRequest: false,
       isFree,

@@ -43,6 +43,7 @@ const { uploadTestimonialMedia } = require('../middleware/testimonialMedia.middl
 
 const curriculumController = require('../controllers/admin/curriculum.controller');
 const courseLandingController = require('../controllers/admin/courseLanding.controller');
+const courseAppearanceController = require('../controllers/admin/courseAppearance.controller');
 
 // Every route in this file is admin-only — enforced once here rather than
 // repeated per-route, so it's impossible to accidentally add an
@@ -133,6 +134,11 @@ router.post('/courses/:courseId/landing-page/access-steps', doubleCsrfProtection
 router.post('/courses/:courseId/landing-page/access-steps/:stepId/edit', doubleCsrfProtection, courseLandingController.updateAccessStep);
 router.post('/courses/:courseId/landing-page/access-steps/:stepId/delete', doubleCsrfProtection, courseLandingController.deleteAccessStep);
 router.post('/courses/:courseId/landing-page/access-steps/:stepId/move', doubleCsrfProtection, courseLandingController.moveAccessStep);
+
+router.post('/courses/:courseId/landing-page/appearance', doubleCsrfProtection, courseAppearanceController.saveAppearance);
+router.post('/courses/:courseId/landing-page/appearance/reset-preset', doubleCsrfProtection, courseAppearanceController.resetToPreset);
+router.post('/courses/:courseId/landing-page/appearance/reset-default', doubleCsrfProtection, courseAppearanceController.resetToDefault);
+router.post('/courses/:courseId/landing-page/appearance/copy', doubleCsrfProtection, courseAppearanceController.copyFromCourse);
 
 router.post('/courses/:courseId/landing-page/sections/:sectionKey/toggle', doubleCsrfProtection, courseLandingController.toggleSection);
 router.post('/courses/:courseId/landing-page/sections/:sectionKey/move', doubleCsrfProtection, courseLandingController.moveSection);
