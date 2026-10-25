@@ -717,7 +717,7 @@ const effectiveAccessSubtitle = defaultAccessPlan ? defaultAccessPlan.label : (l
             <!-- ======================================================== -->
             <!-- 08. REVIEWS / TESTIMONIALS (Reference 2x2 Grid)          -->
             <!-- ======================================================== -->
-            <% if (sectionKey === 'REVIEWS' && (lc.reviewsEnabled === true || inPreviewMode) && testimonialsList.length > 0) { %>
+            <% if (sectionKey === 'REVIEWS' && (lc.reviewsEnabled === true || inPreviewMode || (demoShowcase && testimonialsList.some(function (r) { return r.isDemo; }))) && testimonialsList.length > 0) { %>
                 <section class="reviews-section" id="reviews">
                     <div class="wrap">
                         <div class="section-head">
@@ -729,7 +729,7 @@ const effectiveAccessSubtitle = defaultAccessPlan ? defaultAccessPlan.label : (l
                             <% if ((inPreviewMode || demoShowcase) && testimonialsList.some(r => r.isDemo)) { %>
                                 <div class="mt-2">
                                     <span class="badge" style="background:#fef3c7; color:#92400e; border:1px solid #fde68a; font-size:12px; padding:5px 12px; border-radius:6px; font-weight:700;">
-                                        <i class="bi bi-flask me-1"></i> TESTIMONIAL PREVIEW &mdash; Demo reviews for layout &amp; responsive QA (Visible in Admin Preview Only)
+                                        <i class="bi bi-flask me-1"></i> TESTIMONIAL PREVIEW &mdash; <%= inPreviewMode ? 'Demo reviews for layout & responsive QA (Visible in Admin Preview Only)' : 'Demo reviews shown for presentation only. They are not genuine reviews and are not counted in any rating.' %>
                                     </span>
                                 </div>
                             <% } %>

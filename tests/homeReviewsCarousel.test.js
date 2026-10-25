@@ -105,7 +105,8 @@ test('getHomeReviews queries featured + published reviews of PUBLISHED courses o
     assert.deepEqual(out.map((r) => r.id), [1], 'reviews of unpublished courses are dropped');
     await reviews.getHomeReviews({ includeDemo: true });
     assert.equal(where.isDemo, undefined);
-    assert.equal(where.featuredOnHome, true, 'preview still requires featuring');
+    // showcase/preview: featured genuine reviews PLUS demo reviews (which can never be featured)
+    assert.deepEqual(where.OR, [{ featuredOnHome: true }, { isDemo: true }]);
   } finally {
     restores.reverse().forEach((r) => r());
   }

@@ -57,10 +57,9 @@ async function getHomePage(req, res, next) {
       introVideo,
       homeSectionOrder,
       homeReviewSettings,
-      // Client-demo showcase (non-admin): present demo rows without the demo marking. Never counted anywhere.
-      homeReviews: homeReviewSettings.enabled
-        ? (isAdmin && req.query.previewDemo === '1' ? homeReviews : homeReviews.map((r) => ({ ...r, isDemo: false })))
-        : [],
+      // Client-demo showcase: demo rows are shown but ALWAYS keep their DEMO REVIEW marking
+      // (isDemo stays true) and are never counted in any genuine metric.
+      homeReviews: homeReviewSettings.enabled ? homeReviews : [],
       homeReviewsPreviewDemo: includeDemo,
       stats,
       faqs,

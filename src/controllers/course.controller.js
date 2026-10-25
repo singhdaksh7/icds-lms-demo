@@ -122,10 +122,10 @@ async function getCourseDetail(req, res, next) {
     ]);
     if (landing) {
       landing.demoShowcase = demoShowcase;
-      // Client-demo showcase: present demo testimonials without the demo marking (counts/ratings already exclude them).
+      // Client-demo showcase: demo testimonials stay visibly marked (DEMO REVIEW) and are never counted
+      // (review count / average / rating summary already exclude them).
       // Demo VIDEO testimonials are Admin-Preview only: never shown publicly, even in showcase mode.
       if (Array.isArray(landing.testimonials)) landing.testimonials = landing.testimonials.filter((t) => !(t.isDemo && t.hasVideo));
-      if (demoShowcase && Array.isArray(landing.testimonials)) landing.testimonials = landing.testimonials.map((t) => ({ ...t, isDemo: false }));
     }
 
     const jsonLd = {

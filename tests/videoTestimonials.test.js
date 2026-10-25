@@ -399,5 +399,5 @@ test('course controller strips demo VIDEO reviews even in demo-showcase mode (so
   const i = src.indexOf('Demo VIDEO testimonials');
   assert.ok(i > 0);
   assert.match(src.slice(i, i + 400), /filter\(\(t\) => !\(t\.isDemo && t\.hasVideo\)\)/);
-  assert.ok(src.indexOf('filter((t) => !(t.isDemo && t.hasVideo))') < src.indexOf('isDemo: false'), 'filter runs before demo marking is removed');
+  assert.ok(!src.includes('isDemo: false'), 'showcase mode never strips the DEMO REVIEW marking');
 });

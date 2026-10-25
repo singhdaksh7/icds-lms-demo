@@ -174,7 +174,9 @@ function selectHomeReviews(rows, _settings, { includeDemo = false, limit = HOME_
   // A review needs something to show: a quote (TEXT), or a playable video (VIDEO / TEXT_VIDEO).
   // A TEXT_VIDEO whose video is unplayable still shows as a plain quote.
   let list = (Array.isArray(rows) ? rows : []).filter((r) => {
-    if (!r || !r.isPublished || !r.featuredOnHome) return false;
+    if (!r || !r.isPublished) return false;
+    // Genuine reviews need an explicit Admin selection; demo reviews only appear in showcase mode.
+    if (!r.featuredOnHome && !(includeDemo && r.isDemo)) return false;
     const pub = tv.toPublicTestimonial(r);
     // Demo video testimonials are Admin-Preview only - never public, not even in demo-showcase mode.
     if (r.isDemo && pub.hasVideo) return false;
@@ -213,8 +215,9 @@ function initialsFrom(name) {
 
 async function getHomeReviews({ includeDemo = false, settings = null } = {}) {
   const cfg = settings || (await getHomeReviewSettings());
-  const where = { isPublished: true, featuredOnHome: true };
-  if (!includeDemo) where.isDemo = false;
+  const where = { isPublished: true };
+  if (includeDemo) where.OR = [{ featuredOnHome: true }, { isDemo: true }];
+  else { where.featuredOnHome = true; where.isDemo = false; }
   const rows = await prisma.courseTestimonial.findMany({
     where,
     include: { course: { select: { title: true, slug: true, status: true } } },
