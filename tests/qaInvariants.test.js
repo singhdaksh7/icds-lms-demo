@@ -64,7 +64,7 @@ test('course-landing.css: breadcrumb margin reset and no gap before hero', () =>
 });
 
 // ---- (5) homepage reviews --------------------------------------------------
-const rv = (o) => ({ id: 1, isPublished: true, isDemo: false, quote: 'Great', rating: 5, reviewerName: 'Ann Lee', sortOrder: 0, homeSortOrder: 0, featuredOnHome: false, course: { title: 'C', slug: 'c' }, ...o });
+const rv = (o) => ({ id: 1, isPublished: true, isDemo: false, quote: 'Great', rating: 5, reviewerName: 'Ann Lee', sortOrder: 0, homeSortOrder: 0, featuredOnHome: true, course: { title: 'C', slug: 'c' }, ...o });
 
 test('selectHomeReviews: unpublished/empty hidden, demo only when includeDemo', () => {
   const rows = [rv({ id: 1 }), rv({ id: 2, isPublished: false }), rv({ id: 3, isDemo: true }), rv({ id: 4, quote: '  ' })];
@@ -76,21 +76,21 @@ test('selectHomeReviews: unpublished/empty hidden, demo only when includeDemo', 
   assert.equal(pub[0].initials, 'AL');
 });
 
-test('selectHomeReviews: FEATURED filters + homeSortOrder, ALL_APPROVED uses sortOrder; limit applies', () => {
+test('selectHomeReviews: only featured reviews, ordered by homeSortOrder (the old ALL_APPROVED mode is ignored); limit applies', () => {
   const rows = [
     rv({ id: 1, featuredOnHome: true, homeSortOrder: 2, sortOrder: 0 }),
     rv({ id: 2, featuredOnHome: true, homeSortOrder: 1, sortOrder: 5 }),
     rv({ id: 3, featuredOnHome: false, homeSortOrder: 0, sortOrder: 1 }),
   ];
   assert.deepEqual(reviewsSvc.selectHomeReviews(rows, { sourceMode: 'FEATURED' }).map((r) => r.id), [2, 1]);
-  assert.deepEqual(reviewsSvc.selectHomeReviews(rows, { sourceMode: 'ALL_APPROVED' }).map((r) => r.id), [1, 3, 2]);
-  assert.equal(reviewsSvc.selectHomeReviews(rows, { sourceMode: 'ALL_APPROVED' }, { limit: 1 }).length, 1);
+  assert.deepEqual(reviewsSvc.selectHomeReviews(rows, { sourceMode: 'ALL_APPROVED' }).map((r) => r.id), [2, 1], 'an unfeatured review never shows, whatever the legacy mode says');
+  assert.equal(reviewsSvc.selectHomeReviews(rows, {}, { limit: 1 }).length, 1);
   assert.deepEqual(reviewsSvc.selectHomeReviews(null, null), []);
   assert.equal(reviewsSvc.selectHomeReviews([rv({ rating: 99 })], {})[0].rating, 5);
 });
 
-test('validateHomeReviewSettings rejects bad mode / long text and defaults heading', () => {
-  assert.equal(reviewsSvc.validateHomeReviewSettings({ sourceMode: 'NOPE' }).ok, false);
+test('validateHomeReviewSettings rejects bad options / long text and defaults heading', () => {
+  assert.equal(reviewsSvc.validateHomeReviewSettings({ direction: 'NOPE' }).ok, false);
   assert.equal(reviewsSvc.validateHomeReviewSettings({ heading: 'x'.repeat(121) }).ok, false);
   assert.equal(reviewsSvc.validateHomeReviewSettings({ subheading: 'x'.repeat(301) }).ok, false);
   const ok = reviewsSvc.validateHomeReviewSettings({ heading: '', enabled: 'on', sourceMode: 'FEATURED' });

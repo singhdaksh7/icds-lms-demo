@@ -28,6 +28,7 @@ const internalRoutes = require('./src/routes/internal.routes');
 const healthRoutes = require('./src/routes/api/health.routes');
 const lessonApiRoutes = require('./src/routes/api/lessons.routes');
 const testimonialApiRoutes = require('./src/routes/api/testimonials.routes');
+const homeApiRoutes = require('./src/routes/api/home.routes');
 const notFound = require('./src/middleware/notFound');
 const errorHandler = require('./src/middleware/errorHandler');
 
@@ -198,6 +199,7 @@ app.use(require('./src/lib/richText').middleware);
 app.use('/api/health', healthRoutes);
 app.use('/api/lessons', lessonApiRoutes);
 app.use('/api/testimonials', testimonialApiRoutes);
+app.use('/api/home', homeApiRoutes);
 app.use('/', authRoutes);
 app.use('/', courseRoutes);
 app.use('/', checkoutRoutes);

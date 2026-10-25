@@ -102,6 +102,30 @@
 
             <ul class="navbar-nav mx-auto align-items-lg-center">
 
+                <% if (typeof navHeader !== 'undefined' && navHeader) { %>
+                <%# Admin-managed navigation (Admin > Navigation). Courses keeps its category dropdown. %>
+                <% const dynCategories = (typeof footerCategories !== 'undefined' && footerCategories) ? footerCategories : []; %>
+                <% const here = (typeof currentPath !== 'undefined' && currentPath) ? currentPath : ''; %>
+                <% navHeader.forEach(function (item) { %>
+                    <% const itemPath = item.external ? '' : String(item.url).split(/[?#]/)[0]; %>
+                    <% const isActive = !item.external && here && (itemPath === '/' ? here === '/' : (here === itemPath || here.indexOf(itemPath + '/') === 0)); %>
+                    <% if (item.isCourses && dynCategories.length) { %>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link navigation-link dropdown-toggle<%= isActive ? ' active' : '' %>" href="<%= item.url %>" data-bs-toggle="dropdown" aria-expanded="false"><%= item.label %></a>
+                            <ul class="dropdown-menu border-0 shadow-lg">
+                                <li><a class="dropdown-item py-2" href="<%= item.url %>"><%= nav.allCoursesLabel %></a></li>
+                                <% dynCategories.forEach(function (category) { %>
+                                    <li><a class="dropdown-item py-2" href="/courses?category=<%= encodeURIComponent(category.slug) %>"><%= category.name %></a></li>
+                                <% }); %>
+                            </ul>
+                        </li>
+                    <% } else { %>
+                        <li class="nav-item">
+                            <a class="nav-link navigation-link<%= isActive ? ' active' : '' %>" href="<%= item.url %>"<% if (isActive) { %> aria-current="page"<% } %><% if (item.openInNewTab) { %> target="_blank" rel="noopener noreferrer"<% } %>><%= item.label %></a>
+                        </li>
+                    <% } %>
+                <% }); %>
+                <% } else { %>
                 <% if (nav.showHome) { %>
                     <li class="nav-item">
                         <a class="nav-link navigation-link active" href="/#home">
@@ -189,6 +213,7 @@
                             <%= nav.contactLabel %>
                         </a>
                     </li>
+                <% } %>
                 <% } %>
 
             </ul>

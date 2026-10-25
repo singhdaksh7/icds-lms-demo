@@ -4,7 +4,7 @@ const homeService = require('../services/home.service');
 const { isUserEnrolled } = require('../services/enrollment.service');
 const { prisma } = require('../config/db');
 const { parsePage } = require('../lib/pagination');
-const { getCoursePurchasePrice } = require('../lib/pricing');
+const { getCoursePurchasePrice, getEffectiveCoursePrice } = require('../lib/pricing');
 const { LEVELS } = require('../validators/course.validator');
 const site = require('../config/site');
 const courseLandingService = require('../services/courseLanding.service');
@@ -95,7 +95,8 @@ async function getCourseDetail(req, res, next) {
     const paymentsEnabled = !isFree && (await razorpayService.isConfigured());
     const taxCfg = await require('../services/taxSettings.service').get();
     const gstNote = !isFree && taxCfg.enabled && require('../services/taxSettings.service').rateFor(course, taxCfg) > 0 ? (taxCfg.inclusive ? 'Inclusive of GST' : '+ GST extra') : '';
-    const priceLabel = `${course.currency === 'INR' ? '₹' : `${course.currency} `}${Number(purchasePrice).toLocaleString('en-IN')}`;
+    const coursePricing = getEffectiveCoursePrice(course);
+    const priceLabel = coursePricing.effectiveLabel;
 
     const title = `${course.title} | ${site.name}`;
     const description = course.shortDescription || course.title;
@@ -158,6 +159,7 @@ async function getCourseDetail(req, res, next) {
       faqs: (landing && landing.faqs) ? landing.faqs : [],
       landing,
       courseTheme,
+      coursePricing,
       isEnrolled,
       hasPendingRequest,
       isFree,

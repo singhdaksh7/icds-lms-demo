@@ -1,0 +1,52 @@
+<%# Homepage intro / promo video block. Data: introVideo (public-safe shape from homeIntroVideo.service.toPublicIntroVideo) or null.
+   Every string comes from the admin-managed record; renders nothing when disabled or without a playable video. #%>
+<% const iv = (typeof introVideo !== 'undefined' && introVideo) ? introVideo : null; %>
+<% if (iv) { %>
+<%
+    const hl = iv.highlightText || '';
+    const hIdx = hl && iv.heading ? iv.heading.indexOf(hl) : -1;
+    const bgClass = 'home-intro--bg-' + String(iv.backgroundStyle).toLowerCase();
+    const layoutClass = 'home-intro--layout-' + String(iv.layout).toLowerCase().replace(/_/g, '-');
+    const shapeClass = 'intro-reel--' + String(iv.videoShape).toLowerCase();
+    const titleForLabel = iv.heading || 'intro video';
+%>
+<link rel="stylesheet" href="/css/home-intro-video.css">
+<!-- HOME INTRO VIDEO -->
+<section class="section-space home-intro <%= bgClass %> <%= layoutClass %>" id="intro-video"<% if (iv.heading) { %> aria-labelledby="home-intro-heading"<% } else { %> aria-label="Introduction video"<% } %>>
+    <div class="container">
+        <div class="home-intro-grid">
+            <div class="home-intro-copy">
+                <% if (iv.eyebrow) { %><div class="section-tag"><%= iv.eyebrow %></div><% } %>
+                <% if (iv.heading || hl) { %>
+                <h2 class="home-intro-title" id="home-intro-heading">
+                    <% if (hIdx >= 0) { %><%= iv.heading.slice(0, hIdx) %><span class="home-intro-hl"><%= hl %></span><%= iv.heading.slice(hIdx + hl.length) %><% } else { %><%= iv.heading %><% if (hl) { %> <span class="home-intro-hl"><%= hl %></span><% } %><% } %>
+                </h2>
+                <% } %>
+                <% if (iv.description) { %><p class="home-intro-text"><%= iv.description %></p><% } %>
+                <% if (iv.cta || iv.secondaryCta) { %>
+                <div class="home-intro-actions">
+                    <% if (iv.cta) { %><a class="btn home-intro-btn home-intro-btn-primary" href="<%= iv.cta.url %>"<% if (/^https:/i.test(iv.cta.url)) { %> rel="noopener noreferrer"<% } %>><%= iv.cta.label %> <i class="bi bi-arrow-right" aria-hidden="true"></i></a><% } %>
+                    <% if (iv.secondaryCta) { %><a class="btn home-intro-btn home-intro-btn-secondary" href="<%= iv.secondaryCta.url %>"<% if (/^https:/i.test(iv.secondaryCta.url)) { %> rel="noopener noreferrer"<% } %>><%= iv.secondaryCta.label %></a><% } %>
+                </div>
+                <% } %>
+            </div>
+
+            <div class="home-intro-media">
+                <div class="intro-reel <%= shapeClass %>"
+                     data-intro-reel
+                     data-kind="<%= iv.videoKind %>"
+                     <% if (iv.videoKind === 'hosted') { %>data-source-url="/api/home/intro-video/source"<% } else { %>data-embed="<%= iv.embedUrl %>" data-provider="<%= iv.provider %>"<% } %>
+                     data-muted-start="<%= iv.autoplayMuted ? '1' : '0' %>"
+                     data-loop="<%= iv.loopVideo ? '1' : '0' %>"
+                     data-title="<%= titleForLabel %>">
+                    <button type="button" class="intro-reel-play" data-intro-reel-play aria-label="Play video: <%= titleForLabel %>">
+                        <% if (iv.posterUrl) { %><img class="intro-reel-poster" src="<%= iv.posterUrl %>" alt="" loading="lazy"><% } else { %><span class="intro-reel-poster is-empty" aria-hidden="true"><i class="bi bi-camera-video"></i></span><% } %>
+                        <span class="intro-reel-play-icon" aria-hidden="true"><i class="bi bi-play-fill"></i></span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+<script src="/js/home-intro-video.js" defer></script>
+<% } %>

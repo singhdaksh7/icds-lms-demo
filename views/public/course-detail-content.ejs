@@ -1,8 +1,22 @@
 <%
 const cd = cms.course;
-const effectivePrice = Number(course.salePrice || course.price);
-const freeCourse = typeof isFree !== 'undefined' ? isFree : (effectivePrice === 0);
-const formattedPriceLabel = typeof priceLabel !== 'undefined' ? priceLabel : ((course.currency === 'INR' ? '₹' : course.currency + ' ') + effectivePrice.toLocaleString('en-IN'));
+// Prices come from ONE server-side helper (src/lib/pricing.js getEffectiveCoursePrice);
+// the controller passes the result as `coursePricing`. Nothing here recalculates sales.
+const cp = (typeof coursePricing !== 'undefined' && coursePricing)
+    ? coursePricing
+    : (typeof coursePriceOf === 'function' ? coursePriceOf(course) : { currency: course.currency || 'INR', regular: Number(course.price) || 0, effective: Number(course.price) || 0, regularLabel: '', effectiveLabel: '', isFree: Number(course.price) === 0, onSale: false, discountPercent: 0, badgeLabel: '', saleEndsAt: null });
+const fmtMoney = (n) => ((cp.currency === 'INR' ? '₹' : cp.currency + ' ') + Number(n).toLocaleString('en-IN'));
+const effectivePrice = cp.effective;
+// Star display from a REAL rating (never a hardcoded value).
+const starIcons = (value) => {
+    const v = Math.round(Number(value) * 2) / 2;
+    let out = '';
+    for (let i = 1; i <= 5; i++) out += (i <= v) ? '<i class="bi bi-star-fill"></i>' : ((i - 0.5 === v) ? '<i class="bi bi-star-half"></i>' : '<i class="bi bi-star"></i>');
+    return out;
+};
+const ratingSummary = (typeof landing !== 'undefined' && landing && landing.ratingSummary && landing.ratingSummary.count > 0) ? landing.ratingSummary : null;
+const freeCourse = typeof isFree !== 'undefined' ? isFree : cp.isFree;
+const formattedPriceLabel = typeof priceLabel !== 'undefined' ? priceLabel : fmtMoney(cp.effective);
 const courseStats = typeof stats !== 'undefined' && stats ? stats : {
     moduleCount: (typeof curriculum !== 'undefined' && Array.isArray(curriculum) ? curriculum.length : 0),
     publishedModuleCount: (typeof curriculum !== 'undefined' && Array.isArray(curriculum) ? curriculum.length : 0),
@@ -182,12 +196,11 @@ const effectiveAccessSubtitle = defaultAccessPlan ? defaultAccessPlan.label : (l
                                     <p class="hero-desc"><%= heroDesc %></p>
                                 <% } %>
 
-                                <!-- Rating Row (Honest: rendered only if genuine reviews exist or demo showcase in preview) -->
-                                <% const realRevCount = (typeof landing !== 'undefined' && landing && landing.realReviewCount) ? landing.realReviewCount : 0; %>
-                                <% if (realRevCount > 0 || ((inPreviewMode || demoShowcase) && testimonialsList.length > 0)) { %>
-                                    <div class="hero-rating-row">
-                                        <span class="stars"><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i></span>
-                                        <span class="rating-text"><strong>4.9 rated</strong> &bull; <%= realRevCount > 0 ? (realRevCount + '+ reviews') : (testimonialsList.length + ' reviews (Preview)') %></span>
+                                <!-- Rating Row: genuine, published, non-demo reviews of THIS course only; hidden when none exist -->
+                                <% if (ratingSummary) { %>
+                                    <div class="hero-rating-row" role="img" aria-label="Rated <%= ratingSummary.average.toFixed(1) %> out of 5, based on <%= ratingSummary.count %> review<%= ratingSummary.count === 1 ? '' : 's' %>">
+                                        <span class="stars" aria-hidden="true"><%- starIcons(ratingSummary.average) %></span>
+                                        <span class="rating-text" aria-hidden="true"><strong><%= ratingSummary.average.toFixed(1) %></strong> &bull; Based on <%= ratingSummary.count %> review<%= ratingSummary.count === 1 ? '' : 's' %></span>
                                     </div>
                                 <% } %>
 
@@ -230,14 +243,12 @@ const effectiveAccessSubtitle = defaultAccessPlan ? defaultAccessPlan.label : (l
 
                                 <!-- Pricing & Access Row -->
                                 <div class="hero-price-row">
-                                    <% if (course.salePrice && course.price && Number(course.price) > Number(course.salePrice)) { %>
-                                        <span class="hero-price-old">₹<%= Number(course.price).toLocaleString('en-IN') %></span>
+                                    <% if (cp.onSale && !freeCourse) { %>
+                                        <span class="hero-price-old" aria-label="Regular price <%= fmtMoney(cp.regular) %>"><del><%= fmtMoney(cp.regular) %></del></span>
                                     <% } %>
                                     <span class="hero-price-val"><%= freeCourse ? 'Free' : formattedPriceLabel %></span>
-                                    <% if (course.salePrice && course.price && Number(course.price) > Number(course.salePrice)) { 
-                                        const discountPct = Math.round(((Number(course.price) - Number(course.salePrice)) / Number(course.price)) * 100);
-                                    %>
-                                        <span class="hero-sale-badge"><%= discountPct %>% OFF</span>
+                                    <% if (cp.onSale && !freeCourse) { %>
+                                        <span class="hero-sale-badge"><%= cp.badgeLabel %></span>
                                     <% } else if (freeCourse) { %>
                                         <span class="hero-sale-badge">100% FREE</span>
                                     <% } %>
@@ -670,7 +681,10 @@ const effectiveAccessSubtitle = defaultAccessPlan ? defaultAccessPlan.label : (l
                                 </div>
                             </div>
                             <div style="text-align:center; min-width:260px;">
-                                <div style="font-family:var(--course-heading-font); font-size:36px; font-weight:700; color:var(--course-secondary); margin-bottom:4px;"><%= freeCourse ? 'Free' : formattedPriceLabel %></div>
+                                <% if (cp.onSale && !freeCourse) { %>
+                                    <div class="purchase-price-old"><del aria-label="Regular price <%= fmtMoney(cp.regular) %>"><%= fmtMoney(cp.regular) %></del></div>
+                                <% } %>
+                                <div style="font-family:var(--course-heading-font); font-size:36px; font-weight:700; color:var(--course-secondary); margin-bottom:4px;"><%= freeCourse ? 'Free' : formattedPriceLabel %><% if (cp.onSale && !freeCourse) { %> <span class="purchase-sale-badge"><%= cp.badgeLabel %></span><% } %></div>
                                 <% if (effectiveAccessSubtitle) { %><div style="font-size:13px; color:var(--course-muted); margin-bottom:18px;"><%= effectiveAccessSubtitle %></div><% } %>
                                 <% if (typeof currentUser !== 'undefined' && currentUser && currentUser.role === 'STUDENT') { %>
                                     <% if (userIsEnrolled) { %>
@@ -721,9 +735,19 @@ const effectiveAccessSubtitle = defaultAccessPlan ? defaultAccessPlan.label : (l
                             <% } %>
                         </div>
 
-                        <div class="reviews-grid">
+                        <% if (ratingSummary) { %>
+                            <div class="reviews-summary" role="img" aria-label="Rated <%= ratingSummary.average.toFixed(1) %> out of 5, based on <%= ratingSummary.count %> review<%= ratingSummary.count === 1 ? '' : 's' %>">
+                                <span class="reviews-summary-stars" aria-hidden="true"><%- starIcons(ratingSummary.average) %></span>
+                                <span class="reviews-summary-score" aria-hidden="true"><%= ratingSummary.average.toFixed(1) %></span>
+                                <span class="reviews-summary-count" aria-hidden="true">Based on <%= ratingSummary.count %> review<%= ratingSummary.count === 1 ? '' : 's' %></span>
+                            </div>
+                        <% } %>
+
+                        <div class="reviews-carousel" data-reviews-carousel data-rotate="<%= testimonialsList.length > 2 ? 'true' : 'false' %>" role="region" aria-roledescription="carousel" aria-label="Student reviews">
+                          <div class="reviews-viewport" tabindex="0" aria-label="Reviews. Use the arrow buttons or swipe to browse.">
+                            <div class="reviews-track">
                             <% testimonialsList.forEach(function(rev) { %>
-                                <div class="review-card <%= rev.hasVideo ? 'review-card-video' : '' %> <%= rev.isDemo ? 'review-card-demo' : '' %>" style="<%= rev.isDemo ? 'border:1px dashed var(--course-border-strong); position:relative;' : '' %>">
+                                <div role="group" aria-roledescription="slide" class="review-card <%= rev.hasVideo ? 'review-card-video' : '' %> <%= rev.isDemo ? 'review-card-demo' : '' %>" style="<%= rev.isDemo ? 'border:1px dashed var(--course-border-strong); position:relative;' : '' %>">
                                     <% if (rev.isDemo) { %>
                                         <div style="position:absolute; top:14px; right:14px;">
                                             <span class="badge" style="background:#fef3c7; color:#92400e; font-size:10px; font-weight:700; letter-spacing:0.5px; border-radius:4px; padding:3px 7px;">DEMO REVIEW</span>
@@ -741,11 +765,12 @@ const effectiveAccessSubtitle = defaultAccessPlan ? defaultAccessPlan.label : (l
                                     <% } else if (rev.hasQuote !== false) { %>
                                         <div class="review-quote-mark">&ldquo;</div>
                                     <% } %>
-                                    <div class="review-stars">
-                                        <% for (let s = 1; s <= (rev.rating || 5); s++) { %>
-                                            <i class="bi bi-star-fill"></i>
-                                        <% } %>
-                                    </div>
+                                    <% if (rev.rating >= 1) { %>
+                                        <div class="review-stars" role="img" aria-label="Rated <%= rev.rating %> out of 5">
+                                            <span aria-hidden="true"><%- starIcons(rev.rating) %></span>
+                                            <span class="review-rating-num" aria-hidden="true"><%= Number(rev.rating).toFixed(1) %></span>
+                                        </div>
+                                    <% } %>
                                     <% if (rev.hasQuote !== false && rev.quote) { %>
                                         <blockquote class="review-quote">&ldquo;<%= rev.quote %>&rdquo;</blockquote>
                                     <% } %>
@@ -768,7 +793,13 @@ const effectiveAccessSubtitle = defaultAccessPlan ? defaultAccessPlan.label : (l
                                     </div>
                                 </div>
                             <% }); %>
+                            </div>
+                          </div>
+                          <button type="button" class="reviews-arrow reviews-prev" aria-label="Previous reviews" hidden><i class="bi bi-chevron-left" aria-hidden="true"></i></button>
+                          <button type="button" class="reviews-arrow reviews-next" aria-label="Next reviews" hidden><i class="bi bi-chevron-right" aria-hidden="true"></i></button>
+                          <div class="reviews-dots" aria-label="Review pages" hidden></div>
                         </div>
+                        <script src="/js/course-reviews-carousel.js" defer></script>
                         <% if (testimonialsList.some(function (r) { return r.hasVideo; })) { %>
                             <script src="/js/testimonial-player.js" defer></script>
                         <% } %>
@@ -1163,7 +1194,7 @@ const effectiveAccessSubtitle = defaultAccessPlan ? defaultAccessPlan.label : (l
                         <% } else { %>
                             <div class="floating-copy-title"><%= course.title %></div>
                         <% } %>
-                        <div class="floating-copy-sub"><%= freeCourse ? 'Free' : formattedPriceLabel %> &bull; <%= effectiveAccessSubtitle || 'Self-Paced Access' %></div>
+                        <div class="floating-copy-sub"><% if (cp.onSale && !freeCourse) { %><del class="floating-price-old"><%= fmtMoney(cp.regular) %></del> <% } %><strong><%= freeCourse ? 'Free' : formattedPriceLabel %></strong><% if (cp.onSale && !freeCourse) { %> <span class="floating-sale-badge"><%= cp.badgeLabel %></span><% } %> &bull; <%= effectiveAccessSubtitle || 'Self-Paced Access' %></div>
                     </div>
                 </div>
                 <div>

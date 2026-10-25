@@ -1,6 +1,8 @@
 const homeService = require('../services/home.service');
 const homeReviewsService = require('../services/homeReviews.service');
 const faqService = require('../services/faq.service');
+const homeIntroVideoService = require('../services/homeIntroVideo.service');
+const homeSectionsService = require('../services/homeSections.service');
 const site = require('../config/site');
 const { buildSeo, pageSeoText, PUBLIC_ROBOTS } = require('../lib/seo');
 
@@ -9,7 +11,7 @@ async function getHomePage(req, res, next) {
     const isAdmin = Boolean(res.locals.currentUser && res.locals.currentUser.role === 'ADMIN');
     // Demo reviews are shown (badged) only to an admin explicitly previewing.
     const includeDemo = (isAdmin && req.query.previewDemo === '1') || (await homeReviewsService.isDemoShowcaseEnabled());
-    const [categories, featuredCourses, instructors, reviews, stats, faqs, mentorInstructor, banners, homeReviewSettings, homeReviews] = await Promise.all([
+    const [categories, featuredCourses, instructors, reviews, stats, faqs, mentorInstructor, banners, homeReviewSettings, homeReviews, introVideo, homeSectionOrder] = await Promise.all([
       homeService.getActiveCategories(),
       homeService.getFeaturedCourses(),
       homeService.getActiveInstructors(),
@@ -20,6 +22,8 @@ async function getHomePage(req, res, next) {
       homeService.getHomeBanners(),
       homeReviewsService.getHomeReviewSettings(),
       homeReviewsService.getHomeReviews({ includeDemo }).catch(() => []),
+      homeIntroVideoService.getPublicIntroVideo(),
+      homeSectionsService.getRenderOrder().catch(() => undefined),
     ]);
 
     const { title, description } = pageSeoText(res.locals.settings, 'home', {
@@ -50,6 +54,8 @@ async function getHomePage(req, res, next) {
       mentorInstructor,
       reviews,
       banners,
+      introVideo,
+      homeSectionOrder,
       homeReviewSettings,
       // Client-demo showcase (non-admin): present demo rows without the demo marking. Never counted anywhere.
       homeReviews: homeReviewSettings.enabled

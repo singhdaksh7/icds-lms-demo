@@ -1,10 +1,14 @@
 <% const cp = cms.contactPage; %>
+<% const sp = (typeof sitePage !== 'undefined' && sitePage) ? sitePage : null; %>
+<% const pageHeading = (sp && sp.heading) || cp.heading; %>
+<% const pageIntro = (sp && sp.intro) || cp.intro; %>
 <% const hasContactInfo = Boolean(site.contactEmail || site.contactPhone || site.address); %>
 <section class="section-space">
     <div class="container" style="max-width:<%= hasContactInfo ? '1000px' : '760px' %>">
 
-        <h1 class="section-title"><%= cp.heading %></h1>
-        <p class="section-description"><%= cp.intro %></p>
+        <% if (sp && sp.eyebrow) { %><div class="section-tag"><%= sp.eyebrow %></div><% } %>
+        <h1 class="section-title"><%= pageHeading %></h1>
+        <% if (pageIntro) { %><p class="section-description"><%= pageIntro %></p><% } %>
 
         <div class="row g-4 g-lg-5 mt-1">
 

@@ -1,0 +1,15 @@
+<%# Shared closing call-to-action for standalone pages (hidden when every field is empty). %>
+<% const hasButton = Boolean(page.ctaLabel && page.ctaUrl); %>
+<% if (page.ctaHeading || page.ctaText || hasButton) { %>
+<section class="section-space sp-cta-section">
+    <div class="container">
+        <div class="sp-cta">
+            <% if (page.ctaHeading) { %><h2><%= page.ctaHeading %></h2><% } %>
+            <% if (page.ctaText) { %><p><%= page.ctaText %></p><% } %>
+            <% if (hasButton) { %>
+                <a class="btn sp-cta-btn" href="<%= page.ctaUrl %>"<% if (/^https:\/\//i.test(page.ctaUrl)) { %> target="_blank" rel="noopener noreferrer"<% } %>><%= page.ctaLabel %> <i class="bi bi-arrow-right" aria-hidden="true"></i></a>
+            <% } %>
+        </div>
+    </div>
+</section>
+<% } %>

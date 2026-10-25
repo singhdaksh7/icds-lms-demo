@@ -1,19 +1,37 @@
-<%# Homepage reviews from CourseTestimonial. Data: homeReviews[] (shaped by homeReviews.service), homeReviewSettings. Hidden when disabled/empty. #%>
+<%# Homepage reviews from CourseTestimonial. Data: homeReviews[] (shaped by homeReviews.service; ONLY reviews the admin featured),
+   homeReviewSettings (Admin > Homepage > Reviews). Hidden when disabled/empty. Never autoplays any VIDEO - cards only open the
+   existing testimonial player on click. #%>
 <% const hrList = (typeof homeReviews !== 'undefined' && Array.isArray(homeReviews)) ? homeReviews : []; %>
-<% const hrCfg = (typeof homeReviewSettings !== 'undefined' && homeReviewSettings) ? homeReviewSettings : { enabled: true, heading: 'What our learners say', subheading: '' }; %>
+<% const hrCfg = Object.assign({ enabled: true, eyebrow: '', heading: 'What our learners say', subheading: '', carouselEnabled: true, carouselRotate: true, autoplayInterval: 6000, direction: 'LEFT_TO_RIGHT', cardsDesktop: 3, cardsTablet: 2, showArrows: true, showDots: true, backgroundStyle: 'CREAM' }, (typeof homeReviewSettings !== 'undefined' && homeReviewSettings) ? homeReviewSettings : {}); %>
 <% if (hrCfg.enabled && hrList.length > 0) { %>
+<% const hrCarousel = hrCfg.carouselEnabled && hrList.length > 1; %>
+<link rel="stylesheet" href="/css/home-reviews-carousel.css">
 <!-- HOME REVIEWS -->
-<section class="section-space home-reviews-section" id="reviews">
+<section class="section-space home-reviews-section home-reviews--bg-<%= String(hrCfg.backgroundStyle).toLowerCase() %>" id="reviews" aria-labelledby="home-reviews-heading">
     <div class="container">
         <div class="section-heading reveal-element">
-            <div class="section-tag">Learner stories</div>
-            <h2 class="section-title"><%= hrCfg.heading %></h2>
+            <% if (hrCfg.eyebrow) { %><div class="section-tag"><%= hrCfg.eyebrow %></div><% } %>
+            <h2 class="section-title" id="home-reviews-heading"><%= hrCfg.heading %></h2>
             <% if (hrCfg.subheading) { %><p class="section-description"><%= hrCfg.subheading %></p><% } %>
         </div>
 
+        <% if (hrCarousel) { %>
+        <div class="hr-carousel"
+             data-hr-carousel
+             data-rotate="<%= hrCfg.carouselRotate ? '1' : '0' %>"
+             data-interval="<%= hrCfg.autoplayInterval %>"
+             data-direction="<%= hrCfg.direction === 'RIGHT_TO_LEFT' ? 'rtl' : 'ltr' %>"
+             style="--hr-cols-desktop: <%= hrCfg.cardsDesktop %>; --hr-cols-tablet: <%= hrCfg.cardsTablet %>;"
+             role="region" aria-roledescription="carousel" aria-label="<%= hrCfg.heading %>">
+            <% if (hrCfg.showArrows) { %><button type="button" class="hr-arrow hr-prev" data-hr-prev aria-label="Previous reviews"><i class="bi bi-chevron-left" aria-hidden="true"></i></button><% } %>
+            <div class="hr-viewport" data-hr-viewport tabindex="0" aria-label="Reviews, use the left and right arrow keys to browse">
+                <div class="hr-track" data-hr-track role="list">
+        <% } else { %>
         <div class="home-reviews-grid" role="list">
-            <% hrList.forEach(function (r) { %>
-            <figure class="home-review-card" role="listitem">
+        <% } %>
+            <% hrList.forEach(function (r, ri) { %>
+            <% if (hrCarousel) { %><div class="hr-slide" role="listitem" aria-roledescription="slide" aria-label="Review <%= ri + 1 %> of <%= hrList.length %>"><% } %>
+            <figure class="home-review-card"<% if (!hrCarousel) { %> role="listitem"<% } %>>
                 <% if (r.isDemo) { %><span class="home-review-demo">DEMO REVIEW</span><% } %>
                 <% if (r.rating > 0) { %>
                 <div class="home-review-stars" role="img" aria-label="Rated <%= r.rating %> out of 5">
@@ -41,8 +59,18 @@
                     </span>
                 </figcaption>
             </figure>
+            <% if (hrCarousel) { %></div><% } %>
             <% }); %>
+        <% if (hrCarousel) { %>
+                </div>
+            </div>
+            <% if (hrCfg.showArrows) { %><button type="button" class="hr-arrow hr-next" data-hr-next aria-label="Next reviews"><i class="bi bi-chevron-right" aria-hidden="true"></i></button><% } %>
+            <% if (hrCfg.showDots) { %><div class="hr-dots" data-hr-dots role="group" aria-label="Choose reviews to show"></div><% } %>
         </div>
+        <script src="/js/home-reviews-carousel.js" defer></script>
+        <% } else { %>
+        </div>
+        <% } %>
         <% if (hrList.some(function (r) { return r.hasVideo; })) { %><script src="/js/testimonial-player.js" defer></script><% } %>
     </div>
 </section>

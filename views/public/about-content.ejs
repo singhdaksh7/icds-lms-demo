@@ -1,0 +1,55 @@
+<link rel="stylesheet" href="/css/site-pages.css">
+<%- include('../partials/page-hero', { page }) %>
+
+<% if (sections.length) { %>
+<section class="section-space sp-sections" aria-label="<%= page.heading || 'About' %>">
+    <div class="container">
+        <div class="sp-card-grid">
+            <% sections.forEach(function (s) { %>
+                <article class="sp-card">
+                    <% if (s.icon) { %><span class="sp-card-icon" aria-hidden="true"><i class="bi <%= s.icon %>"></i></span><% } %>
+                    <% if (s.title) { %><h2><%= s.title %></h2><% } %>
+                    <% if (s.body) { %><p><%= s.body %></p><% } %>
+                </article>
+            <% }); %>
+        </div>
+    </div>
+</section>
+<% } %>
+
+<% if (courses && courses.length) { %>
+<section class="section-space sp-courses">
+    <div class="container">
+        <div class="section-heading">
+            <div class="section-tag"><%= cms.featured.eyebrow %></div>
+            <h2 class="section-title"><%= cms.featured.heading %></h2>
+        </div>
+        <div class="row g-4">
+            <% courses.forEach(function (course) { %>
+                <div class="col-md-6 col-xl-4"><%- include('../partials/course-card', { course }) %></div>
+            <% }); %>
+        </div>
+        <div class="text-center mt-4"><a class="btn sp-outline-btn" href="/courses"><%= cms.featured.ctaLabel %></a></div>
+    </div>
+</section>
+<% } %>
+
+<% if (founder) { %>
+<section class="section-space sp-founder">
+    <div class="container">
+        <div class="sp-founder-card">
+            <% if (founder.photoUrl) { %><img src="<%= founder.photoUrl %>" alt="<%= founder.name %>" loading="lazy" width="120" height="120" data-fallback-src="/assets/images/instructor-placeholder.svg"><% } %>
+            <div>
+                <div class="section-tag">Meet the founder</div>
+                <h2><%= founder.name %></h2>
+                <% if (founder.title || founder.designation) { %><p class="sp-founder-role"><%= founder.title || founder.designation %></p><% } %>
+                <% const bio = founder.shortBio || founder.founderIntro; %>
+                <% if (bio) { %><p><%= String(bio).length > 280 ? String(bio).slice(0, 277) + '...' : bio %></p><% } %>
+                <a class="btn sp-outline-btn" href="/founder">Read the full story <i class="bi bi-arrow-right" aria-hidden="true"></i></a>
+            </div>
+        </div>
+    </div>
+</section>
+<% } %>
+
+<%- include('../partials/page-cta', { page }) %>

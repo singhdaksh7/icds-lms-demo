@@ -2,14 +2,17 @@ const courseLandingService = require('../../services/courseLanding.service');
 const { prisma } = require('../../config/db');
 const curriculumService = require('../../services/curriculum.service');
 const courseAppearanceService = require('../../services/courseAppearance.service');
+const { getEffectiveCoursePrice } = require('../../lib/pricing');
 
 async function getLandingEditor(req, res, next) {
   try {
     const courseId = parseInt(req.params.courseId, 10);
     const data = await courseLandingService.getAdminLandingData(courseId);
+    const playerSettings = await require('../../services/coursePlayerSettings.service').getPlayerSettings(courseId);
     const appearanceView = await courseAppearanceService.getAdminView(courseId);
 
     res.render('admin/courses/landing-page', {
+      playerSettings,
       appearanceView,
       pageTitle: `Landing Page: ${data.course.title} | Admin`,
       metaDescription: `Manage dynamic marketing and landing content for ${data.course.title}`,
@@ -413,6 +416,7 @@ function testimonialPayload(req) {
   if (payload.formSubmitted) {
     payload.isPublished = parseFormBool(payload.isPublished, false);
     payload.isDemo = parseFormBool(payload.isDemo, false);
+    payload.featuredOnHome = parseFormBool(payload.featuredOnHome, false);
   }
   const files = req.files || {};
   if (files.video && files.video[0] && files.video[0].r2Key) payload.videoObjectKey = files.video[0].r2Key;
@@ -821,8 +825,8 @@ async function previewLanding(req, res, next) {
     // Preview renders with the course's saved appearance, exactly like the public page.
     const courseTheme = await courseAppearanceService.getRenderTheme(course.id);
 
-    const price = Number(course.price) || 0;
-    const isFree = price === 0;
+    const coursePricing = getEffectiveCoursePrice(course);
+    const isFree = coursePricing.isFree;
 
     res.render('public/course-detail', {
       pageTitle: `[Preview] ${landing?.content?.heroTitleOverride || course.title}`,
@@ -848,7 +852,8 @@ async function previewLanding(req, res, next) {
       hasPendingRequest: false,
       isFree,
       paymentsEnabled: true,
-      priceLabel: isFree ? 'Free' : `₹${price.toLocaleString('en-IN')}`,
+      coursePricing,
+      priceLabel: isFree ? 'Free' : coursePricing.effectiveLabel,
       gstNote: 'Incl. applicable taxes',
       isPreview: true,
       isPreviewMode: true,

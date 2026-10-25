@@ -1,3 +1,7 @@
+const { parseFormBool } = require('../lib/formBool');
+
+const MAX_CATEGORY = 100;
+
 function validateFaq(body) {
   const errors = [];
 
@@ -11,10 +15,18 @@ function validateFaq(body) {
     errors.push('Answer must be between 5 and 5000 characters.');
   }
 
-  const sortOrder = Number.isFinite(Number(body.sortOrder)) ? Math.trunc(Number(body.sortOrder)) : 0;
-  const isActive = body.isActive === 'true' || body.isActive === true || body.isActive === 'on';
+  // Optional grouping used by the /faq page filter chips. Blank = uncategorised.
+  const categoryRaw = typeof body.category === 'string' ? body.category.replace(/[\u0000-\u001f\u007f]/g, ' ').trim() : '';
+  if (categoryRaw.length > MAX_CATEGORY) {
+    errors.push(`Category must be ${MAX_CATEGORY} characters or fewer.`);
+  }
+  const category = categoryRaw.length > MAX_CATEGORY ? null : categoryRaw || null;
 
-  return { errors, values: { question, answer, sortOrder, isActive } };
+  const sortOrder = Number.isFinite(Number(body.sortOrder)) ? Math.trunc(Number(body.sortOrder)) : 0;
+  // Checked => true; unchecked => false (hidden "false" input and/or absent field).
+  const isActive = parseFormBool(body.isActive, false);
+
+  return { errors, values: { question, answer, category, sortOrder, isActive } };
 }
 
-module.exports = { validateFaq };
+module.exports = { validateFaq, MAX_CATEGORY };

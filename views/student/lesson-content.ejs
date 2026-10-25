@@ -1,10 +1,45 @@
-<% const ls = cms.lesson; %>
-<div class="learning-player-wrapper bg-light-subtle py-4">
-    <div class="container-fluid px-lg-4">
+<%
+    const ls = cms.lesson;
+    // Per-course player presentation (Admin > Course > Landing Page > Player).
+    // A missing settings object means "defaults": every flag is on.
+    const ps = (typeof playerSettings !== 'undefined' && playerSettings) ? playerSettings : {};
+    const on = (k) => ps[k] !== false;
+    const showSidebar = on('showSidebar');
+    const sidebarDefaultOpen = on('sidebarDefaultOpen');
+    const theaterEnabled = showSidebar && on('theaterModeEnabled');
+    const showCourseProgress = on('showCourseProgress');
+    const showModuleProgress = on('showModuleProgress');
+    const showDurations = on('showLessonDurations');
+    const showDone = on('showCompletedMarks');
+    const showPrevNext = on('showPrevNext');
+    const showResources = on('showResources');
+    const showDescription = on('showLessonDescription');
+    const sidebarTitle = ps.sidebarTitle || ls.curriculumHeading || 'Course Content';
+    const theaterLabel = ps.theaterButtonLabel || '';
+    const isAdminViewer = typeof isAdmin !== 'undefined' && isAdmin;
+    const isEnrolledViewer = typeof enrolled !== 'undefined' && enrolled;
+    const progressPct = typeof progress !== 'undefined' && progress ? (progress.percent || 0) : 0;
+    const curriculumList = typeof curriculum !== 'undefined' && curriculum ? curriculum : [];
+    const modActiveId = typeof currentModule !== 'undefined' && currentModule ? currentModule.id : null;
+    const topicActiveId = typeof currentTopic !== 'undefined' && currentTopic ? currentTopic.id : null;
+    const pMap = typeof progressMap !== 'undefined' && progressMap ? progressMap : {};
+%>
+<link rel="stylesheet" href="/css/lesson-player.css">
+<div class="lp-page"
+     id="lpPage"
+     data-lp
+     data-course-id="<%= course.id || '' %>"
+     data-sidebar-default="<%= sidebarDefaultOpen ? 'open' : 'closed' %>"
+     data-sidebar-enabled="<%= showSidebar ? 'true' : 'false' %>"
+     data-theater-enabled="<%= theaterEnabled ? 'true' : 'false' %>"
+     data-show-done="<%= showDone ? 'true' : 'false' %>"
+     data-label-hide="<%= theaterLabel || 'Hide Course Content' %>"
+     data-label-show="<%= theaterLabel || 'Show Course Content' %>">
+    <div class="lp-container">
 
-        <!-- Top Breadcrumbs Bar -->
-        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
-            <nav aria-label="breadcrumb">
+        <!-- Breadcrumb + player controls -->
+        <div class="lp-topbar">
+            <nav aria-label="breadcrumb" class="lp-breadcrumb">
                 <ol class="breadcrumb mb-0 small">
                     <li class="breadcrumb-item">
                         <a href="/student/dashboard" class="text-decoration-none text-muted">
@@ -17,40 +52,48 @@
                         </a>
                     </li>
                     <% if (typeof currentModule !== 'undefined' && currentModule && !currentModule.isVirtual) { %>
-                        <li class="breadcrumb-item text-muted">
-                            <%= currentModule.title %>
-                        </li>
+                        <li class="breadcrumb-item text-muted"><%= currentModule.title %></li>
                     <% } %>
                     <% if (typeof currentTopic !== 'undefined' && currentTopic && !currentTopic.isVirtual) { %>
-                        <li class="breadcrumb-item text-muted">
-                            <%= currentTopic.title %>
-                        </li>
+                        <li class="breadcrumb-item text-muted"><%= currentTopic.title %></li>
                     <% } %>
-                    <li class="breadcrumb-item active text-dark fw-semibold" aria-current="page">
-                        <%= lesson.title %>
-                    </li>
+                    <li class="breadcrumb-item active text-dark fw-semibold" aria-current="page"><%= lesson.title %></li>
                 </ol>
             </nav>
 
-            <!-- Mobile Drawer Button (Visible on mobile & tablet) -->
-            <div class="d-lg-none">
-                <button class="btn btn-sm btn-outline-primary fw-semibold" type="button" data-bs-toggle="offcanvas" data-bs-target="#curriculumDrawer" aria-controls="curriculumDrawer">
-                    <i class="bi bi-list-nested me-1"></i> Course Content (<span class="course-progress-percent-text"><%= typeof progress !== 'undefined' && progress ? progress.percent : 0 %></span>%)
-                </button>
-            </div>
+            <% if (showSidebar) { %>
+                <div class="lp-controls">
+                    <% if (theaterEnabled) { %>
+                        <!-- Desktop: Theater mode (hide / show the course content column) -->
+                        <button type="button" class="btn btn-sm btn-outline-secondary lp-btn lp-theater-toggle d-none d-lg-inline-flex"
+                                id="lpTheaterToggle" data-lp-theater-toggle aria-controls="lpSidebar" aria-expanded="<%= sidebarDefaultOpen ? 'true' : 'false' %>">
+                            <i class="bi bi-layout-sidebar-inset-reverse" aria-hidden="true"></i>
+                            <span data-lp-theater-label><%= theaterLabel || (sidebarDefaultOpen ? 'Hide Course Content' : 'Show Course Content') %></span>
+                        </button>
+                    <% } %>
+                    <!-- Tablet / mobile: open the slide-over drawer -->
+                    <button type="button" class="btn btn-sm btn-outline-primary lp-btn lp-drawer-toggle d-lg-none"
+                            id="lpDrawerToggle" data-lp-drawer-toggle aria-controls="lpSidebar" aria-expanded="false">
+                        <i class="bi bi-list-nested" aria-hidden="true"></i>
+                        <span>Course Content</span>
+                        <% if (showCourseProgress && !isAdminViewer) { %>(<span class="course-progress-percent-text"><%= progressPct %></span>%)<% } %>
+                    </button>
+                </div>
+            <% } %>
         </div>
 
-        <div class="row g-4">
+        <div class="lp-layout" id="lpLayout">
 
-            <!-- Main Learning Stage (Video Player & Lesson Content) -->
-            <div class="col-lg-8 col-xl-9">
+            <!-- Main learning stage -->
+            <div class="lp-main" id="lpMain">
 
                 <!-- Video Stage -->
                 <% const isR2Video = lesson.videoType === 'R2' && lesson.videoObjectKey; %>
                 <% if ((lesson.videoType === 'LOCAL' && lesson.videoPath) || isR2Video) { %>
-                    <% const trackProgress = typeof enrolled !== 'undefined' && enrolled && (typeof isAdmin === 'undefined' || !isAdmin); %>
-                    <% const savedProgress = trackProgress && typeof progressMap !== 'undefined' && progressMap ? progressMap[lesson.id] : null; %>
-                    <div class="ratio ratio-16x9 mb-3 rounded-4 overflow-hidden bg-black shadow">
+                    <% const trackProgress = isEnrolledViewer && !isAdminViewer; %>
+                    <% const savedProgress = trackProgress && pMap ? pMap[lesson.id] : null; %>
+                    <div class="lp-video-wrap">
+                    <div class="ratio ratio-16x9 mb-3 rounded-4 overflow-hidden bg-black shadow lp-video">
                         <video
                             id="lesson-video"
                             <% if (trackProgress) { %>
@@ -71,6 +114,7 @@
                             Your browser does not support the video tag.
                         </video>
                     </div>
+                    </div>
                     <script src="/js/lesson-video-guard.js" defer></script>
                     <% if (isR2Video) { %>
                         <script src="/js/lesson-video-source.js" defer></script>
@@ -79,7 +123,8 @@
                         <script src="/js/lesson-progress.js" defer></script>
                     <% } %>
                 <% } else if (typeof videoEmbed !== 'undefined' && videoEmbed) { %>
-                    <div class="ratio ratio-16x9 mb-3 rounded-4 overflow-hidden bg-black shadow">
+                    <div class="lp-video-wrap">
+                    <div class="ratio ratio-16x9 mb-3 rounded-4 overflow-hidden bg-black shadow lp-video">
                         <iframe
                             src="<%= videoEmbed.embedUrl %>"
                             title="<%= lesson.title %>"
@@ -87,33 +132,36 @@
                             referrerpolicy="strict-origin-when-cross-origin">
                         </iframe>
                     </div>
+                    </div>
                 <% } else { %>
-                    <div class="ratio ratio-16x9 mb-3 rounded-4 d-flex align-items-center justify-content-center bg-dark text-white shadow">
+                    <div class="lp-video-wrap">
+                    <div class="ratio ratio-16x9 mb-3 rounded-4 d-flex align-items-center justify-content-center bg-dark text-white shadow lp-video">
                         <div class="text-center p-4">
                             <i class="bi bi-camera-video-off fs-1 d-block mb-2 text-warning"></i>
                             <h5 class="text-white"><%= ls.unavailableText || 'Video lesson in production' %></h5>
                             <p class="text-muted small mb-0">This lesson content will become available as soon as post-processing is complete.</p>
                         </div>
                     </div>
+                    </div>
                 <% } %>
 
-                <!-- Lesson Header & Completion Badge -->
-                <div class="bg-white p-4 rounded-4 border shadow-sm mb-4">
+                <!-- Lesson header & completion badge -->
+                <div class="bg-white p-4 rounded-4 border shadow-sm mb-4 lp-lesson-card">
                     <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-2">
                         <div>
-                            <div class="text-primary small fw-bold text-uppercase mb-1">
+                            <div class="text-primary small fw-bold text-uppercase mb-1 lp-lesson-crumb">
                                 <% if (typeof currentModule !== 'undefined' && currentModule) { %><%= currentModule.title %><% } %>
                                 <% if (typeof currentTopic !== 'undefined' && currentTopic) { %> &bull; <%= currentTopic.title %><% } %>
                             </div>
                             <h1 class="h3 fw-bold text-dark mb-0"><%= lesson.title %></h1>
                         </div>
                         <div id="lesson-completion-badge">
-                            <% const isLessonDone = typeof progressMap !== 'undefined' && progressMap && progressMap[lesson.id] && progressMap[lesson.id].completed; %>
-                            <% if (isLessonDone) { %>
+                            <% const isLessonDone = pMap && pMap[lesson.id] && pMap[lesson.id].completed; %>
+                            <% if (isLessonDone && showDone) { %>
                                 <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2 rounded-pill fs-6">
                                     <i class="bi bi-check-circle-fill me-1"></i> <%= ls.completedLabel || 'Completed' %>
                                 </span>
-                            <% } else if (lesson.duration) { %>
+                            <% } else if (!isLessonDone && lesson.duration && showDurations) { %>
                                 <span class="badge bg-light text-muted border px-3 py-2 rounded-pill">
                                     <i class="bi bi-clock me-1"></i> <%= lesson.duration %>
                                 </span>
@@ -121,15 +169,14 @@
                         </div>
                     </div>
 
-                    <% if (lesson.description) { %>
+                    <% if (lesson.description && showDescription) { %>
                         <hr class="my-3 text-muted opacity-25">
-                        <div class="text-secondary" style="white-space:pre-line; line-height:1.7;">
+                        <div class="text-secondary lp-description" style="white-space:pre-line; line-height:1.7;">
                             <%= lesson.description %>
                         </div>
                     <% } %>
 
-                    <!-- Completion status message for tracked students -->
-                    <% if (typeof enrolled !== 'undefined' && enrolled && (typeof isAdmin === 'undefined' || !isAdmin)) { %>
+                    <% if (isEnrolledViewer && !isAdminViewer) { %>
                         <div class="mt-3 small text-muted" id="lesson-completion-note">
                             <% if (isLessonDone) { %>
                                 <i class="bi bi-check-all text-success me-1"></i> <%= ls.completedLabel || 'Completed' %>
@@ -140,11 +187,11 @@
                     <% } %>
                 </div>
 
-                <!-- Attached Resources (Topic or Course Resources) -->
-                <% if (typeof resources !== 'undefined' && resources && resources.length > 0) { %>
-                    <div class="bg-white p-4 rounded-4 border shadow-sm mb-4">
+                <!-- Attached resources -->
+                <% if (showResources && typeof resources !== 'undefined' && resources && resources.length > 0) { %>
+                    <div class="bg-white p-4 rounded-4 border shadow-sm mb-4 lp-resources">
                         <h5 class="fw-bold text-dark mb-3">
-                            <i class="bi bi-file-earmark-pdf-fill text-danger me-2"></i>Lesson & Course Clinical Resources
+                            <i class="bi bi-file-earmark-pdf-fill text-danger me-2"></i>Lesson &amp; Course Clinical Resources
                         </h5>
                         <div class="list-group">
                             <% resources.forEach(function(resItem) { %>
@@ -170,10 +217,11 @@
                     </div>
                 <% } %>
 
-                <!-- Previous / Next Controls -->
-                <div class="d-flex justify-content-between align-items-center bg-white p-3 rounded-4 border shadow-sm">
+                <!-- Previous / Next -->
+                <% if (showPrevNext) { %>
+                <div class="d-flex justify-content-between align-items-center bg-white p-3 rounded-4 border shadow-sm lp-prevnext">
                     <% if (typeof previousLesson !== 'undefined' && previousLesson) { %>
-                        <a href="/learn/<%= course.slug %>/<%= previousLesson.slug %>" class="btn btn-outline-secondary d-flex align-items-center gap-2">
+                        <a href="/learn/<%= course.slug %>/<%= previousLesson.slug %>" class="btn btn-outline-secondary d-flex align-items-center gap-2" rel="prev">
                             <i class="bi bi-arrow-left"></i>
                             <div class="text-start d-none d-sm-block">
                                 <div class="small text-muted" style="font-size:10px;"><%= ls.previousLabel || 'PREVIOUS' %></div>
@@ -189,7 +237,7 @@
                     </a>
 
                     <% if (typeof nextLesson !== 'undefined' && nextLesson) { %>
-                        <a href="/learn/<%= course.slug %>/<%= nextLesson.slug %>" class="btn btn-primary d-flex align-items-center gap-2">
+                        <a href="/learn/<%= course.slug %>/<%= nextLesson.slug %>" class="btn btn-primary d-flex align-items-center gap-2" rel="next">
                             <div class="text-end d-none d-sm-block">
                                 <div class="small opacity-75" style="font-size:10px;"><%= ls.nextLabel || 'NEXT' %></div>
                                 <div class="small fw-semibold text-truncate" style="max-width:180px;"><%= nextLesson.title %></div>
@@ -202,194 +250,122 @@
                         </a>
                     <% } %>
                 </div>
+                <% } %>
 
             </div>
 
-            <!-- Desktop Sidebar (Curriculum Hierarchy) -->
-            <div class="col-lg-4 col-xl-3 d-none d-lg-block">
-                <div class="bg-white p-3 rounded-4 border shadow-sm" style="position:sticky; top:80px; max-height:calc(100vh - 100px); overflow-y:auto;">
+            <% if (showSidebar) { %>
+            <!-- Course content: right column on desktop, slide-over drawer on tablet/mobile -->
+            <aside class="lp-sidebar <%= sidebarDefaultOpen ? '' : 'is-collapsed' %>" id="lpSidebar" aria-label="<%= sidebarTitle %>" role="complementary">
+                <div class="lp-sidebar-inner">
+                    <div class="lp-sidebar-head">
+                        <h2 class="lp-sidebar-title">
+                            <i class="bi bi-collection-play-fill text-primary" aria-hidden="true"></i>
+                            <span><%= sidebarTitle %></span>
+                        </h2>
+                        <button type="button" class="btn-close lp-drawer-close d-lg-none" data-lp-drawer-close aria-label="Close course content"></button>
+                    </div>
+                    <div class="lp-course-name"><%= course.title %></div>
 
-                    <!-- Progress Header -->
-                    <% if (typeof isAdmin === 'undefined' || !isAdmin) { %>
-                        <div class="mb-3 pb-3 border-bottom">
-                            <div class="d-flex justify-content-between align-items-center small mb-1">
-                                <span class="fw-bold text-dark"><%= ls.progressLabel || 'Course Progress' %></span>
-                                <span class="badge bg-primary-subtle text-primary fw-semibold"><span class="course-progress-percent-text"><%= typeof progress !== 'undefined' && progress ? progress.percent : 0 %></span>%</span>
+                    <% if (!isAdminViewer) { %>
+                        <% if (showCourseProgress) { %>
+                            <div class="lp-progress-block">
+                                <div class="d-flex justify-content-between align-items-center small mb-1">
+                                    <span class="fw-bold text-dark"><%= ls.progressLabel || 'Course Progress' %></span>
+                                    <span class="badge bg-primary-subtle text-primary fw-semibold"><span class="course-progress-percent-text"><%= progressPct %></span>%</span>
+                                </div>
+                                <div class="progress" style="height:6px; border-radius:6px;">
+                                    <div class="progress-bar course-progress-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="<%= progressPct %>" style="width: <%= progressPct %>%; background: var(--primary-color);"></div>
+                                </div>
+                                <div class="small text-muted mt-1 course-progress-count-text" style="font-size:11px;">
+                                    <%= typeof progress !== 'undefined' && progress ? (progress.completed + ' of ' + progress.total + ' lessons completed') : '' %>
+                                </div>
                             </div>
-                            <div class="progress" style="height:6px; border-radius:6px;">
-                                <div class="progress-bar course-progress-bar" role="progressbar" style="width: <%= typeof progress !== 'undefined' && progress ? progress.percent : 0 %>%; background: var(--primary-color);"></div>
-                            </div>
-                            <div class="small text-muted mt-1 course-progress-count-text" style="font-size:11px;">
-                                <%= typeof progress !== 'undefined' && progress ? (progress.completed + ' of ' + progress.total + ' lessons completed') : '' %>
-                            </div>
-                        </div>
+                        <% } %>
                     <% } else { %>
-                        <div class="mb-3 pb-2 border-bottom">
-                            <span class="badge bg-dark-subtle text-dark border">
-                                <i class="bi bi-shield-check me-1"></i> Admin Preview
-                            </span>
+                        <div class="lp-progress-block">
+                            <span class="badge bg-dark-subtle text-dark border"><i class="bi bi-shield-check me-1"></i> Admin Preview</span>
                         </div>
                     <% } %>
 
-                    <h6 class="fw-bold text-dark mb-3 d-flex align-items-center gap-2">
-                        <i class="bi bi-collection-play-fill text-primary"></i> <%= ls.curriculumHeading || 'Course Curriculum' %>
-                    </h6>
-
-                    <!-- Nested Accordion: Module -> Topic -> Lesson -->
-                    <div class="accordion curriculum-sidebar-accordion" id="desktopCurriculumAccordion">
-                        <% (typeof curriculum !== 'undefined' && curriculum ? curriculum : []).forEach(function(mod, modIdx) { %>
-                            <% const isModActive = typeof currentModule !== 'undefined' && currentModule && currentModule.id === mod.id; %>
-                            <div class="accordion-item border rounded-3 mb-2 overflow-hidden shadow-none">
-                                <h2 class="accordion-header" id="sidebar-mod-heading-<%= mod.id %>">
-                                    <button class="accordion-button <%= isModActive ? '' : 'collapsed' %> py-2 px-3 bg-light-subtle small fw-bold text-dark"
-                                            type="button" data-bs-toggle="collapse" data-bs-target="#sidebar-mod-collapse-<%= mod.id %>"
-                                            aria-expanded="<%= isModActive ? 'true' : 'false' %>">
-                                        <div class="d-flex justify-content-between align-items-center w-100 me-2">
-                                            <span><%= mod.title %></span>
-                                            <span class="badge bg-light text-muted border module-progress-badge" data-module-id="<%= mod.id %>" style="font-size:10px;">
-                                                <%= (typeof mod.completedLessons !== 'undefined' ? mod.completedLessons : 0) %>/<%= (typeof mod.totalLessons !== 'undefined' ? mod.totalLessons : (mod.lessons ? mod.lessons.length : 0)) %>
-                                            </span>
+                    <!-- Module -> Topic -> Lesson (real curriculum hierarchy) -->
+                    <div class="lp-curriculum" id="lpCurriculum">
+                        <% curriculumList.forEach(function (mod) { %>
+                            <% const modOpen = modActiveId === mod.id || (modActiveId === null && curriculumList.length === 1); %>
+                            <% const modDone = typeof mod.completedLessons !== 'undefined' ? mod.completedLessons : 0; %>
+                            <% const modTotal = typeof mod.totalLessons !== 'undefined' ? mod.totalLessons : (mod.lessons ? mod.lessons.length : 0); %>
+                            <div class="lp-module <%= modActiveId === mod.id ? 'is-current' : '' %>" data-lp-module="<%= mod.id %>">
+                                <button type="button" class="lp-module-btn" data-lp-collapse
+                                        aria-expanded="<%= modOpen ? 'true' : 'false' %>" aria-controls="lp-mod-panel-<%= mod.id %>" id="lp-mod-btn-<%= mod.id %>">
+                                    <i class="bi bi-chevron-right lp-chevron" aria-hidden="true"></i>
+                                    <span class="lp-module-title"><%= mod.title %></span>
+                                    <% if (showModuleProgress && !isAdminViewer) { %>
+                                        <span class="badge bg-light text-muted border module-progress-badge" data-module-id="<%= mod.id %>" title="Lessons completed in this module"><%= modDone %>/<%= modTotal %></span>
+                                    <% } else { %>
+                                        <span class="badge bg-light text-muted border module-progress-badge lp-hidden-badge" data-module-id="<%= mod.id %>" hidden><%= modDone %>/<%= modTotal %></span>
+                                    <% } %>
+                                </button>
+                                <div class="lp-panel" id="lp-mod-panel-<%= mod.id %>" role="region" aria-labelledby="lp-mod-btn-<%= mod.id %>" <%= modOpen ? '' : 'hidden' %>>
+                                    <% (mod.topics || []).forEach(function (topic) { %>
+                                        <% const topicOpen = topicActiveId === topic.id || (!topicActiveId && (mod.topics || []).length === 1) || !!topic.isVirtual; %>
+                                        <% const topicDone = typeof topic.completedLessons !== 'undefined' ? topic.completedLessons : 0; %>
+                                        <% const topicTotal = typeof topic.totalLessons !== 'undefined' ? topic.totalLessons : (topic.lessons ? topic.lessons.length : 0); %>
+                                        <div class="lp-topic" data-lp-topic="<%= topic.id %>">
+                                            <% if (!topic.isVirtual) { %>
+                                                <button type="button" class="lp-topic-btn" data-lp-collapse
+                                                        aria-expanded="<%= topicOpen ? 'true' : 'false' %>" aria-controls="lp-topic-panel-<%= topic.id %>" id="lp-topic-btn-<%= topic.id %>">
+                                                    <i class="bi bi-chevron-right lp-chevron" aria-hidden="true"></i>
+                                                    <span class="lp-topic-title"><i class="bi bi-folder2-open me-1 text-primary" aria-hidden="true"></i> <%= topic.title %></span>
+                                                    <span class="badge bg-white text-muted border topic-progress-badge" data-topic-id="<%= topic.id %>"><%= topicDone %>/<%= topicTotal %></span>
+                                                </button>
+                                            <% } %>
+                                            <ul class="lp-lessons list-unstyled mb-0" id="lp-topic-panel-<%= topic.id %>" <%= (topic.isVirtual || topicOpen) ? '' : 'hidden' %>>
+                                                <% (topic.lessons || []).forEach(function (item) { %>
+                                                    <% const isDone = pMap[item.id] && pMap[item.id].completed; %>
+                                                    <% const isCurrent = item.id === lesson.id; %>
+                                                    <% const locked = !item.preview && !isEnrolledViewer && !isAdminViewer; %>
+                                                    <li>
+                                                        <% if (locked) { %>
+                                                            <span class="lp-lesson is-locked" data-sidebar-lesson-id="<%= item.id %>" aria-disabled="true">
+                                                                <span class="lp-lesson-main">
+                                                                    <i class="bi bi-lock-fill text-muted flex-shrink-0" aria-hidden="true"></i>
+                                                                    <span class="lp-lesson-title"><%= item.title %></span>
+                                                                </span>
+                                                                <span class="visually-hidden">Locked</span>
+                                                            </span>
+                                                        <% } else { %>
+                                                            <a href="/learn/<%= course.slug %>/<%= item.slug %>"
+                                                               data-sidebar-lesson-id="<%= item.id %>"
+                                                               class="lp-lesson <%= isCurrent ? 'is-current' : '' %> <%= (isDone && showDone) ? 'is-done' : '' %>"
+                                                               <%- isCurrent ? 'aria-current="page"' : '' %>>
+                                                                <span class="lp-lesson-main">
+                                                                    <% if (isDone && showDone) { %>
+                                                                        <i class="bi bi-check-circle-fill text-success flex-shrink-0" aria-hidden="true"></i><span class="visually-hidden">Completed: </span>
+                                                                    <% } else if (isCurrent) { %>
+                                                                        <i class="bi bi-play-circle-fill text-primary flex-shrink-0" aria-hidden="true"></i><span class="visually-hidden">Now playing: </span>
+                                                                    <% } else { %>
+                                                                        <i class="bi bi-circle text-muted flex-shrink-0" aria-hidden="true"></i>
+                                                                    <% } %>
+                                                                    <span class="lp-lesson-title"><%= item.title %></span>
+                                                                </span>
+                                                                <% if (showDurations && item.duration) { %><span class="lp-lesson-dur"><%= item.duration %></span><% } %>
+                                                            </a>
+                                                        <% } %>
+                                                    </li>
+                                                <% }); %>
+                                            </ul>
                                         </div>
-                                    </button>
-                                </h2>
-                                <div id="sidebar-mod-collapse-<%= mod.id %>" class="accordion-collapse collapse <%= isModActive ? 'show' : '' %>" data-bs-parent="#desktopCurriculumAccordion">
-                                    <div class="accordion-body p-2 bg-white">
-                                        <% (mod.topics || []).forEach(function(topic, topicIdx) { %>
-                                            <div class="mb-2">
-                                                <div class="d-flex justify-content-between align-items-center small text-muted fw-bold px-2 py-1 bg-light rounded" style="font-size:11px;">
-                                                    <span><i class="bi bi-folder2-open me-1 text-primary"></i> <%= topic.title %></span>
-                                                    <span class="badge bg-white text-muted border topic-progress-badge" data-topic-id="<%= topic.id %>" style="font-size:9px;">
-                                                        <%= (typeof topic.completedLessons !== 'undefined' ? topic.completedLessons : 0) %>/<%= (typeof topic.totalLessons !== 'undefined' ? topic.totalLessons : (topic.lessons ? topic.lessons.length : 0)) %>
-                                                    </span>
-                                                </div>
-                                                <div class="list-group list-group-flush mt-1">
-                                                    <% (topic.lessons || []).forEach(function(item) { %>
-                                                        <% const isDone = typeof progressMap !== 'undefined' && progressMap && progressMap[item.id] && progressMap[item.id].completed; %>
-                                                        <% const isCurrent = item.id === lesson.id; %>
-                                                        <% const locked = !item.preview && !(typeof enrolled !== 'undefined' && enrolled) && !(typeof isAdmin !== 'undefined' && isAdmin); %>
-                                                        <a href="<%= locked ? '#' : ('/learn/' + course.slug + '/' + item.slug) %>"
-                                                           data-sidebar-lesson-id="<%= item.id %>"
-                                                           class="list-group-item list-group-item-action py-2 px-2 rounded-2 border-0 d-flex justify-content-between align-items-center mb-1 <%= isCurrent ? 'bg-primary-subtle text-primary fw-bold' : '' %> <%= locked ? 'disabled text-muted' : '' %>"
-                                                           style="font-size:12px;">
-                                                            <div class="d-flex align-items-center gap-2 text-truncate">
-                                                                <% if (isDone) { %>
-                                                                    <i class="bi bi-check-circle-fill text-success flex-shrink-0"></i>
-                                                                <% } else if (isCurrent) { %>
-                                                                    <i class="bi bi-play-circle-fill text-primary flex-shrink-0"></i>
-                                                                <% } else { %>
-                                                                    <i class="bi bi-circle text-muted flex-shrink-0"></i>
-                                                                <% } %>
-                                                                <span class="text-truncate"><%= item.title %></span>
-                                                            </div>
-                                                            <div class="flex-shrink-0 ms-2">
-                                                                <% if (locked) { %>
-                                                                    <i class="bi bi-lock-fill text-muted"></i>
-                                                                <% } else if (item.duration) { %>
-                                                                    <span class="text-muted" style="font-size:10px;"><%= item.duration %></span>
-                                                                <% } %>
-                                                            </div>
-                                                        </a>
-                                                    <% }); %>
-                                                </div>
-                                            </div>
-                                        <% }); %>
-                                    </div>
+                                    <% }); %>
                                 </div>
                             </div>
                         <% }); %>
                     </div>
-
                 </div>
-            </div>
+            </aside>
+            <div class="lp-backdrop" id="lpBackdrop" data-lp-drawer-close hidden></div>
+            <% } %>
 
-        </div>
-
-    </div>
-</div>
-
-<!-- Mobile Curriculum Offcanvas Drawer (Phase 12) -->
-<div class="offcanvas offcanvas-start" tabindex="-1" id="curriculumDrawer" aria-labelledby="curriculumDrawerLabel" style="width:340px; max-width:85vw;">
-    <div class="offcanvas-header border-bottom">
-        <h5 class="offcanvas-title fw-bold" id="curriculumDrawerLabel">
-            <i class="bi bi-collection-play-fill text-primary me-2"></i><%= ls.curriculumHeading || 'Course Curriculum' %>
-        </h5>
-        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
-    </div>
-    <div class="offcanvas-body p-3">
-        <% if (typeof isAdmin === 'undefined' || !isAdmin) { %>
-            <div class="mb-3 pb-3 border-bottom">
-                <div class="d-flex justify-content-between align-items-center small mb-1">
-                    <span class="fw-bold"><%= ls.progressLabel || 'Progress' %></span>
-                    <span class="badge bg-primary text-white"><span class="course-progress-percent-text"><%= typeof progress !== 'undefined' && progress ? progress.percent : 0 %></span>%</span>
-                </div>
-                <div class="progress" style="height:6px;">
-                    <div class="progress-bar course-progress-bar" style="width: <%= typeof progress !== 'undefined' && progress ? progress.percent : 0 %>%; background: var(--primary-color);"></div>
-                </div>
-                <div class="small text-muted mt-1 course-progress-count-text" style="font-size:11px;">
-                    <%= typeof progress !== 'undefined' && progress ? (progress.completed + ' of ' + progress.total + ' lessons completed') : '' %>
-                </div>
-            </div>
-        <% } %>
-
-        <div class="accordion" id="mobileCurriculumAccordion">
-            <% (typeof curriculum !== 'undefined' && curriculum ? curriculum : []).forEach(function(mod, modIdx) { %>
-                <% const isModActive = typeof currentModule !== 'undefined' && currentModule && currentModule.id === mod.id; %>
-                <div class="accordion-item border rounded-3 mb-2 overflow-hidden shadow-none">
-                    <h2 class="accordion-header" id="mobile-mod-heading-<%= mod.id %>">
-                        <button class="accordion-button <%= isModActive ? '' : 'collapsed' %> py-2 px-3 bg-light-subtle small fw-bold text-dark"
-                                type="button" data-bs-toggle="collapse" data-bs-target="#mobile-mod-collapse-<%= mod.id %>"
-                                aria-expanded="<%= isModActive ? 'true' : 'false' %>">
-                            <div class="d-flex justify-content-between align-items-center w-100 me-2">
-                                <span><%= mod.title %></span>
-                                <span class="badge bg-white text-muted border module-progress-badge" data-module-id="<%= mod.id %>" style="font-size:10px;">
-                                    <%= (typeof mod.completedLessons !== 'undefined' ? mod.completedLessons : 0) %>/<%= (typeof mod.totalLessons !== 'undefined' ? mod.totalLessons : (mod.lessons ? mod.lessons.length : 0)) %>
-                                </span>
-                            </div>
-                        </button>
-                    </h2>
-                    <div id="mobile-mod-collapse-<%= mod.id %>" class="accordion-collapse collapse <%= isModActive ? 'show' : '' %>" data-bs-parent="#mobileCurriculumAccordion">
-                        <div class="accordion-body p-2 bg-white">
-                            <% (mod.topics || []).forEach(function(topic) { %>
-                                <div class="mb-2">
-                                    <div class="d-flex justify-content-between align-items-center small text-muted fw-bold px-2 py-1 bg-light rounded" style="font-size:11px;">
-                                        <span><%= topic.title %></span>
-                                        <span class="badge bg-white text-muted border topic-progress-badge" data-topic-id="<%= topic.id %>" style="font-size:9px;">
-                                            <%= (typeof topic.completedLessons !== 'undefined' ? topic.completedLessons : 0) %>/<%= (typeof topic.totalLessons !== 'undefined' ? topic.totalLessons : (topic.lessons ? topic.lessons.length : 0)) %>
-                                        </span>
-                                    </div>
-                                    <div class="list-group list-group-flush mt-1">
-                                        <% (topic.lessons || []).forEach(function(item) { %>
-                                            <% const isDone = typeof progressMap !== 'undefined' && progressMap && progressMap[item.id] && progressMap[item.id].completed; %>
-                                            <% const isCurrent = item.id === lesson.id; %>
-                                            <% const locked = !item.preview && !(typeof enrolled !== 'undefined' && enrolled) && !(typeof isAdmin !== 'undefined' && isAdmin); %>
-                                            <a href="<%= locked ? '#' : ('/learn/' + course.slug + '/' + item.slug) %>"
-                                               data-sidebar-lesson-id="<%= item.id %>"
-                                               class="list-group-item list-group-item-action py-2 px-2 rounded-2 border-0 d-flex justify-content-between align-items-center mb-1 <%= isCurrent ? 'bg-primary-subtle text-primary fw-bold' : '' %>"
-                                               style="font-size:13px; min-height:48px;">
-                                                <div class="d-flex align-items-center gap-2 text-truncate">
-                                                    <% if (isDone) { %>
-                                                        <i class="bi bi-check-circle-fill text-success flex-shrink-0"></i>
-                                                    <% } else if (isCurrent) { %>
-                                                        <i class="bi bi-play-circle-fill text-primary flex-shrink-0"></i>
-                                                    <% } else { %>
-                                                        <i class="bi bi-circle text-muted flex-shrink-0"></i>
-                                                    <% } %>
-                                                    <span class="text-truncate"><%= item.title %></span>
-                                                </div>
-                                                <% if (locked) { %>
-                                                    <i class="bi bi-lock-fill text-muted"></i>
-                                                <% } else if (item.duration) { %>
-                                                    <span class="text-muted small"><%= item.duration %></span>
-                                                <% } %>
-                                            </a>
-                                        <% }); %>
-                                    </div>
-                                </div>
-                            <% }); %>
-                        </div>
-                    </div>
-                </div>
-            <% }); %>
         </div>
     </div>
 </div>
+<script src="/js/lesson-player-ui.js" defer></script>

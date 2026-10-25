@@ -205,6 +205,13 @@ model Course {
   // GST rate (%) for this course. NULL = use the site-wide default from
   // Admin > Tax & Invoice; 0 = GST-exempt.
   gstRate          Decimal?     @db.Decimal(5, 2)
+  // Sale window controls. salePrice only applies while saleEnabled and now is
+  // inside [saleStartsAt, saleEndsAt] (either bound may be null = open-ended).
+  // Resolved in ONE place: src/lib/pricing.js getEffectiveCoursePrice().
+  saleEnabled      Boolean      @default(true)
+  saleStartsAt     DateTime?
+  saleEndsAt       DateTime?
+  saleBadgeLabel   String?      @db.VarChar(40)
   currency         String       @default("INR")
   level            CourseLevel  @default(BEGINNER)
   status           CourseStatus @default(DRAFT)
@@ -241,6 +248,7 @@ model Course {
   accessSteps        CourseAccessStep[]
   landingSections    CourseLandingSection[]
   landingAppearance  CourseLandingAppearance?
+  playerSettings     CoursePlayerSettings?
 
   @@index([categoryId])
   @@index([instructorId])
@@ -501,6 +509,7 @@ model Faq {
   id        Int      @id @default(autoincrement())
   question  String   @db.VarChar(300)
   answer    String   @db.Text
+  category  String?  @db.VarChar(100)
   sortOrder Int      @default(0)
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
@@ -1178,6 +1187,138 @@ model CourseLandingAppearance {
   @@map("course_landing_appearances")
 }
 
+
+// ---------------------------------------------------------------------------
+// Per-course student player presentation. One row per course; a course with no
+// row uses the defaults in src/services/coursePlayerSettings.service.js.
+// ---------------------------------------------------------------------------
+model CoursePlayerSettings {
+  id       Int @id @default(autoincrement())
+  courseId Int @unique
+
+  showSidebar          Boolean @default(true)
+  sidebarDefaultOpen   Boolean @default(true)
+  sidebarTitle         String? @db.VarChar(100)
+  showCourseProgress   Boolean @default(true)
+  showModuleProgress   Boolean @default(true)
+  showLessonDurations  Boolean @default(true)
+  showCompletedMarks   Boolean @default(true)
+  showPrevNext         Boolean @default(true)
+  theaterModeEnabled   Boolean @default(true)
+  theaterButtonLabel   String? @db.VarChar(60)
+  showResources        Boolean @default(true)
+  showLessonDescription Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@map("course_player_settings")
+}
+
+// ---------------------------------------------------------------------------
+// Generic CMS-backed standalone pages (about, faq, reviews, contact, ...).
+// Page rows hold the shared hero/CTA/SEO fields; free-form content blocks are
+// SitePageSection rows. Pages are disableable (isEnabled) and their routes,
+// navigation entries and sitemap entries follow that flag.
+// ---------------------------------------------------------------------------
+model SitePage {
+  id              Int      @id @default(autoincrement())
+  slug            String   @unique @db.VarChar(60)
+  isEnabled       Boolean  @default(true)
+  eyebrow         String?  @db.VarChar(120)
+  heading         String?  @db.VarChar(200)
+  intro           String?  @db.Text
+  heroImageUrl    String?  @db.VarChar(500)
+  ctaHeading      String?  @db.VarChar(200)
+  ctaText         String?  @db.VarChar(500)
+  ctaLabel        String?  @db.VarChar(100)
+  ctaUrl          String?  @db.VarChar(300)
+  seoTitle        String?  @db.VarChar(70)
+  metaDescription String?  @db.VarChar(200)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  sections SitePageSection[]
+
+  @@map("site_pages")
+}
+
+model SitePageSection {
+  id          Int      @id @default(autoincrement())
+  pageId      Int
+  title       String?  @db.VarChar(200)
+  body        String?  @db.Text
+  icon        String?  @db.VarChar(60)
+  sortOrder   Int      @default(0)
+  isPublished Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  page SitePage @relation(fields: [pageId], references: [id], onDelete: Cascade)
+
+  @@index([pageId, sortOrder])
+  @@map("site_page_sections")
+}
+
+// Header / footer navigation, fully admin-managed (label, destination,
+// placement, order, visibility).
+model NavigationItem {
+  id           Int                @id @default(autoincrement())
+  label        String             @db.VarChar(60)
+  url          String             @db.VarChar(300)
+  location     NavigationLocation @default(BOTH)
+  sortOrder    Int                @default(0)
+  isPublished  Boolean            @default(true)
+  openInNewTab Boolean            @default(false)
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+
+  @@index([location, isPublished, sortOrder])
+  @@map("navigation_items")
+}
+
+enum NavigationLocation {
+  HEADER
+  FOOTER
+  BOTH
+}
+
+// Homepage intro / promo video block (single row, id = 1). Everything the block
+// shows is editable here; media can be uploaded (R2, public-marketing prefix),
+// or a YouTube / Vimeo link.
+model HomeIntroVideo {
+  id        Int     @id @default(1)
+  isEnabled Boolean @default(false)
+
+  eyebrow       String? @db.VarChar(120)
+  heading       String? @db.VarChar(200)
+  highlightText String? @db.VarChar(120)
+  description   String? @db.Text
+
+  videoType      String? @db.VarChar(10)
+  videoUrl       String? @db.VarChar(500)
+  videoObjectKey String? @db.VarChar(255)
+  posterUrl      String? @db.VarChar(500)
+
+  ctaEnabled         Boolean @default(true)
+  ctaLabel           String? @db.VarChar(100)
+  ctaUrl             String? @db.VarChar(300)
+  secondaryCtaLabel  String? @db.VarChar(100)
+  secondaryCtaUrl    String? @db.VarChar(300)
+
+  layout          String  @default("VIDEO_RIGHT") @db.VarChar(20)
+  videoShape      String  @default("VERTICAL") @db.VarChar(20)
+  backgroundStyle String  @default("CREAM") @db.VarChar(20)
+  autoplayMuted   Boolean @default(false)
+  loopVideo       Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("home_intro_video")
+}
 
 // ---------------------------------------------------------------------------
 // Home banners (hero slider on the public homepage)

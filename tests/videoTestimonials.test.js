@@ -226,7 +226,7 @@ async function publicData(rows, { includeDemo = false } = {}) {
   try { return await landing.getPublicLandingData(5, { includeDemo }); } finally { restores.reverse().forEach((r) => r()); }
 }
 
-const rv = (id, extra) => ({ id, courseId: 5, reviewType: 'TEXT', reviewerName: `Dr ${id}`, quote: `quote ${id}`, rating: 5, isPublished: true, isDemo: false, sortOrder: id, ...extra });
+const rv = (id, extra) => ({ id, courseId: 5, reviewType: 'TEXT', reviewerName: `Dr ${id}`, quote: `quote ${id}`, rating: 5, isPublished: true, isDemo: false, sortOrder: id, featuredOnHome: true, ...extra });
 
 test('demo video review: hidden publicly, visible in Admin Preview, excluded from count/average/social proof', async () => {
   const rows = [

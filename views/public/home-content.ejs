@@ -1,16 +1,28 @@
 <link rel="stylesheet" href="/css/home-polish.css">
-<%- include('../partials/banner-carousel', { banners: (typeof banners !== 'undefined' ? banners : []) }) %>
-<%- include('../partials/hero') %>
-<%- include('../partials/categories', { categories }) %>
-<%- include('../partials/courses', { featuredCourses }) %>
-<%- include('../partials/about') %>
-<%- include('../partials/process') %>
-<%- include('../partials/mentor', { mentorInstructor: (typeof mentorInstructor !== 'undefined' ? mentorInstructor : null) }) %>
-<%- include('../partials/home-reviews', {
-    homeReviews: (typeof homeReviews !== 'undefined' ? homeReviews : []),
-    homeReviewSettings: (typeof homeReviewSettings !== 'undefined' ? homeReviewSettings : null)
-}) %>
-<%- include('../partials/testimonials') %>
-<%- include('../partials/faq', { faqs }) %>
-<%- include('../partials/newsletter') %>
+<%
+    // Section order + visibility come from Admin > Homepage > Sections (homeSections.service).
+    // The fallback is only used by callers that do not pass the resolved order.
+    const sectionOrder = (typeof homeSectionOrder !== 'undefined' && Array.isArray(homeSectionOrder))
+        ? homeSectionOrder
+        : ['BANNER', 'HERO', 'CATEGORIES', 'COURSES', 'INTRO_VIDEO', 'ABOUT', 'PROCESS', 'MENTOR', 'HOME_REVIEWS', 'TESTIMONIALS', 'FAQ', 'NEWSLETTER'];
+%>
+<% sectionOrder.forEach(function (key) { %>
+    <% switch (key) {
+        case 'BANNER': %><%- include('../partials/banner-carousel', { banners: (typeof banners !== 'undefined' ? banners : []) }) %><% break;
+        case 'HERO': %><%- include('../partials/hero') %><% break;
+        case 'CATEGORIES': %><%- include('../partials/categories', { categories }) %><% break;
+        case 'COURSES': %><%- include('../partials/courses', { featuredCourses }) %><% break;
+        case 'INTRO_VIDEO': %><%- include('../partials/home-intro-video', { introVideo: (typeof introVideo !== 'undefined' ? introVideo : null) }) %><% break;
+        case 'ABOUT': %><%- include('../partials/about') %><% break;
+        case 'PROCESS': %><%- include('../partials/process') %><% break;
+        case 'MENTOR': %><%- include('../partials/mentor', { mentorInstructor: (typeof mentorInstructor !== 'undefined' ? mentorInstructor : null) }) %><% break;
+        case 'HOME_REVIEWS': %><%- include('../partials/home-reviews', {
+            homeReviews: (typeof homeReviews !== 'undefined' ? homeReviews : []),
+            homeReviewSettings: (typeof homeReviewSettings !== 'undefined' ? homeReviewSettings : null)
+        }) %><% break;
+        case 'TESTIMONIALS': %><%- include('../partials/testimonials') %><% break;
+        case 'FAQ': %><%- include('../partials/faq', { faqs }) %><% break;
+        case 'NEWSLETTER': %><%- include('../partials/newsletter') %><% break;
+    } %>
+<% }); %>
 <% if (typeof banners !== 'undefined' && banners.length > 1) { %><script src="/js/banner-carousel.js" defer></script><% } %>

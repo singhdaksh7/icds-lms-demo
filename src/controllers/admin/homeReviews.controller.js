@@ -26,12 +26,12 @@ async function show(req, res, next) {
 async function saveSettings(req, res, next) {
   try {
     const reviewsSvc = require('../../services/homeReviews.service');
-    await reviewsSvc.saveHomeReviewSettings({
-      enabled: req.body.enabled,
-      heading: req.body.heading,
-      subheading: req.body.subheading,
-      sourceMode: req.body.sourceMode,
+    // Patch-style: only fields present in the form are passed on (and saved).
+    const input = {};
+    Object.keys(reviewsSvc.KEYS).forEach((field) => {
+      if (req.body[field] !== undefined) input[field] = req.body[field];
     });
+    await reviewsSvc.saveHomeReviewSettings(input);
     req.flashSuccess('Homepage reviews settings saved.');
     res.redirect(BASE);
   } catch (err) {
@@ -62,8 +62,12 @@ function feature(req, res, next) {
   return handle(req, res, next, () => admin.setFeatured(parseInt(req.params.id, 10), featured), featured ? 'Review featured on homepage.' : 'Review removed from featured.');
 }
 
+function setOrder(req, res, next) {
+  return handle(req, res, next, () => admin.setHomeOrder(parseInt(req.params.id, 10), req.body.order), 'Homepage order updated.');
+}
+
 function move(req, res, next) {
   return handle(req, res, next, () => admin.moveFeatured(parseInt(req.params.id, 10), req.body.direction));
 }
 
-module.exports = { show, saveSettings, feature, move };
+module.exports = { show, saveSettings, feature, move, setOrder };

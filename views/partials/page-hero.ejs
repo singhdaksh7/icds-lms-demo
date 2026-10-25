@@ -1,0 +1,17 @@
+<%# Shared hero for CMS-backed standalone pages. Empty fields are simply not rendered. %>
+<section class="sp-hero">
+    <div class="container">
+        <div class="sp-hero-grid<%= page.heroImageUrl ? ' has-image' : '' %>">
+            <div class="sp-hero-copy">
+                <% if (page.eyebrow) { %><div class="section-tag"><%= page.eyebrow %></div><% } %>
+                <% if (page.heading) { %><h1 class="sp-title"><%= page.heading %></h1><% } %>
+                <% if (page.intro) { %><p class="sp-intro"><%= page.intro %></p><% } %>
+            </div>
+            <% if (page.heroImageUrl) { %>
+                <div class="sp-hero-media">
+                    <img src="<%= page.heroImageUrl %>" alt="" loading="eager" data-fallback-src="/assets/images/hero-placeholder.svg">
+                </div>
+            <% } %>
+        </div>
+    </div>
+</section>

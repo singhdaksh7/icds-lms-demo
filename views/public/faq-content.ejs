@@ -1,0 +1,46 @@
+<link rel="stylesheet" href="/css/site-pages.css">
+<%- include('../partials/page-hero', { page }) %>
+
+<section class="section-space sp-faq" data-faq-page>
+    <div class="container">
+        <% if (faqs.length === 0) { %>
+            <p class="text-center text-muted">No questions have been published yet.</p>
+        <% } else { %>
+            <div class="sp-faq-tools">
+                <div class="sp-search">
+                    <label class="visually-hidden" for="faqSearch">Search questions</label>
+                    <i class="bi bi-search" aria-hidden="true"></i>
+                    <input type="search" id="faqSearch" placeholder="Search questions" autocomplete="off" data-faq-search>
+                </div>
+                <% if (categories.length) { %>
+                    <div class="sp-chips" role="group" aria-label="Filter by category">
+                        <button type="button" class="sp-chip is-active" data-faq-category="" aria-pressed="true">All</button>
+                        <% categories.forEach(function (c) { %>
+                            <button type="button" class="sp-chip" data-faq-category="<%= c %>" aria-pressed="false"><%= c %></button>
+                        <% }); %>
+                    </div>
+                <% } %>
+            </div>
+
+            <div class="sp-accordion" id="faqList">
+                <% faqs.forEach(function (f) { %>
+                    <div class="sp-acc-item" data-faq-item data-category="<%= f.category || '' %>">
+                        <h2 class="sp-acc-head">
+                            <button type="button" class="sp-acc-btn" id="faq-btn-<%= f.id %>" aria-expanded="false" aria-controls="faq-panel-<%= f.id %>">
+                                <span><%= f.question %></span>
+                                <i class="bi bi-chevron-down" aria-hidden="true"></i>
+                            </button>
+                        </h2>
+                        <div class="sp-acc-panel" id="faq-panel-<%= f.id %>" role="region" aria-labelledby="faq-btn-<%= f.id %>">
+                            <div class="sp-acc-body"><%= f.answer %></div>
+                        </div>
+                    </div>
+                <% }); %>
+            </div>
+            <p class="sp-empty" data-faq-empty hidden>No questions match your search.</p>
+        <% } %>
+    </div>
+</section>
+
+<%- include('../partials/page-cta', { page }) %>
+<script src="/js/faq-page.js" defer></script>

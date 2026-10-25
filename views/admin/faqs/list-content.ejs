@@ -1,4 +1,7 @@
-<h1 style="font-size:24px;" class="mb-4">FAQs</h1>
+<h1 style="font-size:24px;" class="mb-2">FAQs</h1>
+<p class="small text-muted mb-4">These questions appear in the homepage FAQ section and on the public <a href="/faq" target="_blank" rel="noopener noreferrer">/faq</a> page. Course-specific FAQs are managed per course. Page heading, intro and SEO: <a href="/admin/pages/faq">Pages &rarr; FAQ</a>.</p>
+<% const faqCategories = Array.from(new Set(faqs.map(function (f) { return f.category; }).filter(Boolean))); %>
+<datalist id="faqCategoryList"><% faqCategories.forEach(function (c) { %><option value="<%= c %>"><% }); %></datalist>
 
 <% if (errors && errors.length) { %>
     <div class="alert alert-danger">
@@ -27,13 +30,20 @@
                 </div>
 
                 <div class="mb-3">
+                    <label class="form-label small fw-semibold">Category (optional)</label>
+                    <input type="text" name="category" class="form-control form-control-custom" list="faqCategoryList" value="<%= values.category || '' %>" maxlength="100" placeholder="e.g. Enrollment">
+                    <div class="form-text">Used for the filter chips on the FAQ page.</div>
+                </div>
+
+                <div class="mb-3">
                     <label class="form-label small fw-semibold">Sort Order</label>
                     <input type="number" name="sortOrder" class="form-control form-control-custom" value="<%= values.sortOrder || 0 %>">
                 </div>
 
                 <div class="form-check mb-3">
+                    <input type="hidden" name="isActive" value="false">
                     <input type="checkbox" name="isActive" class="form-check-input" id="faqActive" value="true" checked>
-                    <label class="form-check-label small" for="faqActive">Active (visible on homepage)</label>
+                    <label class="form-check-label small" for="faqActive">Active (visible on homepage and FAQ page)</label>
                 </div>
 
                 <button type="submit" class="auth-submit">Create FAQ</button>
@@ -66,9 +76,11 @@
                                             <input type="text" name="question" class="form-control form-control-sm mb-1" value="<%= faq.question %>" maxlength="300" required>
                                             <textarea name="answer" class="form-control form-control-sm" rows="2" maxlength="5000" required><%= faq.answer %></textarea>
                                         </div>
-                                        <input type="number" name="sortOrder" class="form-control form-control-sm" style="width:80px;" value="<%= faq.sortOrder %>">
+                                        <input type="text" name="category" class="form-control form-control-sm" style="width:130px;" list="faqCategoryList" value="<%= faq.category || '' %>" maxlength="100" placeholder="Category" aria-label="Category">
+                                        <input type="number" name="sortOrder" class="form-control form-control-sm" style="width:80px;" value="<%= faq.sortOrder %>" aria-label="Sort order">
                                         <div class="form-check pt-1">
-                                            <input type="checkbox" name="isActive" class="form-check-input" value="true" <%= faq.isActive ? 'checked' : '' %>>
+                                            <input type="hidden" name="isActive" value="false">
+                                            <input type="checkbox" name="isActive" class="form-check-input" value="true" <%= faq.isActive ? 'checked' : '' %> aria-label="Active">
                                         </div>
                                         <button type="submit" class="btn btn-sm btn-outline-secondary">Save</button>
                                     </form>

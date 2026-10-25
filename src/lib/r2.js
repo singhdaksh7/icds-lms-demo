@@ -37,12 +37,26 @@ const RESOURCE_KEY_RE = /^courses\/(?:\d{1,10}|[a-z0-9_-]+)\/resources\/[a-zA-Z0
 // lesson videos: the testimonial delivery path signs ONLY this shape.
 const TESTIMONIAL_KEY_RE = /^courses\/\d{1,10}\/testimonials\/(?:\d{1,10}|new)\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.(?:mp4|webm)$/;
 
+// site/promo/<uuid>.<mp4|webm> - PUBLIC homepage intro/promo video (marketing media).
+// Its own prefix so it can never be mistaken for a protected lesson video: the public
+// intro-video source endpoint signs ONLY this shape.
+const PROMO_KEY_RE = /^site\/promo\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.(?:mp4|webm)$/;
+
+function isPromoObjectKey(key) {
+  return typeof key === 'string' && key.length <= 200 && PROMO_KEY_RE.test(key);
+}
+
+function buildPromoObjectKey(extension) {
+  if (extension !== '.mp4' && extension !== '.webm') throw new Error('Unsupported video extension.');
+  return `site/promo/${crypto.randomUUID()}${extension}`;
+}
+
 function isTestimonialObjectKey(key) {
   return typeof key === 'string' && key.length <= 200 && TESTIMONIAL_KEY_RE.test(key);
 }
 
 function isOwnedObjectKey(key) {
-  return typeof key === 'string' && key.length <= 200 && (OBJECT_KEY_RE.test(key) || RESOURCE_KEY_RE.test(key) || TESTIMONIAL_KEY_RE.test(key));
+  return typeof key === 'string' && key.length <= 200 && (OBJECT_KEY_RE.test(key) || RESOURCE_KEY_RE.test(key) || TESTIMONIAL_KEY_RE.test(key) || PROMO_KEY_RE.test(key));
 }
 
 function buildTestimonialObjectKey(courseId, testimonialId, extension) {
@@ -239,6 +253,8 @@ module.exports = {
   SIGNED_URL_TTL_SECONDS,
   isOwnedObjectKey,
   isTestimonialObjectKey,
+  isPromoObjectKey,
+  buildPromoObjectKey,
   buildTestimonialObjectKey,
   buildObjectKey,
   buildResourceObjectKey,

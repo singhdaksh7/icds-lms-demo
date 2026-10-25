@@ -1,0 +1,31 @@
+<h1 style="font-size:24px;" class="mb-1">Pages</h1>
+<p class="small text-muted mb-4">Standalone website pages. Each page's heading, intro, content sections, call-to-action and SEO are managed here; turning a page off returns a 404, hides its menu link and removes it from the sitemap.</p>
+
+<div class="admin-card">
+    <div class="table-responsive">
+        <table class="table admin-table align-middle mb-0">
+            <thead>
+                <tr><th>Page</th><th>Heading</th><th style="width:110px;">Status</th><th class="text-end" style="width:200px;">Actions</th></tr>
+            </thead>
+            <tbody>
+                <% pages.forEach(function (p) { %>
+                    <tr>
+                        <td>
+                            <strong><%= p.label %></strong>
+                            <div class="small text-muted"><a href="<%= p.path %>" target="_blank" rel="noopener noreferrer"><%= p.path %></a> &middot; <%= p.description %></div>
+                        </td>
+                        <td><%= p.heading || (p.exists ? '' : 'Starter copy (not customised yet)') %></td>
+                        <td><span class="badge bg-<%= p.isEnabled ? 'success' : 'secondary' %>"><%= p.isEnabled ? 'Enabled' : 'Disabled' %></span></td>
+                        <td class="text-end"><a class="btn btn-sm btn-outline-primary" href="/admin/pages/<%= p.slug %>"><i class="bi bi-pencil me-1"></i>Edit</a></td>
+                    </tr>
+                <% }); %>
+                <tr>
+                    <td><strong>Founder</strong><div class="small text-muted"><a href="/founder" target="_blank" rel="noopener noreferrer">/founder</a> &middot; Managed in Founder Page.</div></td>
+                    <td></td><td></td>
+                    <td class="text-end"><a class="btn btn-sm btn-outline-secondary" href="/admin/founder">Open</a></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+<p class="small text-muted mt-3"><a href="/admin/navigation">Header &amp; footer navigation</a> &middot; <a href="/admin/faqs">FAQ entries</a></p>

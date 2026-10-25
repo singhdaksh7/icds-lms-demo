@@ -1,46 +1,124 @@
-<h1 style="font-size:24px;" class="mb-4">Homepage Reviews</h1>
+<h1 style="font-size:24px;" class="mb-2">Homepage Reviews</h1>
+<p class="text-muted small mb-4">The homepage shows <strong>only the genuine reviews you feature below</strong> (published, non-demo), in the order set here &mdash; it never shows every review automatically. Course pages are unaffected: they always show their own course's published reviews.</p>
 
+<%
+    const s = settings || {};
+    const val = function (k, d) { return s[k] !== undefined && s[k] !== null ? s[k] : d; };
+%>
 <div class="admin-card mb-4">
     <h2 style="font-size:18px;">Section settings</h2>
     <form method="POST" action="/admin/homepage/reviews/settings">
         <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
         <input type="hidden" name="enabled" value="false">
-        <div class="form-check mb-3">
-            <input class="form-check-input" type="checkbox" id="enabled" name="enabled" value="true" <%= settings && settings.enabled ? 'checked' : '' %>>
-            <label class="form-check-label" for="enabled">Show reviews section on the homepage</label>
+        <div class="form-check form-switch mb-3">
+            <input class="form-check-input" type="checkbox" role="switch" id="enabled" name="enabled" value="true" <%= val('enabled', true) ? 'checked' : '' %>>
+            <label class="form-check-label" for="enabled">Show the reviews section on the homepage</label>
         </div>
+
         <div class="row g-3 mb-3">
-            <div class="col-md-6"><label class="form-label">Heading</label><input class="form-control" name="heading" maxlength="120" value="<%= settings ? settings.heading : '' %>"></div>
-            <div class="col-md-6"><label class="form-label">Subheading</label><input class="form-control" name="subheading" maxlength="300" value="<%= settings ? settings.subheading : '' %>"></div>
+            <div class="col-md-4"><label class="form-label" for="eyebrow">Eyebrow</label><input class="form-control" id="eyebrow" name="eyebrow" maxlength="80" value="<%= val('eyebrow', '') %>"><div class="form-text">Leave blank to hide it.</div></div>
+            <div class="col-md-4"><label class="form-label" for="heading">Heading</label><input class="form-control" id="heading" name="heading" maxlength="120" value="<%= val('heading', '') %>"></div>
+            <div class="col-md-4"><label class="form-label" for="subheading">Description</label><input class="form-control" id="subheading" name="subheading" maxlength="300" value="<%= val('subheading', '') %>"></div>
         </div>
-        <div class="mb-3">
-            <label class="form-label">Which reviews to show</label>
-            <select class="form-select" name="sourceMode" style="max-width:360px;">
-                <option value="ALL_APPROVED" <%= settings && settings.sourceMode === 'ALL_APPROVED' ? 'selected' : '' %>>All approved genuine reviews</option>
-                <option value="FEATURED" <%= settings && settings.sourceMode === 'FEATURED' ? 'selected' : '' %>>Only reviews I feature below</option>
-            </select>
-            <div class="form-text">Only published, non-demo reviews are ever shown. Publishing a review in a course's Landing Page editor makes it eligible automatically.</div>
+
+        <h3 style="font-size:15px;" class="mt-4">Carousel</h3>
+        <div class="row g-3 mb-3">
+            <div class="col-md-3">
+                <input type="hidden" name="carouselEnabled" value="false">
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" role="switch" id="carouselEnabled" name="carouselEnabled" value="true" <%= val('carouselEnabled', true) ? 'checked' : '' %>>
+                    <label class="form-check-label" for="carouselEnabled">Carousel (slider)</label>
+                </div>
+                <div class="form-text">Off shows a static grid.</div>
+            </div>
+            <div class="col-md-3">
+                <input type="hidden" name="carouselRotate" value="false">
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" role="switch" id="carouselRotate" name="carouselRotate" value="true" <%= val('carouselRotate', true) ? 'checked' : '' %>>
+                    <label class="form-check-label" for="carouselRotate">Autoplay (slow slide)</label>
+                </div>
+                <div class="form-text">Pauses on hover and touch; disabled for visitors who prefer reduced motion.</div>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label" for="autoplayInterval">Autoplay interval (ms)</label>
+                <input class="form-control" type="number" id="autoplayInterval" name="autoplayInterval" min="2000" max="15000" step="500" value="<%= val('autoplayInterval', 6000) %>">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label" for="direction">Direction</label>
+                <select class="form-select" id="direction" name="direction">
+                    <option value="LEFT_TO_RIGHT" <%= val('direction', 'LEFT_TO_RIGHT') === 'LEFT_TO_RIGHT' ? 'selected' : '' %>>Left to right</option>
+                    <option value="RIGHT_TO_LEFT" <%= val('direction', 'LEFT_TO_RIGHT') === 'RIGHT_TO_LEFT' ? 'selected' : '' %>>Right to left</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label" for="cardsDesktop">Cards visible &mdash; desktop</label>
+                <select class="form-select" id="cardsDesktop" name="cardsDesktop">
+                    <% [2, 3].forEach(function (n) { %><option value="<%= n %>" <%= Number(val('cardsDesktop', 3)) === n ? 'selected' : '' %>><%= n %></option><% }); %>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label" for="cardsTablet">Cards visible &mdash; tablet</label>
+                <select class="form-select" id="cardsTablet" name="cardsTablet">
+                    <% [1, 2].forEach(function (n) { %><option value="<%= n %>" <%= Number(val('cardsTablet', 2)) === n ? 'selected' : '' %>><%= n %></option><% }); %>
+                </select>
+                <div class="form-text">Mobile always shows 1.</div>
+            </div>
+            <div class="col-md-3">
+                <input type="hidden" name="showArrows" value="false">
+                <div class="form-check form-switch mt-4">
+                    <input class="form-check-input" type="checkbox" role="switch" id="showArrows" name="showArrows" value="true" <%= val('showArrows', true) ? 'checked' : '' %>>
+                    <label class="form-check-label" for="showArrows">Show arrows</label>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <input type="hidden" name="showDots" value="false">
+                <div class="form-check form-switch mt-4">
+                    <input class="form-check-input" type="checkbox" role="switch" id="showDots" name="showDots" value="true" <%= val('showDots', true) ? 'checked' : '' %>>
+                    <label class="form-check-label" for="showDots">Show dots</label>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label" for="backgroundStyle">Background</label>
+                <select class="form-select" id="backgroundStyle" name="backgroundStyle">
+                    <option value="CREAM" <%= val('backgroundStyle', 'CREAM') === 'CREAM' ? 'selected' : '' %>>Warm cream</option>
+                    <option value="LIGHT" <%= val('backgroundStyle', 'CREAM') === 'LIGHT' ? 'selected' : '' %>>White</option>
+                    <option value="DARK" <%= val('backgroundStyle', 'CREAM') === 'DARK' ? 'selected' : '' %>>Dark</option>
+                </select>
+            </div>
         </div>
         <button type="submit" class="btn" style="background:var(--primary-color); color:#fff;">Save settings</button>
     </form>
 </div>
 
 <div class="admin-card mb-4">
-    <h2 style="font-size:18px;">Approved reviews</h2>
+    <h2 style="font-size:18px;">Genuine reviews</h2>
+    <p class="small text-muted">Published, non-demo reviews from every course. <strong>Feature</strong> a review to show it on the homepage; featured reviews appear in the order below (lower number first). Publishing or editing a review itself is done in the course's Landing Page editor.</p>
     <div class="table-responsive">
         <table class="table admin-table align-middle">
-            <thead><tr><th>Reviewer</th><th>Course</th><th>Review</th><th>Featured</th><th class="text-end">Actions</th></tr></thead>
+            <thead><tr><th>Reviewer</th><th>Course</th><th>Review</th><th>Homepage</th><th class="text-end">Actions</th></tr></thead>
             <tbody>
                 <% if (genuine.length === 0) { %><tr><td colspan="5" class="text-center text-muted py-4">No approved genuine reviews yet.</td></tr><% } %>
                 <% var featuredList = genuine.filter(function (r) { return r.featuredOnHome; }); %>
                 <% genuine.forEach(function (r) {
                     var fi = featuredList.indexOf(r);
+                    var quote = r.quote || '';
                 %>
                     <tr>
-                        <td><strong><%= r.reviewerName %></strong><div class="small text-muted"><%= r.rating %>/5</div></td>
+                        <td><strong><%= r.reviewerName %></strong><div class="small text-muted"><%= r.rating %>/5<% if (r.reviewType && r.reviewType !== 'TEXT') { %> &middot; <%= r.reviewType === 'VIDEO' ? 'Video' : 'Text + Video' %><% } %></div></td>
                         <td class="small"><%= r.course ? r.course.title : '' %></td>
-                        <td class="small" style="max-width:360px;"><%= r.quote.length > 160 ? r.quote.slice(0, 160) + '...' : r.quote %></td>
-                        <td><% if (r.featuredOnHome) { %><span class="badge bg-success">Featured #<%= fi + 1 %></span><% } else { %><span class="badge bg-secondary">No</span><% } %></td>
+                        <td class="small" style="max-width:360px;"><%= quote.length > 160 ? quote.slice(0, 160) + '...' : quote %></td>
+                        <td>
+                            <% if (r.featuredOnHome) { %>
+                                <span class="badge bg-success">Featured #<%= fi + 1 %></span>
+                                <form method="POST" action="/admin/homepage/reviews/<%= r.id %>/order" class="d-flex gap-1 mt-1 m-0">
+                                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                    <label class="visually-hidden" for="order-<%= r.id %>">Homepage order for <%= r.reviewerName %></label>
+                                    <input id="order-<%= r.id %>" class="form-control form-control-sm" style="width:72px;" type="number" min="0" max="9999" name="order" value="<%= r.homeSortOrder %>">
+                                    <button class="btn btn-sm btn-outline-secondary" title="Save order">Set</button>
+                                </form>
+                            <% } else { %><span class="badge bg-secondary">Not on homepage</span><% } %>
+                        </td>
                         <td class="text-end">
                             <div class="d-flex justify-content-end gap-1">
                                 <% if (r.featuredOnHome) { %>
@@ -48,14 +126,14 @@
                                         <form method="POST" action="/admin/homepage/reviews/<%= r.id %>/move" class="m-0">
                                             <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                                             <input type="hidden" name="direction" value="<%= dir %>">
-                                            <button class="btn btn-sm btn-outline-secondary" title="Move <%= dir %>" <%= (dir === 'up' && fi === 0) || (dir === 'down' && fi === featuredList.length - 1) ? 'disabled' : '' %>><i class="bi bi-arrow-<%= dir %>"></i></button>
+                                            <button class="btn btn-sm btn-outline-secondary" title="Move <%= dir %>" aria-label="Move <%= r.reviewerName %> <%= dir %>" <%= (dir === 'up' && fi === 0) || (dir === 'down' && fi === featuredList.length - 1) ? 'disabled' : '' %>><i class="bi bi-arrow-<%= dir %>"></i></button>
                                         </form>
                                     <% }); %>
                                 <% } %>
                                 <form method="POST" action="/admin/homepage/reviews/<%= r.id %>/feature" class="m-0">
                                     <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                                     <input type="hidden" name="featured" value="<%= r.featuredOnHome ? 'false' : 'true' %>">
-                                    <button class="btn btn-sm btn-outline-secondary"><%= r.featuredOnHome ? 'Unfeature' : 'Feature' %></button>
+                                    <button class="btn btn-sm btn-outline-secondary"><%= r.featuredOnHome ? 'Remove from homepage' : 'Show on homepage' %></button>
                                 </form>
                             </div>
                         </td>

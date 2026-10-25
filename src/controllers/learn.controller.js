@@ -5,6 +5,7 @@ const { computeCourseProgress, getLessonProgressMap } = require('../services/pro
 const { parseVideoEmbed } = require('../lib/video');
 const { isSelfHostedVideo } = require('../lib/videoStorage');
 const { safeRedirectPath } = require('../lib/safeRedirect');
+const { getPlayerSettings } = require('../services/coursePlayerSettings.service');
 
 async function getCourseOverview(req, res, next) {
   try {
@@ -99,6 +100,8 @@ async function getLessonPage(req, res, next) {
       rawCurriculum
     );
     const resources = await curriculumService.listResourcesForCourse(course.id, { publishedOnly: true });
+    // Per-course player presentation (Admin > Landing Page > Player). Never throws.
+    const playerSettings = await getPlayerSettings(course.id);
 
     // Find current module and topic for breadcrumbs
     let currentModule = null;
@@ -143,6 +146,7 @@ async function getLessonPage(req, res, next) {
       progress: courseProgress,
       enrolled,
       isAdmin,
+      playerSettings,
     });
   } catch (err) {
     next(err);

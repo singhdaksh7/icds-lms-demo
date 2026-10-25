@@ -1,0 +1,98 @@
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb mb-1">
+        <li class="breadcrumb-item"><a href="/admin/pages" class="text-decoration-none">Pages</a></li>
+        <li class="breadcrumb-item active" aria-current="page"><%= meta.label %></li>
+    </ol>
+</nav>
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+    <h1 style="font-size:24px;" class="mb-0"><%= meta.label %> page</h1>
+    <a href="<%= meta.path %>" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-primary"><i class="bi bi-box-arrow-up-right me-1"></i>View page</a>
+</div>
+<p class="small text-muted"><%= meta.description %></p>
+
+<form method="POST" action="/admin/pages/<%= meta.slug %>" class="admin-card mb-4">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="mb-0 text-primary">Page settings</h5>
+        <div class="form-check form-switch fs-5">
+            <input type="hidden" name="isEnabled" value="false">
+            <input class="form-check-input" type="checkbox" role="switch" name="isEnabled" id="pgEnabled" value="true" <%= page.isEnabled ? 'checked' : '' %>>
+            <label class="form-check-label fs-6 fw-semibold" for="pgEnabled">Page enabled</label>
+        </div>
+    </div>
+    <% if (!page.isEnabled) { %><div class="alert alert-warning py-2 small">This page is disabled: the public URL returns 404, its menu links are hidden and it is not in the sitemap.</div><% } %>
+    <div class="row g-3">
+        <div class="col-md-4">
+            <label class="form-label small fw-semibold" for="pgEyebrow">Eyebrow</label>
+            <input type="text" class="form-control form-control-custom" id="pgEyebrow" name="eyebrow" maxlength="120" value="<%= page.eyebrow %>">
+        </div>
+        <div class="col-md-8">
+            <label class="form-label small fw-semibold" for="pgHeading">Heading</label>
+            <input type="text" class="form-control form-control-custom" id="pgHeading" name="heading" maxlength="200" value="<%= page.heading %>">
+        </div>
+        <div class="col-12">
+            <label class="form-label small fw-semibold" for="pgIntro">Intro</label>
+            <textarea class="form-control form-control-custom" id="pgIntro" name="intro" rows="3" maxlength="2000"><%= page.intro %></textarea>
+            <div class="form-text">Clearing a field hides it on the public page.</div>
+        </div>
+        <div class="col-12">
+            <label class="form-label small fw-semibold" for="pgHero">Hero image (optional)</label>
+            <input type="text" class="form-control form-control-custom" id="pgHero" name="heroImageUrl" maxlength="500" value="<%= page.heroImageUrl %>" placeholder="https://... or /uploads/...">
+            <div class="form-text">An https:// image URL or a path to an uploaded image (Site Content &rarr; images).</div>
+        </div>
+    </div>
+
+    <hr class="my-4">
+    <h6 class="fw-bold">Closing call-to-action</h6>
+    <div class="row g-3">
+        <div class="col-md-6"><label class="form-label small fw-semibold" for="pgCtaHeading">CTA heading</label><input type="text" class="form-control form-control-custom" id="pgCtaHeading" name="ctaHeading" maxlength="200" value="<%= page.ctaHeading %>"></div>
+        <div class="col-md-6"><label class="form-label small fw-semibold" for="pgCtaText">CTA text</label><input type="text" class="form-control form-control-custom" id="pgCtaText" name="ctaText" maxlength="500" value="<%= page.ctaText %>"></div>
+        <div class="col-md-4"><label class="form-label small fw-semibold" for="pgCtaLabel">Button label</label><input type="text" class="form-control form-control-custom" id="pgCtaLabel" name="ctaLabel" maxlength="100" value="<%= page.ctaLabel %>"></div>
+        <div class="col-md-8"><label class="form-label small fw-semibold" for="pgCtaUrl">Button link</label><input type="text" class="form-control form-control-custom" id="pgCtaUrl" name="ctaUrl" maxlength="300" value="<%= page.ctaUrl %>" placeholder="/courses or https://..."><div class="form-text">Internal path starting with / or a full https:// URL. The button shows only when both label and link are set.</div></div>
+    </div>
+
+    <hr class="my-4">
+    <h6 class="fw-bold">SEO</h6>
+    <div class="row g-3">
+        <div class="col-md-5"><label class="form-label small fw-semibold" for="pgSeoTitle">SEO title</label><input type="text" class="form-control form-control-custom" id="pgSeoTitle" name="seoTitle" maxlength="70" value="<%= page.seoTitle %>"><div class="form-text">Up to 70 characters. Blank = automatic.</div></div>
+        <div class="col-md-7"><label class="form-label small fw-semibold" for="pgMeta">Meta description</label><input type="text" class="form-control form-control-custom" id="pgMeta" name="metaDescription" maxlength="200" value="<%= page.metaDescription %>"><div class="form-text">Up to 200 characters. Blank = automatic.</div></div>
+    </div>
+
+    <div class="mt-4 pt-3 border-top"><button type="submit" class="btn btn-primary px-4"><i class="bi bi-save me-1"></i> Save page</button></div>
+</form>
+
+<% if (meta.hasSections) { %>
+<div class="admin-card">
+    <h5 class="mb-3 text-primary">Content sections</h5>
+    <p class="small text-muted">Cards shown on the page in this order. Each needs a title or text.</p>
+
+    <% if (sections.length === 0) { %><p class="text-muted">No sections yet.</p><% } %>
+    <% sections.forEach(function (s, i) { %>
+        <div class="border rounded-3 p-3 mb-3">
+            <form method="POST" action="/admin/pages/<%= meta.slug %>/sections/<%= s.id %>/edit" class="row g-2">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <div class="col-md-5"><label class="form-label small fw-semibold mb-1" for="secTitle<%= s.id %>">Title</label><input type="text" class="form-control form-control-sm" id="secTitle<%= s.id %>" name="title" maxlength="200" value="<%= s.title || '' %>"></div>
+                <div class="col-md-4"><label class="form-label small fw-semibold mb-1" for="secIcon<%= s.id %>">Icon (Bootstrap icon class)</label><input type="text" class="form-control form-control-sm" id="secIcon<%= s.id %>" name="icon" maxlength="60" value="<%= s.icon || '' %>" placeholder="bi-star"></div>
+                <div class="col-md-3 d-flex align-items-end"><div class="form-check form-switch"><input type="hidden" name="isPublished" value="false"><input class="form-check-input" type="checkbox" name="isPublished" id="secPub<%= s.id %>" value="true" <%= s.isPublished ? 'checked' : '' %>><label class="form-check-label small" for="secPub<%= s.id %>">Published</label></div></div>
+                <div class="col-12"><label class="form-label small fw-semibold mb-1" for="secBody<%= s.id %>">Text</label><textarea class="form-control form-control-sm" id="secBody<%= s.id %>" name="body" rows="3" maxlength="5000"><%= s.body || '' %></textarea></div>
+                <div class="col-12 d-flex gap-2 flex-wrap"><button type="submit" class="btn btn-sm btn-outline-primary">Save section</button></div>
+            </form>
+            <div class="d-flex gap-2 mt-2">
+                <form method="POST" action="/admin/pages/<%= meta.slug %>/sections/<%= s.id %>/move" class="m-0"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><input type="hidden" name="direction" value="up"><button class="btn btn-sm btn-light border" <%= i === 0 ? 'disabled' : '' %> aria-label="Move section up"><i class="bi bi-arrow-up"></i></button></form>
+                <form method="POST" action="/admin/pages/<%= meta.slug %>/sections/<%= s.id %>/move" class="m-0"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><input type="hidden" name="direction" value="down"><button class="btn btn-sm btn-light border" <%= i === sections.length - 1 ? 'disabled' : '' %> aria-label="Move section down"><i class="bi bi-arrow-down"></i></button></form>
+                <form method="POST" action="/admin/pages/<%= meta.slug %>/sections/<%= s.id %>/delete" class="m-0 ms-auto" data-confirm="Delete this section?"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="btn btn-sm btn-outline-danger">Delete</button></form>
+            </div>
+        </div>
+    <% }); %>
+
+    <form method="POST" action="/admin/pages/<%= meta.slug %>/sections" class="border rounded-3 p-3 bg-light-subtle row g-2">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <div class="col-12"><strong class="small">Add a section</strong></div>
+        <div class="col-md-6"><label class="form-label small fw-semibold mb-1" for="newSecTitle">Title</label><input type="text" class="form-control form-control-sm" id="newSecTitle" name="title" maxlength="200"></div>
+        <div class="col-md-6"><label class="form-label small fw-semibold mb-1" for="newSecIcon">Icon (optional)</label><input type="text" class="form-control form-control-sm" id="newSecIcon" name="icon" maxlength="60" placeholder="bi-star"></div>
+        <div class="col-12"><label class="form-label small fw-semibold mb-1" for="newSecBody">Text</label><textarea class="form-control form-control-sm" id="newSecBody" name="body" rows="3" maxlength="5000"></textarea></div>
+        <input type="hidden" name="isPublished" value="true">
+        <div class="col-12"><button type="submit" class="btn btn-sm btn-primary">Add section</button></div>
+    </form>
+</div>
+<% } %>

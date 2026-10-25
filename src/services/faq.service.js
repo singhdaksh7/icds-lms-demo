@@ -19,6 +19,19 @@ async function listActiveFaqs() {
   });
 }
 
+// Public /faq page: active entries in admin order, plus the distinct categories
+// (in order of first appearance) for the filter chips. Entries without a category
+// are always shown under "All". Homepage and course FAQs are separate and untouched.
+async function listPublicFaqsWithCategories() {
+  const faqs = await listActiveFaqs();
+  const categories = [];
+  for (const f of faqs) {
+    const c = f.category && String(f.category).trim();
+    if (c && !categories.includes(c)) categories.push(c);
+  }
+  return { faqs, categories };
+}
+
 async function createFaq(values) {
   return prisma.faq.create({ data: values });
 }
@@ -86,6 +99,7 @@ module.exports = {
   FaqError,
   listFaqsAdmin,
   listActiveFaqs,
+  listPublicFaqsWithCategories,
   createFaq,
   updateFaq,
   deleteFaq,

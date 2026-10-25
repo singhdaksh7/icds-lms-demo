@@ -1,0 +1,29 @@
+<h1 style="font-size:24px;" class="mb-2">Homepage Sections</h1>
+<p class="text-muted small mb-4">Arrange the homepage from top to bottom and hide any section. Changes apply immediately; no code deployment is needed. A section with no content (for example a disabled Intro Video) stays hidden even when it is switched on here.</p>
+
+<div class="admin-card mb-4" id="sections">
+    <ol class="list-unstyled mb-0">
+        <% sections.order.forEach(function (key, i) { var hid = sections.hidden.indexOf(key) !== -1; %>
+            <li class="d-flex align-items-center justify-content-between gap-3 py-2 border-bottom">
+                <div class="d-flex align-items-center gap-3">
+                    <span class="badge bg-light text-dark border" style="min-width:28px;"><%= i + 1 %></span>
+                    <strong class="<%= hid ? 'text-muted text-decoration-line-through' : '' %>"><%= labels[key] || key %></strong>
+                    <% if (hid) { %><span class="badge bg-secondary">Hidden</span><% } %>
+                </div>
+                <div class="d-flex gap-1">
+                    <% ['up', 'down'].forEach(function (dir) { %>
+                        <form method="POST" action="/admin/homepage/sections/<%= key %>/move" class="m-0">
+                            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                            <input type="hidden" name="direction" value="<%= dir %>">
+                            <button class="btn btn-sm btn-outline-secondary" title="Move <%= dir %>" aria-label="Move <%= labels[key] || key %> <%= dir %>" <%= (dir === 'up' && i === 0) || (dir === 'down' && i === sections.order.length - 1) ? 'disabled' : '' %>><i class="bi bi-arrow-<%= dir %>"></i></button>
+                        </form>
+                    <% }); %>
+                    <form method="POST" action="/admin/homepage/sections/<%= key %>/toggle" class="m-0">
+                        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                        <button class="btn btn-sm btn-outline-secondary"><%= hid ? 'Show' : 'Hide' %></button>
+                    </form>
+                </div>
+            </li>
+        <% }); %>
+    </ol>
+</div>

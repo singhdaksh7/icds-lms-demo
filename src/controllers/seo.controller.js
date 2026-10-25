@@ -1,6 +1,7 @@
 const courseService = require('../services/course.service');
 const site = require('../config/site');
 const { absoluteUrl } = require('../lib/seo');
+const sitePages = require('../services/sitePages.service');
 
 // Disallows every private/auth/admin/student path so a crawler never
 // indexes an account-only page, while explicitly allowing the public
@@ -37,15 +38,20 @@ function xmlEscape(value) {
 async function sitemapXml(req, res, next) {
   try {
     const courses = await courseService.listPublishedCourseSlugsForSitemap();
+    // CMS pages are advertised only while enabled in Admin > Pages.
+    const enabled = Object.fromEntries(await Promise.all(sitePages.PAGE_SLUGS.map(async (slug) => [slug, await sitePages.isPageEnabled(slug)])));
 
     const staticEntries = [
       { path: '/', changefreq: 'weekly', priority: '1.0' },
       { path: '/courses', changefreq: 'daily', priority: '0.9' },
+      enabled.about && { path: '/about', changefreq: 'monthly', priority: '0.7' },
       { path: '/founder', changefreq: 'monthly', priority: '0.6' },
-      { path: '/contact', changefreq: 'monthly', priority: '0.5' },
+      enabled.reviews && { path: '/reviews', changefreq: 'weekly', priority: '0.6' },
+      enabled.faq && { path: '/faq', changefreq: 'monthly', priority: '0.6' },
+      enabled.contact && { path: '/contact', changefreq: 'monthly', priority: '0.5' },
       { path: '/privacy', changefreq: 'yearly', priority: '0.2' },
       { path: '/terms', changefreq: 'yearly', priority: '0.2' },
-    ];
+    ].filter(Boolean);
 
     const courseEntries = courses.map((c) => ({
       path: `/courses/${c.slug}`,

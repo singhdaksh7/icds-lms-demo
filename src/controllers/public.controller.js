@@ -5,6 +5,7 @@ const { validateContact, validateNewsletter } = require('../validators/contact.v
 const site = require('../config/site');
 const { buildSeo, pageSeoText, PUBLIC_ROBOTS, DEFAULT_ROBOTS } = require('../lib/seo');
 const emailService = require('../services/email.service');
+const sitePages = require('../services/sitePages.service');
 
 function contactSeo(res) {
   return pageSeoText(res.locals.settings, 'contact', {
@@ -13,30 +14,41 @@ function contactSeo(res) {
   });
 }
 
-async function contactPage(req, res) {
-  const { title, description } = contactSeo(res);
-  res.render('public/contact', {
-    pageTitle: title,
-    metaDescription: description,
-    seo: buildSeo(req, { title, description, robots: PUBLIC_ROBOTS }),
-    errors: [],
-    values: {},
-  });
+// The Contact page's on/off switch, eyebrow, heading/intro overrides and SEO come
+// from the CMS SitePage('contact'); the form labels / success text stay in Site
+// Content. A disabled page is a normal 404 (GET and POST).
+async function contactView(res, errors, values) {
+  const data = await sitePages.getPublicPage('contact', res.locals.cms);
+  if (!data) return null;
+  const base = contactSeo(res);
+  const title = data.page.seoTitle || base.title;
+  const description = data.page.metaDescription || base.description;
+  return { pageTitle: title, metaDescription: description, title, description, sitePage: data.page, errors, values };
+}
+
+async function contactPage(req, res, next) {
+  try {
+    const view = await contactView(res, [], {});
+    if (!view) return res.status(404).render('public/404', { pageTitle: 'Page Not Found' });
+    res.render('public/contact', { ...view, seo: buildSeo(req, { title: view.title, description: view.description, robots: PUBLIC_ROBOTS }) });
+  } catch (err) {
+    next(err);
+  }
 }
 
 async function postContact(req, res, next) {
   const { errors, values } = validateContact(req.body);
   if (errors.length) {
-    const { title, description } = contactSeo(res);
-    return res.status(400).render('public/contact', {
-      pageTitle: title,
-      metaDescription: description,
-      seo: buildSeo(req, { title, description, robots: PUBLIC_ROBOTS }),
-      errors,
-      values,
-    });
+    try {
+      const view = await contactView(res, errors, values);
+      if (!view) return res.status(404).render('public/404', { pageTitle: 'Page Not Found' });
+      return res.status(400).render('public/contact', { ...view, seo: buildSeo(req, { title: view.title, description: view.description, robots: PUBLIC_ROBOTS }) });
+    } catch (err) {
+      return next(err);
+    }
   }
   try {
+    if (!(await sitePages.isPageEnabled('contact'))) return res.status(404).render('public/404', { pageTitle: 'Page Not Found' });
     await prisma.contactMessage.create({ data: values });
     req.flashSuccess(res.locals.cms.contactPage.successMessage);
     res.redirect('/contact');

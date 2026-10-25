@@ -1,7 +1,9 @@
 <%
     const sym = course.currency === 'INR' ? '₹' : course.currency + ' ';
     const money = (n) => sym + Number(n).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    const hasSale = course.salePrice && Number(course.salePrice) < Number(course.price);
+    // One server-side helper decides the payable price (sale window aware).
+    const cprice = typeof coursePriceOf === 'function' ? coursePriceOf(course) : { onSale: false, regular: Number(course.price), effective: Number(course.price) };
+    const hasSale = cprice.onSale;
     const showTax = !isFree && pricing && pricing.rate > 0;
 %>
 <section class="section-space">
@@ -36,7 +38,7 @@
                         <% if (hasSale) { %>
                             <div class="pay-row pay-discount">
                                 <span>Discount</span>
-                                <span>-<%= money(Number(course.price) - Number(course.salePrice)) %></span>
+                                <span>-<%= money(cprice.regular - cprice.effective) %></span>
                             </div>
                         <% } %>
 

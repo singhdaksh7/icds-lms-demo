@@ -1887,3 +1887,201 @@
     display: none;
   }
 }
+
+/* ==========================================================================
+   17. PRICING PRESENTATION (regular / sale / discount) - theme driven
+   ========================================================================== */
+.course-landing-page .purchase-price-old {
+  font-size: 18px;
+  color: var(--course-muted);
+  margin-bottom: 2px;
+}
+
+.course-landing-page .purchase-sale-badge,
+.course-landing-page .floating-sale-badge {
+  display: inline-block;
+  vertical-align: middle;
+  background: var(--course-success-soft);
+  color: var(--course-success);
+  font-family: var(--course-body-font);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+
+.course-landing-page .floating-price-old {
+  color: var(--course-muted);
+  font-weight: 500;
+}
+
+.course-landing-page .floating-copy-sub strong {
+  color: var(--course-heading);
+  font-weight: 800;
+  font-size: 14.5px;
+}
+
+/* ==========================================================================
+   18. REVIEWS: rating summary + carousel (course-specific reviews only)
+   ========================================================================== */
+.course-landing-page .reviews-summary {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: -12px auto 28px;
+  color: var(--course-heading);
+}
+
+.course-landing-page .reviews-summary-stars {
+  color: var(--course-accent);
+  font-size: 20px;
+  display: inline-flex;
+  gap: 3px;
+}
+
+.course-landing-page .reviews-summary-score {
+  font-family: var(--course-heading-font);
+  font-size: 26px;
+  font-weight: 700;
+}
+
+.course-landing-page .reviews-summary-count {
+  color: var(--course-muted);
+  font-size: 14.5px;
+}
+
+.course-landing-page .reviews-carousel {
+  position: relative;
+}
+
+.course-landing-page .reviews-viewport {
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  padding: 6px 2px 18px;
+  outline-offset: 4px;
+}
+
+.course-landing-page .reviews-viewport::-webkit-scrollbar {
+  display: none;
+}
+
+.course-landing-page .reviews-viewport.is-dragging {
+  scroll-snap-type: none;
+  cursor: grabbing;
+  user-select: none;
+}
+
+.course-landing-page .reviews-track {
+  display: flex;
+  gap: 24px;
+}
+
+.course-landing-page .reviews-track > .review-card {
+  flex: 0 0 calc((100% - 24px) / 2);
+  scroll-snap-align: start;
+  min-width: 0;
+}
+
+.course-landing-page .reviews-carousel[data-rotate="false"] .reviews-track:has(> .review-card:only-child) > .review-card {
+  flex-basis: min(560px, 100%);
+  margin: 0 auto;
+}
+
+.course-landing-page .review-stars {
+  align-items: center;
+}
+
+.course-landing-page .review-stars i {
+  color: var(--course-accent);
+}
+
+.course-landing-page .review-rating-num {
+  margin-left: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--course-muted);
+}
+
+.course-landing-page .reviews-arrow {
+  position: absolute;
+  top: 42%;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: 1px solid var(--course-border);
+  background: var(--course-surface);
+  color: var(--course-heading);
+  box-shadow: var(--course-shadow-hover);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 3;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.course-landing-page .reviews-arrow[hidden] {
+  display: none;
+}
+
+.course-landing-page .reviews-arrow:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.course-landing-page .reviews-arrow:focus-visible,
+.course-landing-page .reviews-dot:focus-visible,
+.course-landing-page .reviews-viewport:focus-visible {
+  outline: 3px solid var(--course-primary);
+}
+
+.course-landing-page .reviews-prev { left: -14px; }
+.course-landing-page .reviews-next { right: -14px; }
+
+.course-landing-page .reviews-dots {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.course-landing-page .reviews-dots[hidden] {
+  display: none;
+}
+
+.course-landing-page .reviews-dot {
+  width: 9px;
+  height: 9px;
+  padding: 0;
+  border-radius: 50%;
+  border: 0;
+  background: var(--course-border-strong);
+  cursor: pointer;
+}
+
+.course-landing-page .reviews-dot.is-active {
+  width: 26px;
+  border-radius: 999px;
+  background: var(--course-primary);
+}
+
+@media (max-width: 768px) {
+  .course-landing-page .reviews-track > .review-card {
+    flex-basis: 100%;
+  }
+
+  .course-landing-page .reviews-prev { left: 4px; }
+  .course-landing-page .reviews-next { right: 4px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .course-landing-page .reviews-viewport {
+    scroll-behavior: auto;
+  }
+}

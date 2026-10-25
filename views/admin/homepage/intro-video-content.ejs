@@ -1,0 +1,125 @@
+<%
+    const O = options;
+    const hasHosted = video.videoType === 'UPLOAD' && video.videoObjectKey;
+    const hasLink = (video.videoType === 'YOUTUBE' || video.videoType === 'VIMEO') && video.videoUrl;
+    const hasVideo = Boolean(hasHosted || hasLink);
+%>
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+    <h1 style="font-size:24px;" class="mb-0">Intro / Promo Video</h1>
+    <a href="/#intro-video" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-primary"><i class="bi bi-box-arrow-up-right me-1"></i> View on homepage</a>
+</div>
+<p class="text-muted small mb-4">A premium video block on the homepage. Everything shown &mdash; copy, video, poster, buttons and layout &mdash; is edited here. Saving this page never changes the other homepage settings. Position the block with <a href="/admin/homepage/sections">Homepage Sections</a>.</p>
+
+<% if (video.isEnabled && !preview) { %>
+    <div class="alert alert-warning small">The block is switched on but has no playable video yet, so it is not shown on the homepage. Upload a video or paste a YouTube / Vimeo link below.</div>
+<% } %>
+
+<form method="POST" action="/admin/homepage/intro-video" enctype="multipart/form-data" class="admin-card mb-4" id="introVideoForm">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+    <div class="form-check form-switch mb-4">
+        <input type="hidden" name="isEnabled" value="false">
+        <input class="form-check-input" type="checkbox" role="switch" id="isEnabled" name="isEnabled" value="true" <%= video.isEnabled ? 'checked' : '' %>>
+        <label class="form-check-label fw-semibold" for="isEnabled">Show the intro video block on the homepage</label>
+    </div>
+
+    <h2 style="font-size:17px;" class="mb-3">Text</h2>
+    <div class="row g-3 mb-4">
+        <div class="col-md-6"><label class="form-label" for="eyebrow">Eyebrow</label><input class="form-control" id="eyebrow" name="eyebrow" maxlength="120" value="<%= video.eyebrow || '' %>"></div>
+        <div class="col-md-6"><label class="form-label" for="highlightText">Highlighted text</label><input class="form-control" id="highlightText" name="highlightText" maxlength="120" value="<%= video.highlightText || '' %>"><div class="form-text">Shown in the accent colour inside the heading.</div></div>
+        <div class="col-12"><label class="form-label" for="heading">Heading</label><input class="form-control" id="heading" name="heading" maxlength="200" value="<%= video.heading || '' %>"></div>
+        <div class="col-12"><label class="form-label" for="description">Description</label><textarea class="form-control" id="description" name="description" rows="4" maxlength="2000"><%= video.description || '' %></textarea></div>
+    </div>
+
+    <h2 style="font-size:17px;" class="mb-3">Video</h2>
+    <div class="row g-3 mb-4">
+        <div class="col-12">
+            <% if (hasVideo) { %>
+                <div class="alert alert-light border small mb-2">
+                    <i class="bi bi-film me-1"></i> Current video:
+                    <% if (hasHosted) { %><strong>Uploaded file</strong><% } else { %><strong><%= video.videoType === 'VIMEO' ? 'Vimeo' : 'YouTube' %></strong> &middot; <span class="text-break"><%= video.videoUrl %></span><% } %>
+                    <div class="form-check mt-2">
+                        <input class="form-check-input" type="checkbox" id="removeVideo" name="removeVideo" value="true">
+                        <label class="form-check-label" for="removeVideo">Remove the current video</label>
+                    </div>
+                </div>
+            <% } else { %>
+                <div class="alert alert-light border small mb-2">No video yet.</div>
+            <% } %>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label" for="video">Upload video (MP4 or WebM)</label>
+            <input class="form-control" type="file" id="video" name="video" accept="video/mp4,video/webm,.mp4,.webm" <%= r2Configured ? '' : 'disabled' %>>
+            <div class="form-text"><% if (r2Configured) { %>Uploading replaces the current video. Stored privately on Cloudflare R2 and played through a short-lived link.<% } else { %>Cloudflare R2 is not configured (<a href="/admin/video-storage">Video Storage</a>). Use a YouTube / Vimeo link instead.<% } %></div>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label" for="videoUrl">&hellip;or YouTube / Vimeo link</label>
+            <input class="form-control" type="url" id="videoUrl" name="videoUrl" maxlength="500" placeholder="https://www.youtube.com/watch?v=..." value="<%= hasLink ? video.videoUrl : '' %>">
+            <div class="form-text">Pasting a link replaces an uploaded video. Clearing the box removes a link-based video.</div>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label" for="poster">Poster / thumbnail (JPG, PNG or WEBP, max 5MB)</label>
+            <input class="form-control" type="file" id="poster" name="poster" accept="image/jpeg,image/png,image/webp">
+            <% if (video.posterUrl) { %>
+                <div class="d-flex align-items-center gap-3 mt-2">
+                    <img src="<%= video.posterUrl %>" alt="Current poster" style="height:72px; width:auto; border-radius:8px; border:1px solid #e2e8f0;">
+                    <div class="form-check"><input class="form-check-input" type="checkbox" id="removePoster" name="removePoster" value="true"><label class="form-check-label" for="removePoster">Remove poster</label></div>
+                </div>
+            <% } %>
+        </div>
+    </div>
+
+    <h2 style="font-size:17px;" class="mb-3">Buttons</h2>
+    <div class="row g-3 mb-4">
+        <div class="col-12">
+            <div class="form-check form-switch">
+                <input type="hidden" name="ctaEnabled" value="false">
+                <input class="form-check-input" type="checkbox" role="switch" id="ctaEnabled" name="ctaEnabled" value="true" <%= video.ctaEnabled ? 'checked' : '' %>>
+                <label class="form-check-label" for="ctaEnabled">Show the main button</label>
+            </div>
+        </div>
+        <div class="col-md-6"><label class="form-label" for="ctaLabel">Button label</label><input class="form-control" id="ctaLabel" name="ctaLabel" maxlength="100" value="<%= video.ctaLabel || '' %>"></div>
+        <div class="col-md-6"><label class="form-label" for="ctaUrl">Button link</label><input class="form-control" id="ctaUrl" name="ctaUrl" maxlength="300" placeholder="/courses" value="<%= video.ctaUrl || '' %>"><div class="form-text">A site path such as <code>/courses</code>, or an https link.</div></div>
+        <div class="col-md-6"><label class="form-label" for="secondaryCtaLabel">Secondary button label (optional)</label><input class="form-control" id="secondaryCtaLabel" name="secondaryCtaLabel" maxlength="100" value="<%= video.secondaryCtaLabel || '' %>"></div>
+        <div class="col-md-6"><label class="form-label" for="secondaryCtaUrl">Secondary button link</label><input class="form-control" id="secondaryCtaUrl" name="secondaryCtaUrl" maxlength="300" value="<%= video.secondaryCtaUrl || '' %>"></div>
+    </div>
+
+    <h2 style="font-size:17px;" class="mb-3">Layout &amp; playback</h2>
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <label class="form-label" for="layout">Layout</label>
+            <select class="form-select" id="layout" name="layout">
+                <% O.LAYOUTS.forEach(function (k) { %><option value="<%= k %>" <%= video.layout === k ? 'selected' : '' %>><%= O.LABELS.layout[k] %></option><% }); %>
+            </select>
+        </div>
+        <div class="col-md-4">
+            <label class="form-label" for="videoShape">Video shape</label>
+            <select class="form-select" id="videoShape" name="videoShape">
+                <% O.SHAPES.forEach(function (k) { %><option value="<%= k %>" <%= video.videoShape === k ? 'selected' : '' %>><%= O.LABELS.shape[k] %></option><% }); %>
+            </select>
+        </div>
+        <div class="col-md-4">
+            <label class="form-label" for="backgroundStyle">Background</label>
+            <select class="form-select" id="backgroundStyle" name="backgroundStyle">
+                <% O.BACKGROUNDS.forEach(function (k) { %><option value="<%= k %>" <%= video.backgroundStyle === k ? 'selected' : '' %>><%= O.LABELS.background[k] %></option><% }); %>
+            </select>
+        </div>
+        <div class="col-md-6">
+            <div class="form-check form-switch">
+                <input type="hidden" name="autoplayMuted" value="false">
+                <input class="form-check-input" type="checkbox" role="switch" id="autoplayMuted" name="autoplayMuted" value="true" <%= video.autoplayMuted ? 'checked' : '' %>>
+                <label class="form-check-label" for="autoplayMuted">Autoplay muted when scrolled into view</label>
+            </div>
+            <div class="form-text">Off by default. Always muted, never with sound, skipped for visitors who prefer reduced motion or are on data-saver.</div>
+        </div>
+        <div class="col-md-6">
+            <div class="form-check form-switch">
+                <input type="hidden" name="loopVideo" value="false">
+                <input class="form-check-input" type="checkbox" role="switch" id="loopVideo" name="loopVideo" value="true" <%= video.loopVideo ? 'checked' : '' %>>
+                <label class="form-check-label" for="loopVideo">Loop the video</label>
+            </div>
+        </div>
+    </div>
+
+    <button type="submit" class="btn" style="background:var(--primary-color); color:#fff;">Save intro video</button>
+</form>

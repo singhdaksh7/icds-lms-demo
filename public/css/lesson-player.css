@@ -1,0 +1,296 @@
+/* Student lesson player: video + right-hand course content sidebar.
+ *  - desktop (>= 992px): two-column grid; "Theater mode" slides the sidebar out
+ *    to the right (transform + opacity, ~300ms) while the video column expands.
+ *  - tablet / mobile (< 992px): the same sidebar becomes a slide-over drawer
+ *    from the right with a backdrop (never squeezed under the video).
+ * Native browser/video fullscreen is independent and untouched.
+ */
+.lp-page {
+  background: #f6f7fb;
+  padding: 20px 0 48px;
+  /* 320-400px: narrower on small desktops so the video never gets squeezed */
+  --lp-sidebar-w: clamp(300px, 26vw, 380px);
+  --lp-gap: 24px;
+  --lp-ease: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.lp-container {
+  width: 100%;
+  max-width: 1760px;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+
+@media (min-width: 992px) {
+  .lp-container { padding: 0 28px; }
+}
+
+.lp-topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.lp-controls { display: flex; gap: 8px; align-items: center; }
+
+.lp-btn { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; }
+
+.lp-btn:focus-visible,
+.lp-module-btn:focus-visible,
+.lp-topic-btn:focus-visible,
+.lp-lesson:focus-visible,
+.lp-drawer-close:focus-visible {
+  outline: 3px solid rgba(13, 110, 253, 0.55);
+  outline-offset: 2px;
+}
+
+/* ---- layout ------------------------------------------------------------- */
+.lp-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) var(--lp-sidebar-w);
+  column-gap: var(--lp-gap);
+  align-items: start;
+  transition: grid-template-columns var(--lp-ease), column-gap var(--lp-ease);
+}
+
+.lp-layout.is-theater {
+  grid-template-columns: minmax(0, 1fr) 0px;
+  column-gap: 0;
+}
+
+.lp-main { min-width: 0; }
+
+.lp-video-wrap { width: 100%; }
+
+.lp-video { max-height: calc(100vh - 150px); background: #000; }
+
+/* Theater: the video uses the full width; cap height so controls stay on screen. */
+.lp-layout.is-theater .lp-video-wrap {
+  max-width: calc((100vh - 150px) * 16 / 9);
+  margin: 0 auto;
+}
+
+@media (max-width: 991.98px) {
+  .lp-video { max-height: none; }
+  .lp-layout.is-theater .lp-video-wrap { max-width: none; }
+}
+
+.lp-layout.is-theater .lp-lesson-card,
+.lp-layout.is-theater .lp-resources,
+.lp-layout.is-theater .lp-prevnext {
+  max-width: calc((100vh - 150px) * 16 / 9);
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* ---- sidebar ------------------------------------------------------------ */
+.lp-sidebar {
+  position: sticky;
+  top: 76px;
+  width: var(--lp-sidebar-w);
+  max-height: calc(100vh - 96px);
+  background: #fff;
+  border: 1px solid #e3e6ee;
+  border-radius: 16px;
+  box-shadow: 0 6px 20px rgba(15, 27, 51, 0.06);
+  overflow: hidden;
+  transform: translateX(0);
+  opacity: 1;
+  visibility: visible;
+  transition: transform var(--lp-ease), opacity var(--lp-ease), visibility 0s linear 0s;
+}
+
+.lp-sidebar.is-collapsed {
+  transform: translateX(110%);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  /* hide from tab order only after the slide-out finishes */
+  transition: transform var(--lp-ease), opacity var(--lp-ease), visibility 0s linear 300ms;
+}
+
+.lp-sidebar-inner {
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100vh - 96px);
+  overflow-y: auto;
+  padding: 16px;
+  overscroll-behavior: contain;
+}
+
+.lp-sidebar-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.lp-sidebar-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: #0f1b33;
+}
+
+.lp-course-name {
+  font-size: 12.5px;
+  color: #5b6a86;
+  margin: 4px 0 12px;
+  line-height: 1.4;
+}
+
+.lp-progress-block {
+  margin-bottom: 14px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid #edf0f6;
+}
+
+/* ---- curriculum accordion ---------------------------------------------- */
+.lp-module {
+  border: 1px solid #e6e9f2;
+  border-radius: 12px;
+  margin-bottom: 8px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.lp-module.is-current { border-color: #bcd0fb; }
+
+.lp-module-btn,
+.lp-topic-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  color: #0f1b33;
+}
+
+.lp-module-btn {
+  padding: 11px 12px;
+  background: #f7f9fe;
+  font-size: 13.5px;
+  font-weight: 700;
+}
+
+.lp-module-title,
+.lp-topic-title { flex: 1 1 auto; min-width: 0; }
+
+.lp-topic-btn {
+  padding: 8px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #5b6a86;
+  background: #f1f4fa;
+  border-radius: 8px;
+}
+
+.lp-chevron { transition: transform 200ms ease; font-size: 12px; flex-shrink: 0; }
+
+[aria-expanded="true"] > .lp-chevron { transform: rotate(90deg); }
+
+.lp-panel { padding: 8px; }
+
+.lp-topic { margin-bottom: 6px; }
+
+.lp-lessons { margin-top: 4px; }
+
+.lp-lesson {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 10px;
+  min-height: 40px;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #1b2745;
+  text-decoration: none;
+  line-height: 1.35;
+}
+
+a.lp-lesson:hover { background: #f1f5ff; }
+
+.lp-lesson.is-current {
+  background: #e8f0ff;
+  color: #1747b0;
+  font-weight: 700;
+}
+
+.lp-lesson.is-locked { color: #8a96ad; cursor: not-allowed; }
+
+.lp-lesson-main { display: flex; align-items: center; gap: 8px; min-width: 0; }
+
+.lp-lesson-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.lp-lesson-dur { flex-shrink: 0; font-size: 11px; color: #6b7891; }
+
+.lp-page[data-show-done="false"] .lp-lesson .bi-check-circle-fill { display: none; }
+
+/* ---- drawer (tablet / mobile) ------------------------------------------- */
+.lp-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(8, 14, 30, 0.55);
+  z-index: 1049;
+  opacity: 0;
+  transition: opacity var(--lp-ease);
+}
+
+.lp-backdrop.is-visible { opacity: 1; }
+
+@media (max-width: 991.98px) {
+  .lp-layout {
+    display: block;
+    transition: none;
+  }
+
+  .lp-sidebar {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: min(400px, 90vw);
+    max-height: none;
+    height: 100%;
+    border-radius: 16px 0 0 16px;
+    z-index: 1050;
+    transform: translateX(100%);
+    opacity: 1;
+    visibility: hidden;
+    transition: transform var(--lp-ease), visibility 0s linear 300ms;
+  }
+
+  .lp-sidebar.is-collapsed { transform: translateX(100%); }
+
+  .lp-sidebar.is-open {
+    transform: translateX(0);
+    visibility: visible;
+    pointer-events: auto;
+    transition: transform var(--lp-ease), visibility 0s linear 0s;
+  }
+
+  .lp-sidebar-inner { max-height: none; height: 100%; padding-bottom: 32px; }
+
+  body.lp-drawer-open { overflow: hidden; }
+}
+
+@media (min-width: 992px) {
+  .lp-backdrop { display: none !important; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lp-layout,
+  .lp-sidebar,
+  .lp-backdrop,
+  .lp-chevron { transition: none !important; }
+}

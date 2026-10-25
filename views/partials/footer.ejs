@@ -54,6 +54,15 @@
 
                 <ul class="footer-links">
 
+                    <% if (typeof navFooter !== 'undefined' && navFooter) { %>
+                    <%# Admin-managed footer links (Admin > Navigation). %>
+                    <% navFooter.forEach(function (item) { %>
+                    <li>
+                        <a href="<%= item.url %>"<% if (item.openInNewTab) { %> target="_blank" rel="noopener noreferrer"<% } %>><%= item.label %></a>
+                    </li>
+                    <% }); %>
+                    <% } else { %>
+
                     <li>
                         <a href="/courses"><%= f.allCoursesLabel %></a>
                     </li>
@@ -80,6 +89,8 @@
                     <li>
                         <a href="/#faq"><%= f.faqLabel %></a>
                     </li>
+                    <% } %>
+
                     <% } %>
 
                 </ul>

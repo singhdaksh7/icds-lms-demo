@@ -35,20 +35,43 @@ function validateCourse(body) {
     errors.push('Invalid instructor.');
   }
 
-  const price = parseAmount(typeof body.price === 'string' ? body.price.trim() : '');
+  const isFreeChecked = (Array.isArray(body.isFree) ? body.isFree[body.isFree.length - 1] : body.isFree) === 'on';
+  const price = isFreeChecked ? '0' : parseAmount(typeof body.price === 'string' ? body.price.trim() : '');
   if (price === null) {
     errors.push('Price must be a valid amount (0 or more).');
   }
 
   let salePrice = null;
-  const salePriceRaw = typeof body.salePrice === 'string' ? body.salePrice.trim() : '';
+  const salePriceRaw = !isFreeChecked && typeof body.salePrice === 'string' ? body.salePrice.trim() : '';
   if (salePriceRaw) {
     salePrice = parseAmount(salePriceRaw);
     if (salePrice === null) {
       errors.push('Sale price must be a valid amount (0 or more).');
     } else if (price !== null && Number(salePrice) > Number(price)) {
       errors.push('Sale price cannot be greater than the regular price.');
+    } else if (price !== null && Number(price) > 0 && Number(salePrice) === Number(price)) {
+      errors.push('Sale price must be lower than the regular price to create a discount (or leave it blank).');
     }
+  }
+
+  // Sale window + badge. These fields are only applied when the form submitted
+  // them (saleEnabled is always posted by the Admin form: hidden "false" + checkbox).
+  let saleFields = {};
+  if (body.saleEnabled !== undefined) {
+    const enabledRaw = Array.isArray(body.saleEnabled) ? body.saleEnabled[body.saleEnabled.length - 1] : body.saleEnabled;
+    const saleEnabled = enabledRaw === 'on' || enabledRaw === 'true' || enabledRaw === true;
+    const parseDate = (raw, label) => {
+      const v = typeof raw === 'string' ? raw.trim() : '';
+      if (!v) return null;
+      const d = new Date(v);
+      if (Number.isNaN(d.getTime())) { errors.push(`${label} is not a valid date/time.`); return null; }
+      return d;
+    };
+    const saleStartsAt = parseDate(body.saleStartsAt, 'Sale start');
+    const saleEndsAt = parseDate(body.saleEndsAt, 'Sale end');
+    if (saleStartsAt && saleEndsAt && saleEndsAt <= saleStartsAt) errors.push('Sale end must be after the sale start.');
+    const saleBadgeLabel = typeof body.saleBadgeLabel === 'string' ? body.saleBadgeLabel.trim().slice(0, 40) : '';
+    saleFields = { saleEnabled, saleStartsAt, saleEndsAt, saleBadgeLabel: saleBadgeLabel || null };
   }
 
   // GST: blank = use the site default; 0 = exempt; otherwise 0-100.
@@ -85,6 +108,7 @@ function validateCourse(body) {
       instructorId,
       price,
       salePrice,
+      ...saleFields,
       gstRate,
       currency: 'INR', // fixed for now — never accepted from the client
       level,

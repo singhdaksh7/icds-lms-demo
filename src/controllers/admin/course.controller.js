@@ -4,6 +4,15 @@ const { validateCourse, LEVELS, STATUSES } = require('../../validators/course.va
 const { parsePage } = require('../../lib/pagination');
 const imageStorage = require('../../lib/imageStorage');
 
+// <input type="datetime-local"> value for a stored date (server local time).
+function toLocalInput(d) {
+  if (!d) return '';
+  const x = new Date(d);
+  if (Number.isNaN(x.getTime())) return '';
+  const p = (n) => String(n).padStart(2, '0');
+  return `${x.getFullYear()}-${p(x.getMonth() + 1)}-${p(x.getDate())}T${p(x.getHours())}:${p(x.getMinutes())}`;
+}
+
 async function getFormOptions() {
   const [categories, instructors] = await Promise.all([
     prisma.category.findMany({ orderBy: { name: 'asc' } }),
@@ -104,6 +113,11 @@ async function editCourseForm(req, res, next) {
         price: course.price.toString(),
         salePrice: course.salePrice ? course.salePrice.toString() : '',
         gstRate: course.gstRate !== null && course.gstRate !== undefined ? course.gstRate.toString() : '',
+        isFree: Number(course.price) === 0,
+        saleEnabled: course.saleEnabled !== false,
+        saleStartsAt: toLocalInput(course.saleStartsAt),
+        saleEndsAt: toLocalInput(course.saleEndsAt),
+        saleBadgeLabel: course.saleBadgeLabel || '',
       },
     });
   } catch (err) {

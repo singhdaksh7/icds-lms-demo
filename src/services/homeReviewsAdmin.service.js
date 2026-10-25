@@ -38,6 +38,16 @@ async function setFeatured(id, featured) {
   return prisma.courseTestimonial.update({ where: { id }, data: { featuredOnHome: Boolean(featured), homeSortOrder } });
 }
 
+// Explicit numeric position for a featured review (lower = earlier). Ties fall back to id.
+async function setHomeOrder(id, order) {
+  const n = parseInt(order, 10);
+  if (!Number.isInteger(n) || n < 0 || n > 9999) throw new HomeReviewsAdminError('Order must be a whole number between 0 and 9999.');
+  const row = await prisma.courseTestimonial.findUnique({ where: { id } });
+  if (!row) throw new HomeReviewsAdminError('Review not found', 404);
+  if (!row.featuredOnHome) throw new HomeReviewsAdminError('Feature the review on the homepage first.');
+  return prisma.courseTestimonial.update({ where: { id }, data: { homeSortOrder: n } });
+}
+
 // Swap among featured rows, normalising ties first.
 async function moveFeatured(id, direction) {
   if (direction !== 'up' && direction !== 'down') throw new HomeReviewsAdminError('Invalid direction');
@@ -57,4 +67,4 @@ async function moveFeatured(id, direction) {
   });
 }
 
-module.exports = { HomeReviewsAdminError, listGenuineReviews, listDemoReviews, setFeatured, moveFeatured };
+module.exports = { HomeReviewsAdminError, listGenuineReviews, listDemoReviews, setFeatured, setHomeOrder, moveFeatured };

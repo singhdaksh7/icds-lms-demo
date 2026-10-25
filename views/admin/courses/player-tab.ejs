@@ -1,0 +1,63 @@
+<%
+    const ps = playerSettings || {};
+    const checked = (k) => (ps[k] === false ? '' : 'checked');
+    const toggles = [
+        ['showSidebar', 'Show course content sidebar', 'The curriculum panel (modules, topics, lessons) beside the video.'],
+        ['sidebarDefaultOpen', 'Sidebar open by default', 'When off, students start in theater mode (video full width) and can open the content panel.'],
+        ['theaterModeEnabled', 'Allow theater mode', 'Shows the Hide / Show Course Content button on the player.'],
+        ['showCourseProgress', 'Show course progress', 'Overall % complete and the "x of y lessons" count.'],
+        ['showModuleProgress', 'Show module progress', 'Completed / total lessons next to each module.'],
+        ['showLessonDurations', 'Show lesson durations', 'Duration beside each lesson in the sidebar and lesson header.'],
+        ['showCompletedMarks', 'Show completed indicators', 'Green check on lessons the student has finished.'],
+        ['showPrevNext', 'Show Previous / Next buttons', 'Navigation below the player.'],
+        ['showResources', 'Show resources area', 'Downloadable resources under the lesson.'],
+        ['showLessonDescription', 'Show lesson description', 'The description text under the lesson title.'],
+    ];
+%>
+<div class="admin-card">
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-2">
+        <div>
+            <h5 class="mb-1 text-primary"><i class="bi bi-play-btn me-2"></i>Student Player Settings</h5>
+            <p class="small text-muted mb-0">
+                How the learning player looks for <strong><%= course.title %></strong> only. Lessons, progress and completion
+                always come from the real course data &mdash; these settings change presentation, never tracking.
+            </p>
+        </div>
+    </div>
+
+    <form method="POST" action="/admin/courses/<%= course.id %>/player-settings" id="playerSettingsForm" class="mt-3">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <div class="row g-3">
+            <% toggles.forEach(([key, label, help]) => { %>
+                <div class="col-md-6">
+                    <div class="form-check form-switch">
+                        <input type="hidden" name="<%= key %>" value="false">
+                        <input class="form-check-input" type="checkbox" role="switch" name="<%= key %>" id="ps-<%= key %>" value="true" <%= checked(key) %>>
+                        <label class="form-check-label fw-semibold small" for="ps-<%= key %>"><%= label %></label>
+                        <div class="form-text mt-0"><%= help %></div>
+                    </div>
+                </div>
+            <% }); %>
+
+            <div class="col-md-6">
+                <label class="form-label small fw-semibold" for="ps-sidebarTitle">Sidebar title</label>
+                <input type="text" class="form-control form-control-custom" id="ps-sidebarTitle" name="sidebarTitle" maxlength="100" value="<%= ps.sidebarTitle || '' %>" placeholder="Course Content">
+                <div class="form-text">Blank = the default heading.</div>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label small fw-semibold" for="ps-theaterButtonLabel">Theater button label</label>
+                <input type="text" class="form-control form-control-custom" id="ps-theaterButtonLabel" name="theaterButtonLabel" maxlength="60" value="<%= ps.theaterButtonLabel || '' %>" placeholder="Hide Course Content / Show Course Content">
+                <div class="form-text">Blank = &ldquo;Hide Course Content&rdquo; / &ldquo;Show Course Content&rdquo;. A custom label is used for both states.</div>
+            </div>
+        </div>
+
+        <div class="mt-4 pt-3 border-top d-flex flex-wrap gap-2 align-items-center">
+            <button type="submit" class="btn btn-primary px-4"><i class="bi bi-save me-1"></i> Save Player Settings</button>
+        </div>
+    </form>
+
+    <form method="POST" action="/admin/courses/<%= course.id %>/player-settings/reset" class="mt-3" data-confirm="Reset the player to the default settings for this course?">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-arrow-repeat me-1"></i> Reset to Defaults</button>
+    </form>
+</div>

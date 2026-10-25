@@ -185,6 +185,7 @@ async function createCourse(values) {
       instructorId: values.instructorId || null,
       price: values.price,
       salePrice: values.salePrice,
+      ...(values.saleEnabled !== undefined ? { saleEnabled: values.saleEnabled, saleStartsAt: values.saleStartsAt, saleEndsAt: values.saleEndsAt, saleBadgeLabel: values.saleBadgeLabel } : {}),
       gstRate: values.gstRate,
       currency: values.currency,
       level: values.level,
@@ -226,6 +227,8 @@ async function updateCourse(id, values) {
       instructorId: values.instructorId || null,
       price: values.price,
       salePrice: values.salePrice,
+      // Sale window fields are patched only when the form posted them.
+      ...(values.saleEnabled !== undefined ? { saleEnabled: values.saleEnabled, saleStartsAt: values.saleStartsAt, saleEndsAt: values.saleEndsAt, saleBadgeLabel: values.saleBadgeLabel } : {}),
       gstRate: values.gstRate,
       currency: values.currency,
       level: values.level,
@@ -235,6 +238,23 @@ async function updateCourse(id, values) {
       publishedAt: !wasPublished && willBePublished ? new Date() : existing.publishedAt,
     },
   });
+}
+
+// Patch ONLY the regular/sale price of one course (validated like the Admin form).
+// Used by targeted data scripts; touches nothing else on the course.
+async function updateCoursePricing(id, { price, salePrice }) {
+  const { parseAmount } = require('../lib/money');
+  const regular = parseAmount(String(price));
+  if (regular === null) throw new CourseError('Regular price must be a valid amount (0 or more).');
+  let sale = null;
+  if (salePrice !== null && salePrice !== undefined && String(salePrice).trim() !== '') {
+    sale = parseAmount(String(salePrice));
+    if (sale === null) throw new CourseError('Sale price must be a valid amount (0 or more).');
+    if (Number(regular) > 0 && Number(sale) >= Number(regular)) throw new CourseError('Sale price must be lower than the regular price.');
+  }
+  const existing = await prisma.course.findUnique({ where: { id }, select: { id: true } });
+  if (!existing) throw new CourseError('Course not found.');
+  return prisma.course.update({ where: { id }, data: { price: regular, salePrice: sale, saleEnabled: true } });
 }
 
 async function setCourseThumbnail(id, thumbnailUrl) {
@@ -297,6 +317,7 @@ module.exports = {
   listCoursesAdmin,
   getCourseByIdAdmin,
   createCourse,
+  updateCoursePricing,
   updateCourse,
   setCourseThumbnail,
   setCourseStatus,

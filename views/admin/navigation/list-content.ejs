@@ -1,0 +1,59 @@
+<h1 style="font-size:24px;" class="mb-1">Navigation</h1>
+<p class="small text-muted mb-4">Header and footer menus. Rename, reorder, hide or re-point any link. Links to a page that is disabled in <a href="/admin/pages">Pages</a> are hidden automatically. The Courses link keeps its category dropdown in the header.</p>
+
+<% if (usingDefaults) { %>
+    <div class="alert alert-info d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <span>No navigation has been saved yet, so the site is showing the default menu (<%= defaults.map(function (d) { return d.label; }).join(', ') %>). Save it to start editing.</span>
+        <form method="POST" action="/admin/navigation/defaults" class="m-0"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="btn btn-sm btn-primary">Create default menu</button></form>
+    </div>
+<% } %>
+
+<% const disabledPaths = pages.filter(function (p) { return !p.isEnabled; }).map(function (p) { return p.path; }); %>
+<div class="admin-card mb-4">
+    <h5 class="mb-3 text-primary">Menu items</h5>
+    <% if (items.length === 0) { %><p class="text-muted mb-0">No items.</p><% } %>
+    <% items.forEach(function (item, i) { %>
+        <div class="border rounded-3 p-3 mb-3 <%= item.isPublished ? '' : 'bg-light' %>">
+            <form method="POST" action="/admin/navigation/<%= item.id %>/edit" class="row g-2 align-items-end">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <div class="col-md-3"><label class="form-label small fw-semibold mb-1" for="navLabel<%= item.id %>">Label</label><input type="text" class="form-control form-control-sm" id="navLabel<%= item.id %>" name="label" maxlength="60" value="<%= item.label %>" required></div>
+                <div class="col-md-4"><label class="form-label small fw-semibold mb-1" for="navUrl<%= item.id %>">Link</label><input type="text" class="form-control form-control-sm" id="navUrl<%= item.id %>" name="url" maxlength="300" value="<%= item.url %>" required></div>
+                <div class="col-md-2">
+                    <label class="form-label small fw-semibold mb-1" for="navLoc<%= item.id %>">Location</label>
+                    <select class="form-select form-select-sm" id="navLoc<%= item.id %>" name="location">
+                        <% locations.forEach(function (l) { %><option value="<%= l %>" <%= item.location === l ? 'selected' : '' %>><%= locationLabels[l] %></option><% }); %>
+                    </select>
+                </div>
+                <div class="col-md-3 d-flex gap-3 flex-wrap">
+                    <div class="form-check form-switch"><input type="hidden" name="isPublished" value="false"><input class="form-check-input" type="checkbox" name="isPublished" id="navPub<%= item.id %>" value="true" <%= item.isPublished ? 'checked' : '' %>><label class="form-check-label small" for="navPub<%= item.id %>">Visible</label></div>
+                    <div class="form-check form-switch"><input type="hidden" name="openInNewTab" value="false"><input class="form-check-input" type="checkbox" name="openInNewTab" id="navTab<%= item.id %>" value="true" <%= item.openInNewTab ? 'checked' : '' %>><label class="form-check-label small" for="navTab<%= item.id %>">New tab</label></div>
+                </div>
+                <div class="col-12 d-flex gap-2 align-items-center flex-wrap">
+                    <button type="submit" class="btn btn-sm btn-outline-primary">Save</button>
+                    <% if (disabledPaths.indexOf(item.url.split(/[?#]/)[0]) !== -1) { %><span class="badge bg-warning text-dark">Hidden: page is disabled</span><% } %>
+                </div>
+            </form>
+            <div class="d-flex gap-2 mt-2">
+                <form method="POST" action="/admin/navigation/<%= item.id %>/move" class="m-0"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><input type="hidden" name="direction" value="up"><button class="btn btn-sm btn-light border" <%= i === 0 ? 'disabled' : '' %> aria-label="Move up"><i class="bi bi-arrow-up"></i></button></form>
+                <form method="POST" action="/admin/navigation/<%= item.id %>/move" class="m-0"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><input type="hidden" name="direction" value="down"><button class="btn btn-sm btn-light border" <%= i === items.length - 1 ? 'disabled' : '' %> aria-label="Move down"><i class="bi bi-arrow-down"></i></button></form>
+                <form method="POST" action="/admin/navigation/<%= item.id %>/delete" class="m-0 ms-auto" data-confirm="Delete this menu item?"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="btn btn-sm btn-outline-danger">Delete</button></form>
+            </div>
+        </div>
+    <% }); %>
+</div>
+
+<div class="admin-card">
+    <h5 class="mb-3 text-primary">Add a menu item</h5>
+    <form method="POST" action="/admin/navigation" class="row g-2 align-items-end">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <div class="col-md-3"><label class="form-label small fw-semibold mb-1" for="newNavLabel">Label</label><input type="text" class="form-control form-control-sm" id="newNavLabel" name="label" maxlength="60" required></div>
+        <div class="col-md-4"><label class="form-label small fw-semibold mb-1" for="newNavUrl">Link</label><input type="text" class="form-control form-control-sm" id="newNavUrl" name="url" maxlength="300" placeholder="/about or https://example.com" required></div>
+        <div class="col-md-3">
+            <label class="form-label small fw-semibold mb-1" for="newNavLoc">Location</label>
+            <select class="form-select form-select-sm" id="newNavLoc" name="location"><% locations.forEach(function (l) { %><option value="<%= l %>" <%= l === 'BOTH' ? 'selected' : '' %>><%= locationLabels[l] %></option><% }); %></select>
+        </div>
+        <input type="hidden" name="isPublished" value="true">
+        <div class="col-md-2"><button type="submit" class="btn btn-sm btn-primary w-100">Add</button></div>
+        <div class="col-12"><div class="form-text">Internal path starting with <code>/</code> or a full <code>https://</code> URL. Anything else is rejected.</div></div>
+    </form>
+</div>

@@ -1,0 +1,49 @@
+<link rel="stylesheet" href="/css/site-pages.css">
+<%- include('../partials/page-hero', { page }) %>
+
+<section class="section-space sp-reviews">
+    <div class="container">
+        <% if (counts.all > 0 && counts.video > 0 && counts.text > 0) { %>
+            <nav class="sp-chips sp-review-filter" aria-label="Filter reviews">
+                <% [['all', 'All'], ['text', 'Text'], ['video', 'Video']].forEach(function (f) { %>
+                    <a class="sp-chip<%= filter === f[0] ? ' is-active' : '' %>" href="/reviews<%= f[0] === 'all' ? '' : '?type=' + f[0] %>"<% if (filter === f[0]) { %> aria-current="true"<% } %>><%= f[1] %> <span class="sp-chip-count"><%= counts[f[0]] %></span></a>
+                <% }); %>
+            </nav>
+        <% } %>
+
+        <% if (reviews.length === 0) { %>
+            <p class="text-center text-muted">No reviews to show yet.</p>
+        <% } else { %>
+            <div class="sp-review-grid" role="list">
+                <% reviews.forEach(function (r) { %>
+                    <figure class="sp-review-card" role="listitem">
+                        <% if (r.rating > 0) { %>
+                            <div class="sp-stars" role="img" aria-label="Rated <%= r.rating %> out of 5">
+                                <% for (let s = 1; s <= 5; s++) { %><i class="bi <%= s <= r.rating ? 'bi-star-fill' : 'bi-star' %>" aria-hidden="true"></i><% } %>
+                            </div>
+                        <% } %>
+                        <% if (r.hasVideo) { %>
+                            <button type="button" class="sp-review-video" data-testimonial-video data-kind="<%= r.videoKind %>" data-id="<%= r.id %>"<% if (r.embedUrl) { %> data-embed="<%= r.embedUrl %>"<% } %> data-title="<%= r.reviewerName %>" aria-label="Play video review from <%= r.reviewerName %>">
+                                <% if (r.videoThumbnailUrl) { %><img src="<%= r.videoThumbnailUrl %>" alt="" loading="lazy"><% } else { %><span class="sp-review-poster" aria-hidden="true"><i class="bi bi-camera-video"></i></span><% } %>
+                                <span class="sp-review-play" aria-hidden="true"><i class="bi bi-play-fill"></i></span>
+                            </button>
+                        <% } %>
+                        <% if (r.quote) { %><blockquote class="sp-review-quote">&ldquo;<%= r.quote %>&rdquo;</blockquote><% } %>
+                        <figcaption class="sp-review-person">
+                            <% if (r.avatarUrl) { %><img class="sp-avatar" src="<%= r.avatarUrl %>" alt="" loading="lazy" width="48" height="48"><% } else { %><span class="sp-avatar is-initials" aria-hidden="true"><%= r.initials %></span><% } %>
+                            <span class="sp-review-meta">
+                                <strong><%= r.reviewerName %></strong>
+                                <% if (r.reviewerDesignation) { %><span><%= r.reviewerDesignation %></span><% } %>
+                                <% if (r.reviewerLocation) { %><span><i class="bi bi-geo-alt" aria-hidden="true"></i> <%= r.reviewerLocation %></span><% } %>
+                                <% if (r.courseTitle && r.courseSlug) { %><a href="/courses/<%= encodeURIComponent(r.courseSlug) %>"><%= r.courseTitle %></a><% } %>
+                            </span>
+                        </figcaption>
+                    </figure>
+                <% }); %>
+            </div>
+            <% if (reviews.some(function (r) { return r.hasVideo; })) { %><script src="/js/testimonial-player.js" defer></script><% } %>
+        <% } %>
+    </div>
+</section>
+
+<%- include('../partials/page-cta', { page }) %>

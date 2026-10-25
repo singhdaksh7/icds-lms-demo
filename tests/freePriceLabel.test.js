@@ -7,7 +7,7 @@ const ejs = require('ejs');
 
 const VIEWS = path.join(__dirname, '..', 'views');
 const card = (course) =>
-  ejs.renderFile(path.join(VIEWS, 'partials', 'course-card.ejs'), { course, fill: (s) => s, cms: require('../src/services/settings.service').defaultContent() }, { views: [VIEWS] });
+  ejs.renderFile(path.join(VIEWS, 'partials', 'course-card.ejs'), { course, coursePriceOf: require('../src/lib/pricing').getEffectiveCoursePrice, fill: (s) => s, cms: require('../src/services/settings.service').defaultContent() }, { views: [VIEWS] });
 
 const base = { id: 1, slug: 'c', title: 'T', shortDescription: 'd', level: 'ADVANCED', currency: 'INR', thumbnailUrl: null, duration: null, category: null, instructor: null, reviews: [], _count: { lessons: 3 }, salePrice: null };
 
@@ -24,5 +24,6 @@ test('paid course cards are unchanged (rupee price, sale price strike-through)',
   assert.doesNotMatch(paid, /Free/);
   const sale = (await card({ ...base, price: 2000, salePrice: 1500 })).match(/<div class="course-price">([\s\S]*?)<\/div>/)[1];
   assert.match(sale, /₹1,500/);
-  assert.match(sale, /<del>₹2,000<\/del>/);
+  assert.match(sale, /<del[^>]*>₹2,000<\/del>/);
+  assert.match(sale, /25% OFF/); // calculated, not hardcoded
 });

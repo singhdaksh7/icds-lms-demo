@@ -81,10 +81,15 @@
         <div class="course-footer">
 
             <div class="course-price">
-                <% if (Number(course.salePrice || course.price) === 0) { %>Free<% } else { %><%= course.currency === 'INR' ? '₹' : course.currency + ' ' %><%= Number(course.salePrice || course.price).toLocaleString('en-IN') %><% } %>
-
-                <% if (course.salePrice && Number(course.salePrice || course.price) !== 0) { %>
-                    <del><%= course.currency === 'INR' ? '₹' : course.currency + ' ' %><%= Number(course.price).toLocaleString('en-IN') %></del>
+                <% const cardPrice = typeof coursePriceOf === 'function' ? coursePriceOf(course) : null; %>
+                <% if (cardPrice) { %>
+                    <% if (cardPrice.isFree) { %>Free<% } else { %><%= cardPrice.effectiveLabel %><% } %>
+                    <% if (cardPrice.onSale && !cardPrice.isFree) { %>
+                        <del aria-label="Regular price <%= cardPrice.regularLabel %>"><%= cardPrice.regularLabel %></del>
+                        <span class="course-sale-badge"><%= cardPrice.badgeLabel %></span>
+                    <% } %>
+                <% } else { %>
+                    <% if (Number(course.price) === 0) { %>Free<% } else { %><%= course.currency === 'INR' ? '₹' : course.currency + ' ' %><%= Number(course.price).toLocaleString('en-IN') %><% } %>
                 <% } %>
             </div>
 

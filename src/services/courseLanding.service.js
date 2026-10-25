@@ -462,6 +462,10 @@ async function getPublicLandingData(courseId, courseStatsContext = {}, options =
     testimonials: testimonials.map(tv.toPublicTestimonial),
     realReviewCount,
     realAverageRating,
+    // Genuine (published, non-demo) reviews of THIS course only. null => hide the summary.
+    ratingSummary: realReviewCount > 0 && realAverageRating > 0
+      ? { count: realReviewCount, average: Math.round(Number(realAverageRating) * 10) / 10 }
+      : null,
     accessPlans,
     courseStats,
     stats: courseStats,
@@ -976,6 +980,13 @@ async function moveHighlight(courseId, highlightId, direction) {
 // 8. Reviews / Testimonials
 // ============================================================================
 
+// Blank / non-numeric => undefined (field left unchanged on update).
+function toIntOrUndefined(value) {
+  if (value === undefined || value === null || String(value).trim() === '') return undefined;
+  const n = parseInt(value, 10);
+  return Number.isFinite(n) ? Math.max(0, Math.min(100000, n)) : undefined;
+}
+
 function cleanInitials(initials, reviewerName) {
   const raw = initials ? String(initials).trim().slice(0, 10) : '';
   return raw || String(reviewerName).trim().split(/\s+/).map((w) => w[0]).join('').slice(0, 3).toUpperCase() || null;
@@ -1039,6 +1050,9 @@ async function addTestimonial(courseId, input) {
       sortOrder: Number(sortOrder) || count * 10 + 10,
       isPublished: cleanBoolValue(isPublished),
       isDemo: cleanBoolValue(isDemo),
+      // Homepage selection is explicit: a review never reaches the homepage unless an admin ticks it.
+      featuredOnHome: input.featuredOnHome === undefined ? false : cleanBoolValue(input.featuredOnHome),
+      homeSortOrder: toIntOrUndefined(input.homeSortOrder) ?? 0,
     },
   });
 }
@@ -1073,6 +1087,9 @@ async function updateTestimonial(courseId, testimonialId, input) {
       ...(initials !== undefined ? { initials: initials ? String(initials).trim().slice(0, 10) : null } : {}),
       ...(isPublished !== undefined ? { isPublished: cleanBoolValue(isPublished) } : {}),
       ...(isDemo !== undefined ? { isDemo: cleanBoolValue(isDemo) } : {}),
+      ...(input.featuredOnHome !== undefined ? { featuredOnHome: cleanBoolValue(input.featuredOnHome) } : {}),
+      ...(toIntOrUndefined(input.homeSortOrder) !== undefined ? { homeSortOrder: toIntOrUndefined(input.homeSortOrder) } : {}),
+      ...(toIntOrUndefined(input.sortOrder) !== undefined ? { sortOrder: toIntOrUndefined(input.sortOrder) } : {}),
     },
   });
   // Tell the caller which stored files are no longer referenced so it can delete them.
