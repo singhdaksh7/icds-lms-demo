@@ -1343,9 +1343,11 @@
         }
 
         .newsletter-box {
+            /* Warm theme: charcoal with amber glows (was an amber -> blue-violet gradient). */
             background:
-                radial-gradient(circle at 85% 20%, rgba(255,255,255,.16), transparent 20%),
-                linear-gradient(135deg, var(--primary-color), #4448b8);
+                radial-gradient(circle at 88% 12%, rgba(245, 158, 11, .32), transparent 38%),
+                radial-gradient(circle at 8% 100%, rgba(234, 88, 12, .22), transparent 42%),
+                linear-gradient(135deg, #0b1325 0%, #17120a 100%);
             color: #fff;
             border-radius: 30px;
             padding: 60px;
@@ -1358,7 +1360,7 @@
             position: absolute;
             width: 250px;
             height: 250px;
-            border: 1px solid rgba(255,255,255,.13);
+            border: 1px solid rgba(245, 158, 11, .25);
             border-radius: 50%;
             right: -80px;
             bottom: -100px;
@@ -1395,10 +1397,44 @@
         .newsletter-form button {
             border: 0;
             border-radius: 8px;
-            padding: 13px 20px;
-            background: var(--secondary-color);
-            color: #fff;
-            font-weight: 700;
+            padding: 13px 22px;
+            background: linear-gradient(135deg, var(--accent-orange) 0%, var(--accent-amber) 100%);
+            color: var(--cta-ink);
+            font-weight: 800;
+            box-shadow: 0 6px 16px rgba(234, 88, 12, .30);
+            transition: transform .2s ease, box-shadow .2s ease, filter .2s ease;
+            cursor: pointer;
+        }
+
+        .newsletter-form button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 10px 22px rgba(234, 88, 12, .40);
+            filter: saturate(1.08);
+        }
+
+        .newsletter-form button:focus-visible {
+            outline: 3px solid var(--cta-ink);
+            outline-offset: 2px;
+        }
+
+        /* "STAY UPDATED" tag: always readable on the dark box, whatever colour an admin applies to its text. */
+        .newsletter-box .section-tag,
+        .newsletter-box .section-tag.text-white-50 {
+            background: rgba(245, 158, 11, .18);
+            border: 1px solid rgba(245, 158, 11, .5);
+            color: #fff !important;
+        }
+
+        .newsletter-box .section-tag::before {
+            background: var(--accent-amber);
+        }
+
+        .newsletter-box .section-tag span {
+            color: #fff !important;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .newsletter-form button { transition: none; }
         }
 
         .main-footer {
