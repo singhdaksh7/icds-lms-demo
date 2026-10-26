@@ -40,3 +40,4 @@ icds-lms-demo/
 scripts/seed-local-preview-banners-and-settings.js
 scripts/test-admin-persistence-qa.js
 
+shots/
