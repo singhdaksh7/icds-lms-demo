@@ -13,7 +13,7 @@ const PAGE_META = Object.freeze({
   about: { slug: 'about', label: 'About', path: '/about', hasSections: true, description: 'Who you are, your mission and learning approach.' },
   faq: { slug: 'faq', label: 'FAQ', path: '/faq', hasSections: false, description: 'Questions and answers are managed in Admin > FAQs.' },
   reviews: { slug: 'reviews', label: 'Reviews', path: '/reviews', hasSections: false, description: 'Genuine published testimonials; manage them per course.' },
-  contact: { slug: 'contact', label: 'Contact', path: '/contact', hasSections: false, description: 'Contact details come from Site Content > Brand & Global; form labels from Site Content > Contact.' },
+  contact: { slug: 'contact', label: 'Contact', path: '/contact', hasSections: false, description: 'Hero, closing call-to-action and SEO are edited here. Email, phone, WhatsApp, address, business hours and map link: Site Content > Brand & Global. Cards, form copy, reason options and FAQ preview text: Site Content > Contact. Enquiries: Contact Enquiries.' },
 });
 const PAGE_SLUGS = Object.keys(PAGE_META);
 
@@ -64,8 +64,9 @@ function starterDefaults(slug, cms = null) {
   if (slug === 'reviews') {
     return { ...base, eyebrow: 'Learner stories', heading: 'What our learners say', ctaLabel: 'Explore Courses', ctaUrl: '/courses', ctaHeading: 'Start your own journey' };
   }
-  // contact: heading/intro/labels come from Site Content (cms.contactPage).
-  return { ...base };
+  // contact: heading/intro/labels come from Site Content (cms.contactPage); the hero eyebrow
+  // and closing CTA below are just first-render starters (editable, persisted by the initializer).
+  return { ...base, eyebrow: 'Get in touch', ctaHeading: 'Still deciding which course is right for you?', ctaText: 'Browse our courses, or talk to the team - we are happy to help you choose.', ctaLabel: 'Explore Courses', ctaUrl: '/courses' };
 }
 
 function starterSections(slug, cms = null) {

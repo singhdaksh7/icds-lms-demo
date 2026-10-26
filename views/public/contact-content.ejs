@@ -1,80 +1,220 @@
-<% const cp = cms.contactPage; %>
-<% const sp = (typeof sitePage !== 'undefined' && sitePage) ? sitePage : null; %>
-<% const pageHeading = (sp && sp.heading) || cp.heading; %>
-<% const pageIntro = (sp && sp.intro) || cp.intro; %>
-<% const hasContactInfo = Boolean(site.contactEmail || site.contactPhone || site.address); %>
-<section class="section-space">
-    <div class="container" style="max-width:<%= hasContactInfo ? '1000px' : '760px' %>">
+<%
+    // Everything below comes from the database: SitePage('contact') for the hero/CTA/SEO,
+    // Site Content (cms.contactPage / site contact settings) for cards, form copy and labels.
+    const cp = cms.contactPage;
+    // Locals supplied by the controller (safe defaults keep direct renders working).
+    const waHref = typeof whatsappHref !== 'undefined' ? whatsappHref : '';
+    const courseList = typeof courses !== 'undefined' ? courses : [];
+    const reasonList = typeof reasons !== 'undefined' ? reasons : [];
+    const selId = typeof selectedCourseId !== 'undefined' ? selectedCourseId : '';
+    const wasSent = typeof sent !== 'undefined' && sent;
+    const sp = (typeof sitePage !== 'undefined' && sitePage) ? sitePage : null;
+    const pageHeading = (sp && sp.heading) || cp.heading;
+    const pageIntro = (sp && sp.intro) || cp.intro;
+    const highlight = cp.heroHighlight || '';
+    const heroImage = sp && sp.heroImageUrl;
+    const contactCards = typeof cards !== 'undefined' ? cards : [];
+    const hasAside = Boolean(waHref);
+    const faqList = typeof faqs !== 'undefined' ? faqs : [];
+    const hasPrimaryCta = Boolean(sp && sp.ctaLabel && sp.ctaUrl);
+    const hasSecondaryCta = Boolean(cp.ctaSecondaryLabel);
+    const showCta = Boolean(sp && (sp.ctaHeading || sp.ctaText)) || hasPrimaryCta || hasSecondaryCta;
+    const has = (k) => values && values[k] !== undefined && values[k] !== null && values[k] !== '';
+%>
+<link rel="stylesheet" href="/css/site-pages.css">
+<link rel="stylesheet" href="/css/contact-page.css">
 
-        <% if (sp && sp.eyebrow) { %><div class="section-tag"><%= sp.eyebrow %></div><% } %>
-        <h1 class="section-title"><%= pageHeading %></h1>
-        <% if (pageIntro) { %><p class="section-description"><%= pageIntro %></p><% } %>
-
-        <div class="row g-4 g-lg-5 mt-1">
-
-            <div class="<%= hasContactInfo ? 'col-lg-7' : 'col-12' %>">
-
-                <% if (cp.formHeading) { %><h2 class="h5 mb-3"><%= cp.formHeading %></h2><% } %>
-
-                <% if (errors.length) { %><div class="alert alert-danger"><%= errors.join(' ') %></div><% } %>
-
-                <form method="POST" action="/contact">
-                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-
-                    <div class="mb-3">
-                        <label class="form-label small fw-semibold" for="contact-name"><%= cp.nameLabel %></label>
-                        <input class="form-control" id="contact-name" name="name" placeholder="<%= cp.nameLabel %>" required value="<%= values.name || '' %>">
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label small fw-semibold" for="contact-email"><%= cp.emailLabel %></label>
-                        <input class="form-control" id="contact-email" type="email" name="email" placeholder="<%= cp.emailLabel %>" required value="<%= values.email || '' %>">
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label small fw-semibold" for="contact-subject"><%= cp.subjectLabel %></label>
-                        <input class="form-control" id="contact-subject" name="subject" placeholder="<%= cp.subjectLabel %>" required value="<%= values.subject || '' %>">
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label small fw-semibold" for="contact-message"><%= cp.messageLabel %></label>
-                        <textarea class="form-control" id="contact-message" name="message" rows="6" maxlength="5000" placeholder="<%= cp.messageLabel %>" required><%= values.message || '' %></textarea>
-                    </div>
-
-                    <button class="auth-submit"><%= cp.submitLabel %></button>
-                </form>
-
+<!-- HERO -->
+<section class="ct-hero">
+    <div class="ct-glow" aria-hidden="true"></div>
+    <div class="container">
+        <div class="ct-hero-grid<%= heroImage ? ' has-image' : '' %>">
+            <div class="ct-hero-copy">
+                <% if (sp && sp.eyebrow) { %><div class="section-tag ct-eyebrow"><%= sp.eyebrow %></div><% } %>
+                <h1 class="ct-title">
+                    <% if (highlight && pageHeading.indexOf(highlight) !== -1) { %>
+                        <%= pageHeading.slice(0, pageHeading.indexOf(highlight)) %><em class="ct-accent"><%= highlight %></em><%= pageHeading.slice(pageHeading.indexOf(highlight) + highlight.length) %>
+                    <% } else { %>
+                        <%= pageHeading %><% if (highlight) { %> <em class="ct-accent"><%= highlight %></em><% } %>
+                    <% } %>
+                </h1>
+                <% if (pageIntro) { %><p class="ct-intro"><%= pageIntro %></p><% } %>
+                <% if (cp.supportNote) { %><p class="ct-note"><i class="bi bi-stars" aria-hidden="true"></i> <span><%= cp.supportNote %></span></p><% } %>
+                <% if (waHref) { %>
+                    <a class="ct-btn ct-btn-wa" href="<%= waHref %>" target="_blank" rel="noopener noreferrer" data-wa-link data-wa-default="<%= site.name %>"><i class="bi bi-whatsapp" aria-hidden="true"></i> <%= cp.whatsappButtonLabel %></a>
+                <% } %>
             </div>
-
-            <% if (hasContactInfo) { %>
-                <div class="col-lg-5">
-                    <div class="contact-info-card">
-                        <h2 class="h5 mb-3"><%= cp.infoHeading %></h2>
-                        <ul class="list-unstyled mb-0">
-                            <% if (site.contactEmail) { %>
-                                <li class="d-flex gap-3 mb-3">
-                                    <i class="bi bi-envelope fs-5" style="color:#565acf;"></i>
-                                    <a href="mailto:<%= site.contactEmail %>" class="text-decoration-none text-break"><%= site.contactEmail %></a>
-                                </li>
-                            <% } %>
-                            <% if (site.contactPhone) { %>
-                                <li class="d-flex gap-3 mb-3">
-                                    <i class="bi bi-telephone fs-5" style="color:#565acf;"></i>
-                                    <a href="<%= site.phoneHref %>" class="text-decoration-none"><%= site.contactPhone %></a>
-                                </li>
-                            <% } %>
-                            <% if (site.address) { %>
-                                <li class="d-flex gap-3">
-                                    <i class="bi bi-geo-alt fs-5" style="color:#565acf;"></i>
-                                    <span style="white-space:pre-line;"><%= site.address %></span>
-                                </li>
-                            <% } %>
-                        </ul>
-                    </div>
-                </div>
+            <% if (heroImage) { %>
+                <div class="ct-hero-media"><img src="<%= heroImage %>" alt="" loading="eager" data-fallback-src="/assets/images/hero-placeholder.svg"></div>
             <% } %>
-
         </div>
-
     </div>
 </section>
+
+<!-- CONTACT CARDS (only values that exist) -->
+<% if (contactCards.length) { %>
+<section class="ct-cards-section" aria-labelledby="ct-info-heading">
+    <div class="container">
+        <h2 id="ct-info-heading" class="ct-section-label"><%= cp.infoHeading %></h2>
+        <div class="ct-cards">
+            <% contactCards.forEach(function (card) { %>
+                <article class="ct-card ct-card-<%= card.key %>">
+                    <span class="ct-card-icon" aria-hidden="true"><i class="bi <%= card.icon %>"></i></span>
+                    <div class="ct-card-body">
+                        <div class="ct-card-label"><%= card.label %></div>
+                        <% if (card.href) { %>
+                            <a class="ct-card-value" href="<%= card.href %>"<% if (card.external) { %> target="_blank" rel="noopener noreferrer" data-wa-link data-wa-default="<%= site.name %>"<% } %>><%= card.value %></a>
+                        <% } else { %>
+                            <div class="ct-card-value<%= card.multiline ? ' ct-pre' : '' %>"><%= card.value %></div>
+                        <% } %>
+                        <% if (card.note) { %><div class="ct-card-note"><%= card.note %></div><% } %>
+                        <% if (card.mapHref) { %>
+                            <a class="ct-card-link" href="<%= card.mapHref %>" target="_blank" rel="noopener noreferrer"><%= card.mapLabel %> <i class="bi bi-arrow-up-right" aria-hidden="true"></i></a>
+                        <% } %>
+                    </div>
+                </article>
+            <% }); %>
+        </div>
+    </div>
+</section>
+<% } %>
+
+<!-- FORM -->
+<section class="ct-form-section" id="contact-form">
+    <div class="container">
+        <div class="ct-form-grid<%= hasAside ? ' has-aside' : '' %>">
+            <div class="ct-form-card">
+                <% if (cp.formHeading) { %><h2 class="ct-form-title"><%= cp.formHeading %></h2><% } %>
+                <% if (cp.formDescription) { %><p class="ct-form-desc"><%= cp.formDescription %></p><% } %>
+
+                <!-- Live region: server-side result or client-side validation messages -->
+                <div id="contact-feedback" class="ct-feedback" role="status" aria-live="polite" aria-atomic="true">
+                    <% if (wasSent) { %>
+                        <div class="ct-alert ct-alert-ok"><i class="bi bi-check-circle-fill" aria-hidden="true"></i> <span><%= cp.successMessage %></span></div>
+                    <% } %>
+                    <% if (errors.length) { %>
+                        <div class="ct-alert ct-alert-err" role="alert"><i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i>
+                            <ul><% errors.forEach(function (e) { %><li><%= e %></li><% }) %></ul>
+                        </div>
+                    <% } %>
+                </div>
+
+                <form method="POST" action="/contact" id="contact-form-el" class="ct-form" data-contact-form>
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                    <div class="ct-hp" aria-hidden="true">
+                        <label>Leave this field empty<input type="text" name="website" tabindex="-1" autocomplete="off"></label>
+                    </div>
+
+                    <div class="ct-row">
+                        <div class="ct-field">
+                            <label for="contact-name"><%= cp.nameLabel %> <span class="ct-req" aria-hidden="true">*</span></label>
+                            <input id="contact-name" name="name" type="text" required minlength="2" maxlength="120" autocomplete="name" value="<%= values.name || '' %>" aria-describedby="err-name">
+                            <div class="ct-err" id="err-name" data-error-for="contact-name"></div>
+                        </div>
+                        <div class="ct-field">
+                            <label for="contact-email"><%= cp.emailLabel %> <span class="ct-req" aria-hidden="true">*</span></label>
+                            <input id="contact-email" name="email" type="email" required maxlength="254" autocomplete="email" value="<%= values.email || '' %>" aria-describedby="err-email">
+                            <div class="ct-err" id="err-email" data-error-for="contact-email"></div>
+                        </div>
+                    </div>
+
+                    <div class="ct-row">
+                        <div class="ct-field">
+                            <label for="contact-phone"><%= cp.phoneLabel %></label>
+                            <input id="contact-phone" name="phone" type="tel" inputmode="tel" maxlength="30" pattern="[0-9+()\-.\s]{5,30}" autocomplete="tel" value="<%= values.phone || '' %>" aria-describedby="err-phone">
+                            <div class="ct-err" id="err-phone" data-error-for="contact-phone"></div>
+                        </div>
+                        <% if (reasonList.length) { %>
+                            <div class="ct-field">
+                                <label for="contact-reason"><%= cp.reasonLabel %> <span class="ct-req" aria-hidden="true">*</span></label>
+                                <select id="contact-reason" name="reason" required aria-describedby="err-reason">
+                                    <option value="" <%= has('reason') ? '' : 'selected' %> disabled>Select&hellip;</option>
+                                    <% reasonList.forEach(function (r) { %><option value="<%= r %>" <%= values.reason === r ? 'selected' : '' %>><%= r %></option><% }) %>
+                                </select>
+                                <div class="ct-err" id="err-reason" data-error-for="contact-reason"></div>
+                            </div>
+                        <% } %>
+                    </div>
+
+                    <% if (courseList.length) { %>
+                        <div class="ct-field">
+                            <label for="contact-course"><%= cp.courseLabel %></label>
+                            <select id="contact-course" name="courseId" data-course-select>
+                                <option value="">&mdash;</option>
+                                <% courseList.forEach(function (c) { %><option value="<%= c.id %>" data-title="<%= c.title %>" <%= String(selId) === String(c.id) ? 'selected' : '' %>><%= c.title %></option><% }) %>
+                            </select>
+                        </div>
+                    <% } %>
+
+                    <div class="ct-field">
+                        <label for="contact-subject"><%= cp.subjectLabel %></label>
+                        <input id="contact-subject" name="subject" type="text" maxlength="180" value="<%= values.subject || '' %>" aria-describedby="err-subject">
+                        <div class="ct-err" id="err-subject" data-error-for="contact-subject"></div>
+                    </div>
+
+                    <div class="ct-field">
+                        <label for="contact-message"><%= cp.messageLabel %> <span class="ct-req" aria-hidden="true">*</span></label>
+                        <textarea id="contact-message" name="message" rows="6" required minlength="10" maxlength="5000" aria-describedby="err-message contact-count"><%= values.message || '' %></textarea>
+                        <div class="ct-meta"><div class="ct-err" id="err-message" data-error-for="contact-message"></div><span class="ct-count" id="contact-count" aria-hidden="true">0 / 5000</span></div>
+                    </div>
+
+                    <p class="ct-required-note"><span class="ct-req" aria-hidden="true">*</span> Required</p>
+                    <button type="submit" class="ct-btn ct-btn-primary" data-submit><%= cp.submitLabel %> <i class="bi bi-arrow-right" aria-hidden="true"></i></button>
+                </form>
+            </div>
+
+            <% if (hasAside) { %>
+                <aside class="ct-aside" aria-label="<%= cp.whatsappCardLabel %>">
+                    <div class="ct-wa-card">
+                        <span class="ct-card-icon ct-card-icon-wa" aria-hidden="true"><i class="bi bi-whatsapp"></i></span>
+                        <div class="ct-card-label"><%= cp.whatsappCardLabel %></div>
+                        <% if (cp.whatsappCardNote) { %><p><%= cp.whatsappCardNote %></p><% } %>
+                        <a class="ct-btn ct-btn-wa" href="<%= waHref %>" target="_blank" rel="noopener noreferrer" data-wa-link data-wa-default="<%= site.name %>"><i class="bi bi-whatsapp" aria-hidden="true"></i> <%= cp.whatsappButtonLabel %></a>
+                    </div>
+                </aside>
+            <% } %>
+        </div>
+    </div>
+</section>
+
+<!-- FAQ PREVIEW (global published FAQs; no copies) -->
+<% if (cp.faqEnabled && faqList.length) { %>
+<section class="ct-faq-section" aria-labelledby="ct-faq-heading">
+    <div class="container">
+        <div class="ct-faq-wrap">
+            <% if (cp.faqHeading) { %><h2 id="ct-faq-heading" class="ct-faq-title"><%= cp.faqHeading %></h2><% } %>
+            <div class="ct-faq-list">
+                <% faqList.forEach(function (f) { %>
+                    <details class="ct-faq-item">
+                        <summary><span><%= f.question %></span><i class="bi bi-chevron-down" aria-hidden="true"></i></summary>
+                        <div class="ct-faq-answer"><%= f.answer %></div>
+                    </details>
+                <% }) %>
+            </div>
+            <a class="ct-faq-all" href="/faq"><%= cp.faqLinkLabel %> <i class="bi bi-arrow-right" aria-hidden="true"></i></a>
+        </div>
+    </div>
+</section>
+<% } %>
+
+<!-- CLOSING CTA -->
+<% if (showCta) { %>
+<section class="ct-cta-section">
+    <div class="container">
+        <div class="ct-cta">
+            <% if (sp && sp.ctaHeading) { %><h2><%= sp.ctaHeading %></h2><% } %>
+            <% if (sp && sp.ctaText) { %><p><%= sp.ctaText %></p><% } %>
+            <div class="ct-cta-actions">
+                <% if (hasPrimaryCta) { %>
+                    <a class="ct-btn ct-btn-light" href="<%= sp.ctaUrl %>"<% if (/^https:\/\//i.test(sp.ctaUrl)) { %> target="_blank" rel="noopener noreferrer"<% } %>><%= sp.ctaLabel %> <i class="bi bi-arrow-right" aria-hidden="true"></i></a>
+                <% } %>
+                <% if (hasSecondaryCta) { %>
+                    <a class="ct-btn ct-btn-ghost" href="#contact-form"><%= cp.ctaSecondaryLabel %></a>
+                <% } %>
+            </div>
+        </div>
+    </div>
+</section>
+<% } %>
+
+<script src="/js/contact-page.js" defer></script>

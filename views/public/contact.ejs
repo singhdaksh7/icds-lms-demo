@@ -1,1 +1,16 @@
-<%- include('../layouts/main', { pageTitle, metaDescription, contentView: '../public/contact-content', errors, values, sitePage: typeof sitePage !== 'undefined' ? sitePage : null }) %>
+<%- include('../layouts/main', {
+    pageTitle,
+    metaDescription,
+    contentView: '../public/contact-content',
+    errors,
+    values,
+    sent: typeof sent !== 'undefined' ? sent : false,
+    sitePage: typeof sitePage !== 'undefined' ? sitePage : null,
+    courses: typeof courses !== 'undefined' ? courses : [],
+    reasons: typeof reasons !== 'undefined' ? reasons : [],
+    selectedCourseId: typeof selectedCourseId !== 'undefined' ? selectedCourseId : '',
+    selectedCourseTitle: typeof selectedCourseTitle !== 'undefined' ? selectedCourseTitle : '',
+    cards: typeof cards !== 'undefined' ? cards : [],
+    whatsappHref: typeof whatsappHref !== 'undefined' ? whatsappHref : '',
+    faqs: typeof faqs !== 'undefined' ? faqs : [],
+}) %>

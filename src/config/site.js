@@ -39,6 +39,7 @@ const envDefaults = {
   contactEmail: site.contactEmail,
   contactPhone: site.contactPhone,
   address: site.address,
+  whatsappNumber: site.whatsappNumber,
 };
 const copyrightFromEnv = Boolean(process.env.COPYRIGHT_NAME);
 
@@ -61,11 +62,22 @@ site.applyOverrides = function applyOverrides(overrides = {}) {
   site.supportEmail = pick(overrides.supportEmail, '') || emailOverride || envDefaults.supportEmail;
   site.contactPhone = pick(overrides.phone, envDefaults.contactPhone);
   site.address = pick(overrides.address, envDefaults.address);
+  // WhatsApp / business hours / map link are Admin-managed (env WHATSAPP_NUMBER stays the fallback).
+  const waDigits = digits(pick(overrides.whatsapp, '') || envDefaults.whatsappNumber);
+  site.whatsappNumber = waDigits.length >= 8 && waDigits.length <= 15 ? waDigits : '';
+  site.whatsappHref = site.whatsappNumber ? `https://wa.me/${site.whatsappNumber}` : '';
+  site.whatsappDisplay = site.whatsappNumber ? (pick(overrides.whatsapp, '') || `+${site.whatsappNumber}`) : '';
+  site.businessHours = pick(overrides.hours, '');
+  const map = pick(overrides.mapUrl, '');
+  site.mapUrl = /^https:\/\/[^\s"'<>]+$/i.test(map) ? map : '';
   site.seoTitle = pick(overrides.seoTitle, '');
   site.seoDescription = pick(overrides.seoDescription, '');
   site.phoneHref = site.contactPhone ? `tel:${digits(site.contactPhone)}` : '';
 };
 
+site.businessHours = '';
+site.whatsappDisplay = site.whatsappNumber ? `+${site.whatsappNumber}` : '';
+site.mapUrl = '';
 site.shortName = '';
 site.seoTitle = '';
 site.seoDescription = '';

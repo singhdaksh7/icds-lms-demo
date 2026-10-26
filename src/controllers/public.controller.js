@@ -1,11 +1,13 @@
 const { prisma } = require('../config/db');
 const { getSettings } = require('../services/settings.service');
 const { parseLegalText, formatLegalDate } = require('../lib/legalText');
-const { validateContact, validateNewsletter } = require('../validators/contact.validator');
+const { validateNewsletter } = require('../validators/contact.validator');
 const site = require('../config/site');
 const { buildSeo, pageSeoText, PUBLIC_ROBOTS, DEFAULT_ROBOTS } = require('../lib/seo');
 const emailService = require('../services/email.service');
 const sitePages = require('../services/sitePages.service');
+const contactEnquiries = require('../services/contactEnquiry.service');
+const faqService = require('../services/faq.service');
 
 function contactSeo(res) {
   return pageSeoText(res.locals.settings, 'contact', {
@@ -14,50 +16,109 @@ function contactSeo(res) {
   });
 }
 
-// The Contact page's on/off switch, eyebrow, heading/intro overrides and SEO come
-// from the CMS SitePage('contact'); the form labels / success text stay in Site
-// Content. A disabled page is a normal 404 (GET and POST).
-async function contactView(res, errors, values) {
+// The Contact page is CMS-driven end to end:
+//   - on/off switch, eyebrow, heading/description overrides, hero image, closing CTA and SEO
+//     come from the SitePage('contact') row (Admin > Pages > Contact);
+//   - contact details (email, phone, WhatsApp, address, hours, map link) come from Site Content
+//     > Brand & Global; every label, the form copy, reason options and FAQ-preview text come
+//     from Site Content > Contact. Cards render only for values that exist.
+// A disabled page is a normal 404 (GET and POST).
+async function contactView(req, res, { errors = [], values = {}, sent = false } = {}) {
   const data = await sitePages.getPublicPage('contact', res.locals.cms);
   if (!data) return null;
+  const cms = res.locals.cms;
+  const cp = cms.contactPage;
   const base = contactSeo(res);
   const title = data.page.seoTitle || base.title;
   const description = data.page.metaDescription || base.description;
-  return { pageTitle: title, metaDescription: description, title, description, sitePage: data.page, errors, values };
+
+  const [courses, allFaqs] = await Promise.all([
+    contactEnquiries.listPublishedCourses(),
+    cp.faqEnabled ? faqService.listActiveFaqs().catch(() => []) : Promise.resolve([]),
+  ]);
+  const reasons = contactEnquiries.parseReasonOptions(cp.reasonOptions);
+  // A submitted (re-rendered) form keeps its own choice; otherwise ?course=<slug> preselects a
+  // PUBLISHED course. Drafts / unknown slugs are ignored.
+  const selected = values.courseId
+    ? courses.find((c) => c.id === values.courseId) || null
+    : contactEnquiries.resolveCourseBySlug(courses, req.query && req.query.course);
+  const cards = contactEnquiries.buildContactCards(cms, site, selected ? selected.title : '');
+  const whatsappHref = contactEnquiries.whatsappLink(site.whatsappNumber, selected ? selected.title : '');
+
+  return {
+    pageTitle: title,
+    metaDescription: description,
+    title,
+    description,
+    sitePage: data.page,
+    errors,
+    values,
+    sent,
+    courses,
+    reasons,
+    selectedCourseId: selected ? selected.id : '',
+    selectedCourseTitle: selected ? selected.title : '',
+    cards,
+    whatsappHref,
+    faqs: (allFaqs || []).slice(0, 5),
+  };
+}
+
+function renderContact(req, res, view, status = 200) {
+  return res.status(status).render('public/contact', {
+    ...view,
+    seo: buildSeo(req, { title: view.title, description: view.description, robots: PUBLIC_ROBOTS }),
+  });
 }
 
 async function contactPage(req, res, next) {
   try {
-    const view = await contactView(res, [], {});
+    // Inline success panel (read-once flash from the POST below); the header alert is suppressed
+    // so the visitor sees one clear confirmation next to the form.
+    const sent = Boolean(res.locals.flash && res.locals.flash.success);
+    if (sent) res.locals.flash = { ...res.locals.flash, success: null };
+    const view = await contactView(req, res, { sent });
     if (!view) return res.status(404).render('public/404', { pageTitle: 'Page Not Found' });
-    res.render('public/contact', { ...view, seo: buildSeo(req, { title: view.title, description: view.description, robots: PUBLIC_ROBOTS }) });
+    renderContact(req, res, view);
   } catch (err) {
     next(err);
   }
 }
 
 async function postContact(req, res, next) {
-  const { errors, values } = validateContact(req.body);
-  if (errors.length) {
-    try {
-      const view = await contactView(res, errors, values);
-      if (!view) return res.status(404).render('public/404', { pageTitle: 'Page Not Found' });
-      return res.status(400).render('public/contact', { ...view, seo: buildSeo(req, { title: view.title, description: view.description, robots: PUBLIC_ROBOTS }) });
-    } catch (err) {
-      return next(err);
-    }
-  }
   try {
     if (!(await sitePages.isPageEnabled('contact'))) return res.status(404).render('public/404', { pageTitle: 'Page Not Found' });
-    await prisma.contactMessage.create({ data: values });
+
+    const [courses] = await Promise.all([contactEnquiries.listPublishedCourses()]);
+    const reasons = contactEnquiries.parseReasonOptions(res.locals.cms.contactPage.reasonOptions);
+    const { errors, values, spam } = contactEnquiries.validateEnquiry(req.body, { reasons, courses });
+
+    // Spam (honeypot filled, link floods, markup) is never stored and never claimed as sent.
+    if (spam || errors.length) {
+      const shown = spam ? ['We could not send your message. Please check what you entered and try again.'] : errors;
+      const view = await contactView(req, res, { errors: shown, values });
+      if (!view) return res.status(404).render('public/404', { pageTitle: 'Page Not Found' });
+      return renderContact(req, res, view, 400);
+    }
+
+    let saved;
+    try {
+      saved = await contactEnquiries.createEnquiry(values);
+    } catch (_err) {
+      // Never fake success: if the enquiry could not be stored, say so.
+      const view = await contactView(req, res, { errors: ['Sorry, we could not save your message right now. Please try again in a moment or use the contact details on this page.'], values });
+      if (!view) return res.status(404).render('public/404', { pageTitle: 'Page Not Found' });
+      return renderContact(req, res, view, 503);
+    }
+
     req.flashSuccess(res.locals.cms.contactPage.successMessage);
-    res.redirect('/contact');
-    // Fire-and-forget: DB persistence above is the source of truth, so a
-    // failed/unconfigured notification email must never affect the
-    // response already sent to the visitor.
-    emailService.sendContactNotification(values).catch(() => {});
-  } catch (e) {
-    next(e);
+    res.redirect('/contact#contact-form');
+    // Fire-and-forget: the stored enquiry is the source of truth, so a failed or unconfigured
+    // notification email must never affect the response already sent to the visitor.
+    const course = courses.find((c) => c.id === saved.courseId);
+    emailService.sendContactNotification({ ...values, courseTitle: course ? course.title : '' }).catch(() => {});
+  } catch (err) {
+    next(err);
   }
 }
 

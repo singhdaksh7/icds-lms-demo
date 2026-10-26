@@ -128,14 +128,20 @@ function smtpTest() {
   return { subject: `${site.name}: test email`, html, text: `This is a test message from ${site.name}. Your SMTP settings work.` };
 }
 
-function contactNotification({ name, email, subject, message }) {
+function contactNotification({ name, email, subject, message, phone = '', reason = '', courseTitle = '' }) {
+  const extra = [
+    phone ? `<p style="font-size:14px;color:#57596c;margin:0 0 4px;"><strong>Phone:</strong> ${escapeHtml(phone)}</p>` : '',
+    reason ? `<p style="font-size:14px;color:#57596c;margin:0 0 4px;"><strong>Reason:</strong> ${escapeHtml(reason)}</p>` : '',
+    courseTitle ? `<p style="font-size:14px;color:#57596c;margin:0 0 4px;"><strong>Interested course:</strong> ${escapeHtml(courseTitle)}</p>` : '',
+  ].join('');
   const html = shell(`
     <h1 style="font-size:20px;margin:0 0 12px;">New contact message</h1>
     <p style="font-size:14px;color:#57596c;margin:0 0 4px;"><strong>From:</strong> ${escapeHtml(name)} (${escapeHtml(email)})</p>
+    ${extra}
     <p style="font-size:14px;color:#57596c;margin:0 0 12px;"><strong>Subject:</strong> ${escapeHtml(subject)}</p>
     <p style="font-size:14px;line-height:1.6;color:#15162b;white-space:pre-line;border-top:1px solid #e8e8f2;padding-top:12px;">${escapeHtml(message)}</p>
   `);
-  const text = `New contact message\nFrom: ${name} (${email})\nSubject: ${subject}\n\n${message}`;
+  const text = `New contact message\nFrom: ${name} (${email})\n${phone ? `Phone: ${phone}\n` : ''}${reason ? `Reason: ${reason}\n` : ''}${courseTitle ? `Interested course: ${courseTitle}\n` : ''}Subject: ${subject}\n\n${message}`;
   return { subject: `New contact message: ${subject}`, html, text };
 }
 

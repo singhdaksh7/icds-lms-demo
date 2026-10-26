@@ -1,1 +1,42 @@
-<h1 class="mb-4">Contact Message</h1><div class="admin-card"><dl><dt>Name</dt><dd><%= message.name %></dd><dt>Email</dt><dd><%= message.email %></dd><dt>Subject</dt><dd><%= message.subject %></dd><dt>Received</dt><dd><%= message.createdAt.toLocaleString('en-IN') %></dd></dl><hr><p style="white-space:pre-wrap"><%= message.message %></p><form method="POST" action="/admin/messages/<%= message.id %>/status" class="mt-4"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><select name="status" class="form-select d-inline-block w-auto"><% ['NEW','READ','RESOLVED'].forEach(s => { %><option <%= message.status === s ? 'selected' : '' %>><%= s %></option><% }) %></select><button class="btn btn-primary ms-2">Update Status</button></form></div>
+<%
+    const badge = { NEW: 'primary', READ: 'secondary', IN_PROGRESS: 'warning text-dark', RESOLVED: 'success', SPAM: 'danger' };
+    const label = (s) => (statusLabels && statusLabels[s]) || s;
+%>
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb mb-1">
+        <li class="breadcrumb-item"><a href="/admin/messages" class="text-decoration-none">Contact Enquiries</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Enquiry #<%= message.id %></li>
+    </ol>
+</nav>
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+    <h1 class="mb-0">Contact Enquiry</h1>
+    <span class="badge fs-6 bg-<%= badge[message.status] || 'secondary' %>"><%= label(message.status) %></span>
+</div>
+
+<div class="admin-card">
+    <dl class="row mb-0">
+        <dt class="col-sm-3">Name</dt><dd class="col-sm-9"><%= message.name %></dd>
+        <dt class="col-sm-3">Email</dt><dd class="col-sm-9"><a href="mailto:<%= message.email %>"><%= message.email %></a></dd>
+        <% if (message.phone) { %><dt class="col-sm-3">Phone</dt><dd class="col-sm-9"><%= message.phone %></dd><% } %>
+        <% if (message.reason) { %><dt class="col-sm-3">Reason</dt><dd class="col-sm-9"><%= message.reason %></dd><% } %>
+        <% if (message.course) { %><dt class="col-sm-3">Interested course</dt><dd class="col-sm-9"><a href="/admin/courses/<%= message.course.id %>/edit"><%= message.course.title %></a></dd><% } %>
+        <dt class="col-sm-3">Subject</dt><dd class="col-sm-9"><%= message.subject %></dd>
+        <dt class="col-sm-3">Received</dt><dd class="col-sm-9"><%= message.createdAt.toLocaleString('en-IN') %></dd>
+    </dl>
+    <hr>
+    <p style="white-space:pre-wrap; overflow-wrap:anywhere;"><%= message.message %></p>
+
+    <div class="d-flex flex-wrap gap-2 align-items-center mt-4">
+        <% [['IN_PROGRESS', 'Mark In Progress', 'outline-primary'], ['RESOLVED', 'Mark Resolved', 'outline-success'], ['SPAM', 'Mark Spam', 'outline-danger'], ['NEW', 'Mark New', 'outline-secondary']].forEach(function (a) { if (message.status !== a[0]) { %>
+            <form method="POST" action="/admin/messages/<%= message.id %>/status" class="m-0">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <input type="hidden" name="status" value="<%= a[0] %>">
+                <button class="btn btn-sm btn-<%= a[2] %>"><%= a[1] %></button>
+            </form>
+        <% } }) %>
+        <form method="POST" action="/admin/messages/<%= message.id %>/delete" class="m-0 ms-auto" data-confirm="Delete this enquiry permanently?">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <button class="btn btn-sm btn-danger"><i class="bi bi-trash me-1"></i>Delete</button>
+        </form>
+    </div>
+</div>

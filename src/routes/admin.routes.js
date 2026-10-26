@@ -376,6 +376,7 @@ router.get('/newsletter', engagementController.newsletter);
 router.get('/messages', engagementController.messages);
 router.get('/messages/:id', engagementController.messageDetail);
 router.post('/messages/:id/status', doubleCsrfProtection, engagementController.updateMessage);
+router.post('/messages/:id/delete', doubleCsrfProtection, engagementController.deleteMessage);
 
 // Feature-area routers (student player, homepage media/sections/reviews, pages/navigation/FAQ).
 router.use(require('./adminPlayer.routes'));

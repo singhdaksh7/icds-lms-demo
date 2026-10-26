@@ -63,7 +63,7 @@ function validateForm(form, body = {}) {
     }
 
     const multiline = field.type === 'textarea' || field.type === 'longtext';
-    const max = field.max || (field.type === 'email' ? 254 : field.type === 'phone' ? 30 : field.type === 'date' ? 10 : 150);
+    const max = field.max || (field.type === 'url' ? 300 : field.type === 'email' ? 254 : field.type === 'phone' ? 30 : field.type === 'date' ? 10 : 150);
     const value = clean(raw, { multiline, max });
     values[field.key] = value;
 
@@ -73,6 +73,8 @@ function validateForm(form, body = {}) {
       errors.push(`${name} must be a valid email address.`);
     } else if (field.type === 'phone' && (!PHONE_PATTERN.test(value) || value.length < 5)) {
       errors.push(`${name} may contain only digits, spaces and + ( ) - . (at least 5 characters).`);
+    } else if (field.type === 'url' && !/^https:\/\/[^\s"'<>]+$/i.test(value)) {
+      errors.push(`${name} must be a full https:// link.`);
     } else if (field.type === 'date' && !isRealIsoDate(value)) {
       errors.push(`${name} must be a valid date (YYYY-MM-DD).`);
     } else if (unsafeContent(value)) {

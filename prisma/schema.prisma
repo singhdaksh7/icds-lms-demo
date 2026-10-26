@@ -83,7 +83,9 @@ enum EntityStatus {
 enum ContactMessageStatus {
   NEW
   READ
+  IN_PROGRESS
   RESOLVED
+  SPAM
 }
 
 enum EnrollmentRequestStatus {
@@ -249,6 +251,7 @@ model Course {
   landingSections    CourseLandingSection[]
   landingAppearance  CourseLandingAppearance?
   playerSettings     CoursePlayerSettings?
+  contactMessages    ContactMessage[]
 
   @@index([categoryId])
   @@index([instructorId])
@@ -527,15 +530,25 @@ model NewsletterSubscriber {
   @@map("newsletter_subscribers")
 }
 
+// Contact-form enquiries ("Contact -> Enquiries" in Admin). Extended in place
+// (phone, reason, optional interested course) rather than adding a parallel table.
 model ContactMessage {
   id        Int                  @id @default(autoincrement())
   name      String
   email     String
+  phone     String?              @db.VarChar(40)
   subject   String
+  reason    String?              @db.VarChar(100)
+  courseId  Int?
   message   String               @db.Text
   status    ContactMessageStatus @default(NEW)
   createdAt DateTime             @default(now())
+  updatedAt DateTime             @default(now()) @updatedAt
 
+  course Course? @relation(fields: [courseId], references: [id], onDelete: SetNull)
+
+  @@index([status, createdAt])
+  @@index([courseId])
   @@map("contact_messages")
 }
 

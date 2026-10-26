@@ -832,13 +832,15 @@ test('auth pages: side-panel image is applied only from a validated upload path'
 
 test('contact page: admin copy, labels and the real contact details from global settings', async () => {
   const cms = await cmsWith({ 'contactPage.heading': 'Talk to us', 'contactPage.nameLabel': 'Your name', 'contactPage.submitLabel': 'Deliver', 'contactPage.infoHeading': 'Find us' });
-  const data = baseView(cms, { errors: [], values: {}, site: { ...site, contactEmail: 'hi@acme.test', contactPhone: '+91 1', phoneHref: 'tel:911', address: '1 Main St' } });
+  const acme = { ...site, contactEmail: 'hi@acme.test', contactPhone: '+91 1', phoneHref: 'tel:911', address: '1 Main St', whatsappNumber: '', businessHours: '', mapUrl: '' };
+  // The controller builds the contact cards from the admin-managed site details (only values that exist).
+  const data = baseView(cms, { errors: [], values: {}, site: acme, cards: require('../src/services/contactEnquiry.service').buildContactCards(cms, acme) });
   const html = await render('public/contact-content.ejs', data);
   for (const t of ['Talk to us', 'Your name', 'Deliver', 'Find us', 'hi@acme\\.test', '1 Main St', 'tel:911']) assert.match(html, new RegExp(t));
   assert.match(html, /action="\/contact"/);
   assert.match(html, /name="message"/);
 
-  const bare = await render('public/contact-content.ejs', { ...data, site: { ...site, contactEmail: '', contactPhone: '', phoneHref: '', address: '' } });
+  const bare = await render('public/contact-content.ejs', { ...data, cards: [], site: { ...site, contactEmail: '', contactPhone: '', phoneHref: '', address: '' } });
   assert.ok(!bare.includes('contact-info-card'), 'no empty contact-info block');
   assert.match(bare, /Talk to us/);
 });

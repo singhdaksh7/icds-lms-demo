@@ -1,20 +1,55 @@
-<h1 class="mb-4">Contact Messages</h1>
+<%
+    const badge = { NEW: 'primary', READ: 'secondary', IN_PROGRESS: 'warning text-dark', RESOLVED: 'success', SPAM: 'danger' };
+    const label = (s) => (statusLabels && statusLabels[s]) || s;
+%>
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+    <div>
+        <h1 class="mb-1">Contact Enquiries</h1>
+        <div class="small text-muted">Messages sent through the public Contact form. Only admins can see them.</div>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="/admin/pages/contact" class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil-square me-1"></i>Edit Contact page</a>
+        <a href="/contact" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-secondary"><i class="bi bi-box-arrow-up-right me-1"></i>View page</a>
+    </div>
+</div>
+
+<ul class="nav nav-pills gap-2 mb-3" aria-label="Filter enquiries by status">
+    <li class="nav-item"><a class="nav-link py-1 <%= !filter ? 'active' : '' %>" href="/admin/messages">All <span class="badge bg-light text-dark ms-1"><%= total %></span></a></li>
+    <% statuses.forEach(function (s) { %>
+        <li class="nav-item"><a class="nav-link py-1 <%= filter === s ? 'active' : '' %>" href="/admin/messages?status=<%= s %>"><%= label(s) %> <span class="badge bg-light text-dark ms-1"><%= counts[s] || 0 %></span></a></li>
+    <% }) %>
+</ul>
+
 <div class="admin-card table-responsive">
     <% if (!messages.length) { %>
-        <%- include('../partials/empty-state', { icon: 'bi-envelope', title: 'No messages yet', text: 'Contact form submissions from visitors will appear here.' }) %>
+        <%- include('../partials/empty-state', { icon: 'bi-envelope', title: filter ? 'No enquiries with this status' : 'No enquiries yet', text: 'Contact form submissions from visitors will appear here.' }) %>
     <% } else { %>
         <table class="table align-middle mb-0">
             <thead>
-                <tr><th>Name</th><th>Email</th><th>Subject</th><th>Status</th><th>Received</th></tr>
+                <tr><th>Name</th><th>Contact</th><th>Reason</th><th>Course</th><th>Status</th><th>Received</th><th class="text-end">Actions</th></tr>
             </thead>
             <tbody>
                 <% messages.forEach(function (m) { %>
                     <tr>
-                        <td><a href="/admin/messages/<%= m.id %>"><%= m.name %></a></td>
-                        <td><%= m.email %></td>
-                        <td><%= m.subject %></td>
-                        <td><span class="badge bg-<%= m.status === 'NEW' ? 'primary' : (m.status === 'READ' ? 'secondary' : 'success') %>"><%= m.status %></span></td>
+                        <td><a href="/admin/messages/<%= m.id %>" class="fw-semibold"><%= m.name %></a><div class="small text-muted text-truncate" style="max-width:240px;"><%= m.subject %></div></td>
+                        <td class="small"><%= m.email %><% if (m.phone) { %><br><span class="text-muted"><%= m.phone %></span><% } %></td>
+                        <td class="small"><%= m.reason || '—' %></td>
+                        <td class="small"><%= m.course ? m.course.title : '—' %></td>
+                        <td><span class="badge bg-<%= badge[m.status] || 'secondary' %>"><%= label(m.status) %></span></td>
                         <td class="text-muted small"><%= m.createdAt.toLocaleDateString('en-IN') %></td>
+                        <td class="text-end">
+                            <div class="d-inline-flex gap-1 flex-wrap justify-content-end">
+                                <a class="btn btn-sm btn-outline-secondary" href="/admin/messages/<%= m.id %>">View</a>
+                                <% [['IN_PROGRESS', 'In progress'], ['RESOLVED', 'Resolve'], ['SPAM', 'Spam']].forEach(function (a) { if (m.status !== a[0]) { %>
+                                    <form method="POST" action="/admin/messages/<%= m.id %>/status" class="m-0">
+                                        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                        <input type="hidden" name="status" value="<%= a[0] %>">
+                                        <input type="hidden" name="back" value="list">
+                                        <button class="btn btn-sm btn-outline-<%= a[0] === 'SPAM' ? 'danger' : 'primary' %>"><%= a[1] %></button>
+                                    </form>
+                                <% } }) %>
+                            </div>
+                        </td>
                     </tr>
                 <% }) %>
             </tbody>

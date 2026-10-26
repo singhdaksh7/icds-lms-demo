@@ -9,6 +9,14 @@
     <a href="<%= meta.path %>" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-primary"><i class="bi bi-box-arrow-up-right me-1"></i>View page</a>
 </div>
 <p class="small text-muted"><%= meta.description %></p>
+<% if (meta.slug === 'contact') { %>
+    <div class="alert alert-light border small d-flex flex-wrap gap-2 align-items-center">
+        <strong>More Contact settings:</strong>
+        <a href="/admin/site-content/brand" class="btn btn-sm btn-outline-secondary">Contact details (email, phone, WhatsApp, address, hours, map)</a>
+        <a href="/admin/site-content/contact" class="btn btn-sm btn-outline-secondary">Cards, form copy, reasons &amp; FAQ preview</a>
+        <a href="/admin/messages" class="btn btn-sm btn-outline-primary">Contact Enquiries</a>
+    </div>
+<% } %>
 
 <form method="POST" action="/admin/pages/<%= meta.slug %>" class="admin-card mb-4">
     <input type="hidden" name="_csrf" value="<%= csrfToken %>">

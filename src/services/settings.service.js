@@ -88,6 +88,9 @@ function applySiteOverrides(flat) {
     supportEmail: flat['contact.supportEmail'],
     phone: flat['contact.phone'],
     address: flat['contact.address'],
+    whatsapp: flat['contact.whatsapp'],
+    hours: flat['contact.hours'],
+    mapUrl: flat['contact.mapUrl'],
     seoTitle: flat['seo.defaultTitle'],
     seoDescription: flat['seo.defaultDescription'],
   });
