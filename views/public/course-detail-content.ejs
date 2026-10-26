@@ -1053,16 +1053,19 @@ const effectiveAccessSubtitle = defaultAccessPlan ? defaultAccessPlan.label : (l
                             <div class="mentor-details">
                                 <h2><%= inst.name %></h2>
 
-                                <% if (inst.designation || inst.title || inst.organization) { %>
+                                <% const mentorBio = inst.fullBio || inst.bio || inst.shortBio; %>
+                                <%# An organization that merely repeats the bio would print the same sentence twice. #%>
+                                <% const instOrgRaw = String(inst.organization || '').trim(); %>
+                                <% const instOrg = (instOrgRaw && !(mentorBio && (String(mentorBio).indexOf(instOrgRaw.slice(0, 40)) !== -1 || instOrgRaw.indexOf(String(mentorBio).slice(0, 40)) !== -1))) ? instOrgRaw : ''; %>
+                                <% if (inst.designation || inst.title || instOrg) { %>
                                     <div class="mentor-designation">
                                         <%= inst.designation || inst.title %>
-                                        <% if (inst.organization) { %>
-                                            &bull; <%= inst.organization %>
+                                        <% if (instOrg) { %>
+                                            &bull; <%= instOrg %>
                                         <% } %>
                                     </div>
                                 <% } %>
 
-                                <% const mentorBio = inst.fullBio || inst.bio || inst.shortBio; %>
                                 <% if (mentorBio) { %>
                                     <div class="mentor-bio">
                                         <p><%= mentorBio %></p>

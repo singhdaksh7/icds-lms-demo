@@ -460,3 +460,17 @@ test('autoplay (muted) and loop are Admin options: default on / off, saved patch
   assert.match(form, /name="autoplayMuted" value="true"/);
   assert.match(form, /name="loopVideo" value="true"/);
 });
+
+// ---- duplicated bio: an "organization" that repeats the bio must not print the sentence twice ----
+test('mentor block does not print an organization that duplicates the bio (homepage + course page)', async () => {
+  const BIO = 'With over a decade of clinical excellence, Dr. Tanu Raghav holds an MDS in Prosthodontics & Implantology.';
+  const inst = { ...INSTRUCTOR, designation: 'PROSTHODONTIST & IMPLANTOLOGIST', organization: BIO, shortBio: BIO, bio: BIO };
+  const home = await renderMentor({ mentorInstructor: inst });
+  assert.equal((home.match(/With over a decade of clinical excellence/g) || []).length, 1, 'homepage mentor: bio once');
+  assert.match(home, /PROSTHODONTIST &amp; IMPLANTOLOGIST/);
+  // a genuine, different organization is still shown
+  const ok = await renderMentor({ mentorInstructor: { ...inst, organization: 'ICDS' } });
+  assert.match(ok, /&bull; ICDS/);
+  const view = fs.readFileSync(path.join(__dirname, '..', 'views/public/course-detail-content.ejs'), 'utf8');
+  assert.match(view, /instOrgRaw/);
+});

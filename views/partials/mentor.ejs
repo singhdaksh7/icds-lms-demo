@@ -36,16 +36,19 @@
                         <%= mentorInstructor.name %>
                     </h2>
 
-                    <% if (mentorInstructor.designation || mentorInstructor.title || mentorInstructor.organization) { %>
+                    <% const bioText = mentorInstructor.shortBio || mentorInstructor.bio || ''; %>
+                    <%# An organization that merely repeats the bio (or part of it) would print the same sentence twice. #%>
+                    <% const orgRaw = String(mentorInstructor.organization || '').trim(); %>
+                    <% const orgText = (orgRaw && !(bioText && (bioText.indexOf(orgRaw.slice(0, 40)) !== -1 || orgRaw.indexOf(bioText.slice(0, 40)) !== -1))) ? orgRaw : ''; %>
+                    <% if (mentorInstructor.designation || mentorInstructor.title || orgText) { %>
                         <div class="mentor-subtitle mb-3">
                             <span class="text-primary fw-bold"><%= mentorInstructor.designation || mentorInstructor.title %></span>
-                            <% if (mentorInstructor.organization) { %>
-                                <span class="text-muted"> &bull; <%= mentorInstructor.organization %></span>
+                            <% if (orgText) { %>
+                                <span class="text-muted"> &bull; <%= orgText %></span>
                             <% } %>
                         </div>
                     <% } %>
 
-                    <% const bioText = mentorInstructor.shortBio || mentorInstructor.bio || ''; %>
                     <% if (bioText) { %>
                         <p class="section-description mb-4">
                             <%= bioText %>
