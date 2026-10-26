@@ -2310,7 +2310,7 @@
                     </div>
                     <div class="mb-3">
                         <label class="form-label small fw-semibold">Description</label>
-                        <textarea name="description" class="form-control" rows="3" required></textarea>
+                        <textarea name="description" class="form-control" rows="3" placeholder="Optional supporting sentence"></textarea>
                     </div>
                     <div class="mb-3">
                         <label class="form-label small fw-semibold">Card Number / Icon Text (optional)</label>
@@ -2393,7 +2393,7 @@ const editModalDefs = [
     { prefix: 'editTakeawayModal', route: 'takeaways', tab: 'takeaways', title: 'Edit Learning Outcome', items: typeof takeaways !== 'undefined' ? takeaways : [],
       fields: [
         { n: 'title', l: 'Title', t: 'text', max: 200, req: true },
-        { n: 'description', l: 'Description', t: 'textarea', req: true },
+        { n: 'description', l: 'Description (optional)', t: 'textarea' },
         { n: 'icon', l: 'Card Number / Icon Text (optional)', t: 'text', max: 50 },
       ] },
 ];

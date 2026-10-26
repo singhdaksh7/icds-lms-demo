@@ -690,13 +690,13 @@ async function moveHeroChip(courseId, chipId, direction) {
 
 async function addTakeaway(courseId, { title, description, icon, sortOrder = 0, isPublished = true }) {
   if (!title || !String(title).trim()) throw new CourseLandingError('Takeaway title is required');
-  if (!description || !String(description).trim()) throw new CourseLandingError('Takeaway description is required');
+  // The description is optional: a card can be just the one-line outcome (empty text simply stays hidden).
   const count = await prisma.courseTakeaway.count({ where: { courseId } });
   return prisma.courseTakeaway.create({
     data: {
       courseId,
       title: String(title).trim().slice(0, 200),
-      description: String(description).trim(),
+      description: description ? String(description).trim() : '',
       icon: icon ? String(icon).trim().slice(0, 50) : null,
       sortOrder: Number(sortOrder) || count * 10 + 10,
       isPublished: cleanBoolValue(isPublished),

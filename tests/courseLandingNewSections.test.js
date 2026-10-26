@@ -819,3 +819,25 @@ test('FMR Course invariants: Free enrollment preserved, 15 published videos, 1 d
   assert.ok(html.includes('video lessons'));
   assert.ok(html.includes('Dental Case History Forms') || html.includes('resource-card'));
 });
+
+// ---- Learning outcomes: description is optional (one-line outcomes) --------------------------
+test('learning outcome can be a one-line title; empty description stays hidden publicly', async () => {
+  let created = null;
+  const origCount = prisma.courseTakeaway.count;
+  const origCreate = prisma.courseTakeaway.create;
+  prisma.courseTakeaway.count = async () => 0;
+  prisma.courseTakeaway.create = async ({ data }) => { created = data; return { id: 1, ...data }; };
+  try {
+    await courseLandingService.addTakeaway(6, { title: '  Learn about OSA and its management ', description: '' });
+    assert.equal(created.title, 'Learn about OSA and its management');
+    assert.equal(created.description, '');
+    await assert.rejects(() => courseLandingService.addTakeaway(6, { title: ' ', description: 'x' }), /title is required/);
+  } finally {
+    prisma.courseTakeaway.count = origCount;
+    prisma.courseTakeaway.create = origCreate;
+  }
+  const view = fs.readFileSync(path.join(__dirname, '..', 'views/public/course-detail-content.ejs'), 'utf8');
+  assert.match(view, /<% if \(item\.description\) \{ %>/);
+  const admin = fs.readFileSync(path.join(__dirname, '..', 'views/admin/courses/landing-page-content.ejs'), 'utf8');
+  assert.doesNotMatch(admin, /n: 'description', l: 'Description', t: 'textarea', req: true/);
+});
