@@ -260,22 +260,23 @@
 .fp-res li span { display: block; font-size: 0.92rem; color: #64748b; margin-top: 2px; }
 
 /* ---------- Career Timeline ---------- */
-.fp-timeline {
+/* NOTE: scoped with .founder-page so it beats the page-wide `ol { padding: 0; margin: 0 }` reset above. */
+.founder-page .fp-timeline {
   position: relative;
   border-left: 2px solid rgba(194, 142, 52, 0.35);
-  margin-left: 12px;
-  padding-left: 28px;
+  margin-left: 14px;
+  padding-left: 52px; /* generous horizontal gap between the line and the text */
 }
 
-.fp-timeline li {
+.founder-page .fp-timeline li {
   position: relative;
-  padding-bottom: 32px;
+  padding-bottom: 38px;
 }
 
-.fp-timeline li::before {
+.founder-page .fp-timeline li::before {
   content: '';
   position: absolute;
-  left: -35px;
+  left: -60px;
   top: 5px;
   width: 14px;
   height: 14px;
@@ -286,6 +287,7 @@
 
 .fp-time-label {
   display: inline-block;
+  margin-bottom: 6px;
   font-weight: 800;
   font-size: 13px;
   letter-spacing: 0.06em;
@@ -306,6 +308,11 @@
   margin: 0;
   line-height: 1.65;
   color: #64748b;
+}
+
+@media (max-width: 575.98px) {
+  .founder-page .fp-timeline { margin-left: 8px; padding-left: 38px; }
+  .founder-page .fp-timeline li::before { left: -46px; }
 }
 
 /* ---------- Training Impact Stats ---------- */
