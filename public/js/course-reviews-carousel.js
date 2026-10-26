@@ -16,6 +16,25 @@
     var next = root.querySelector('.reviews-next');
     var dotsBox = root.querySelector('.reviews-dots');
     if (!viewport || !track) return;
+    // Continuous mode: slow seamless marquee (review-marquee.js). Reduced-motion visitors keep the
+    // static, swipeable row below.
+    if (root.getAttribute('data-mode') === 'CONTINUOUS' && window.ReviewMarquee && !reduceMotion && track.children.length > 1) {
+      var started = window.ReviewMarquee.init({
+        root: root, viewport: viewport, track: track,
+        prev: root.querySelector('.reviews-prev'), next: root.querySelector('.reviews-next'),
+        dots: root.querySelector('.reviews-dots'),
+        seconds: parseFloat(root.getAttribute('data-seconds')) || 32,
+        direction: root.getAttribute('data-direction') === 'ltr' ? 'ltr' : 'rtl',
+        gap: 24,
+        visible: { desktop: 2.75, tablet: 2.15, mobile: 1.12 }
+      });
+      if (started) {
+        var pb = root.querySelector('.reviews-prev'); var nb = root.querySelector('.reviews-next');
+        if (pb) pb.hidden = false;
+        if (nb) nb.hidden = false;
+        return;
+      }
+    }
     var cards = Array.prototype.slice.call(track.children);
     var timer = null;
     var paused = false;

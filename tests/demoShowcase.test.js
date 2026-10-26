@@ -37,9 +37,13 @@ test('homepage partial renders the DEMO REVIEW badge for demo cards', async () =
   assert.equal((html.match(/home-review-demo">DEMO REVIEW/g) || []).length, 1, 'only the demo card is badged');
 });
 
-test('controllers never strip the demo marking', () => {
-  assert.doesNotMatch(read('src/controllers/home.controller.js'), /isDemo: false/);
-  assert.doesNotMatch(read('src/controllers/course.controller.js'), /isDemo: false/);
+test('showcase keeps the DEMO REVIEW badge by default; it is hidden only by the separate demo.hideBadgeInShowcase switch', () => {
+  const home = read('src/controllers/home.controller.js');
+  assert.match(home, /\(isAdmin && req\.query\.previewDemo === '1'\) \|\| !hideDemoBadge \? homeReviews : homeReviews\.map/, 'badge kept unless hidden by the switch; admin preview always keeps it');
+  const course = read('src/controllers/course.controller.js');
+  assert.match(course, /demoShowcase && Array\.isArray\(landing\.testimonials\) && \(await require\('\.\.\/services\/homeReviews\.service'\)\.isDemoBadgeHidden\(\)\)/);
+  // the unmarking happens AFTER the genuine aggregates are computed from the database
+  assert.ok(course.indexOf('getPublicLandingData') < course.indexOf('isDemo: false'));
 });
 
 function render(testimonials, landingExtra = {}, extra = {}) {
@@ -61,11 +65,13 @@ function render(testimonials, landingExtra = {}, extra = {}) {
 }
 const card = (id, extra) => ({ id, sortOrder: id, isPublished: true, isDemo: true, hasQuote: true, hasVideo: false, reviewerName: `Demo ${id}`, quote: `q${id}`, rating: 5, ...extra });
 
-test('course page showcase: demo carousel visible, every card marked, banner is honest, no genuine metrics', () => {
+test('course page showcase: unmarked demo cards form the carousel; admin preview keeps badges; no genuine metrics', () => {
+  const unmarked = render([card(1, { isDemo: false }), card(2, { isDemo: false }), card(3, { isDemo: false })], { demoShowcase: true, showcaseHasDemo: true });
+  assert.match(unmarked, /data-reviews-carousel/);
+  assert.doesNotMatch(unmarked, /DEMO REVIEW|presentation only/);
   const html = render([card(1), card(2), card(3)], { demoShowcase: true });
   assert.match(html, /data-reviews-carousel/);
-  assert.equal((html.match(/>DEMO REVIEW</g) || []).length, 3);
-  assert.match(html, /Demo reviews shown for presentation only/);
+  assert.equal((html.match(/>DEMO REVIEW</g) || []).length, 3, 'still badged when the rows are marked (admin preview path)');
   assert.doesNotMatch(html, /Visible in Admin Preview Only/);
   assert.doesNotMatch(html, /reviews-summary"|hero-rating-row/, 'demo reviews create no rating summary');
 });

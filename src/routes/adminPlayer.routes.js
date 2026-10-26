@@ -9,4 +9,6 @@ const coursePlayerController = require('../controllers/admin/coursePlayer.contro
 router.post('/courses/:courseId/player-settings', doubleCsrfProtection, coursePlayerController.savePlayerSettings);
 router.post('/courses/:courseId/player-settings/reset', doubleCsrfProtection, coursePlayerController.resetPlayerSettings);
 
+router.post('/courses/:courseId/reviews-carousel', doubleCsrfProtection, require('../controllers/admin/courseReviewsCarousel.controller').save);
+
 module.exports = router;

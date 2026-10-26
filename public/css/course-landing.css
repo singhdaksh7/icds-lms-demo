@@ -2085,3 +2085,55 @@
     scroll-behavior: auto;
   }
 }
+
+/* ---- Continuous (marquee) reviews: slow seamless motion; ~2.75 / 2.15 / 1.12 cards visible ---- */
+.course-landing-page .reviews-carousel.is-marquee .reviews-viewport {
+  overflow: hidden;
+  scroll-snap-type: none;
+  cursor: grab;
+  padding-bottom: 12px;
+  -webkit-mask-image: linear-gradient(90deg, transparent 0, black 3%, black 97%, transparent 100%);
+  mask-image: linear-gradient(90deg, transparent 0, black 3%, black 97%, transparent 100%);
+}
+
+.course-landing-page .reviews-carousel.is-marquee .reviews-track {
+  width: max-content;
+}
+
+.course-landing-page .reviews-carousel.is-marquee .reviews-track > .review-card {
+  flex: 0 0 var(--rm-slide-w, 380px);
+}
+
+.course-landing-page .reviews-carousel.is-marquee .reviews-dots {
+  display: none;
+}
+
+/* Premium star row */
+.course-landing-page .review-stars i {
+  font-size: 18px;
+}
+
+.course-landing-page .review-rating-num {
+  font-size: 14px;
+  color: var(--course-heading);
+}
+
+/* "Video review" tag on video cards */
+.course-landing-page .review-video-thumb { position: relative; }
+.course-landing-page .review-video-tag {
+  position: absolute;
+  left: 10px;
+  bottom: 10px;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  background: color-mix(in srgb, var(--course-secondary) 82%, transparent);
+  color: var(--course-hero-text);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}

@@ -18,6 +18,22 @@
     var viewport = root.querySelector('[data-hr-viewport]');
     var track = root.querySelector('[data-hr-track]');
     if (!viewport || !track) return;
+    // Continuous mode: slow, seamless marquee (see review-marquee.js). Reduced-motion visitors fall
+    // through to the regular swipeable / arrow carousel below, which never autoplays for them.
+    if (root.getAttribute('data-mode') === 'CONTINUOUS' && window.ReviewMarquee && !reduced() && track.children.length > 1) {
+      var cd = parseInt(root.getAttribute('data-cards-desktop'), 10) || 3;
+      var ct = parseInt(root.getAttribute('data-cards-tablet'), 10) || 2;
+      var started = window.ReviewMarquee.init({
+        root: root, viewport: viewport, track: track,
+        prev: root.querySelector('[data-hr-prev]'), next: root.querySelector('[data-hr-next]'),
+        dots: root.querySelector('[data-hr-dots]'),
+        seconds: parseFloat(root.getAttribute('data-seconds')) || 32,
+        direction: root.getAttribute('data-direction') === 'rtl' ? 'rtl' : 'ltr',
+        gap: 0,
+        visible: { desktop: Math.min(3, cd) - 0.25, tablet: ct + 0.15, mobile: 1.12 }
+      });
+      if (started) return;
+    }
     var prevBtn = root.querySelector('[data-hr-prev]');
     var nextBtn = root.querySelector('[data-hr-next]');
     var dotsBox = root.querySelector('[data-hr-dots]');

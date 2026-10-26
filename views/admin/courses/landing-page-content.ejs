@@ -1092,6 +1092,41 @@
 
     <!-- 09. REVIEWS / TESTIMONIALS TAB -->
     <div class="tab-pane fade <%= activeTab === 'reviews' ? 'show active' : '' %>" id="tab-reviews" role="tabpanel">
+        <% if (typeof reviewsCarousel !== 'undefined' && reviewsCarousel) { %>
+        <div class="admin-card mb-4">
+            <form method="POST" action="/admin/courses/<%= course.id %>/reviews-carousel">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <h5 class="mb-1 text-primary"><i class="bi bi-arrow-left-right me-2"></i>Reviews Carousel Presentation</h5>
+                <p class="small text-muted">How this course&rsquo;s reviews move on its landing page. Applies to this course only.</p>
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-4">
+                        <label class="form-label small fw-semibold" for="rcMode">Carousel mode</label>
+                        <select class="form-select form-select-sm" id="rcMode" name="mode">
+                            <% [['STATIC', 'Static (no movement, swipeable)'], ['SLIDE', 'Slide (pauses between moves)'], ['CONTINUOUS', 'Continuous (slow marquee)']].forEach(function (m) { %>
+                                <option value="<%= m[0] %>" <%= reviewsCarousel.mode === m[0] ? 'selected' : '' %>><%= m[1] %></option>
+                            <% }); %>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label small fw-semibold" for="rcSpeed">Continuous speed</label>
+                        <select class="form-select form-select-sm" id="rcSpeed" name="speed">
+                            <% [['VERY_SLOW', 'Very slow (~45s loop)'], ['SLOW', 'Slow (~32s loop)'], ['NORMAL', 'Normal (~22s loop)']].forEach(function (s) { %>
+                                <option value="<%= s[0] %>" <%= reviewsCarousel.speed === s[0] ? 'selected' : '' %>><%= s[1] %></option>
+                            <% }); %>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label small fw-semibold" for="rcDirection">Direction</label>
+                        <select class="form-select form-select-sm" id="rcDirection" name="direction">
+                            <option value="LEFT_TO_RIGHT" <%= reviewsCarousel.direction === 'LEFT_TO_RIGHT' ? 'selected' : '' %>>Left to right</option>
+                            <option value="RIGHT_TO_LEFT" <%= reviewsCarousel.direction === 'RIGHT_TO_LEFT' ? 'selected' : '' %>>Right to left</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2"><button type="submit" class="btn btn-primary btn-sm w-100"><i class="bi bi-save me-1"></i> Save</button></div>
+                </div>
+            </form>
+        </div>
+        <% } %>
         <div class="admin-card mb-4">
             <form method="POST" action="/admin/courses/<%= course.id %>/landing-page/settings">
                 <input type="hidden" name="_csrf" value="<%= csrfToken %>">

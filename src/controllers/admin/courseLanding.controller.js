@@ -9,10 +9,12 @@ async function getLandingEditor(req, res, next) {
     const courseId = parseInt(req.params.courseId, 10);
     const data = await courseLandingService.getAdminLandingData(courseId);
     const playerSettings = await require('../../services/coursePlayerSettings.service').getPlayerSettings(courseId);
+    const reviewsCarousel = await require('../../services/courseReviewsCarousel.service').getCourseReviewsCarousel(courseId);
     const appearanceView = await courseAppearanceService.getAdminView(courseId);
 
     res.render('admin/courses/landing-page', {
       playerSettings,
+      reviewsCarousel,
       appearanceView,
       pageTitle: `Landing Page: ${data.course.title} | Admin`,
       metaDescription: `Manage dynamic marketing and landing content for ${data.course.title}`,
@@ -824,6 +826,7 @@ async function previewLanding(req, res, next) {
     const landing = await courseLandingService.getPublicLandingData(course.id, stats, { includeDemo: true });
     // Preview renders with the course's saved appearance, exactly like the public page.
     const courseTheme = await courseAppearanceService.getRenderTheme(course.id);
+    const reviewsCarousel = await require('../../services/courseReviewsCarousel.service').getCourseReviewsCarousel(course.id);
 
     const coursePricing = getEffectiveCoursePrice(course);
     const isFree = coursePricing.isFree;
@@ -853,6 +856,7 @@ async function previewLanding(req, res, next) {
       isFree,
       paymentsEnabled: true,
       coursePricing,
+      reviewsCarousel,
       priceLabel: isFree ? 'Free' : coursePricing.effectiveLabel,
       gstNote: 'Incl. applicable taxes',
       isPreview: true,

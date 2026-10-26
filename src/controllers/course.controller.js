@@ -112,20 +112,25 @@ async function getCourseDetail(req, res, next) {
     const price = getCoursePurchasePrice(course);
     const curriculumService = require('../services/curriculum.service');
     const demoShowcase = await require('../services/homeReviews.service').isDemoShowcaseEnabled();
-    const [curriculum, stats, resources, globalFaqs, landing, courseTheme] = await Promise.all([
+    const [curriculum, stats, resources, globalFaqs, landing, courseTheme, reviewsCarousel] = await Promise.all([
       curriculumService.getPublishedCurriculum(course.id),
       curriculumService.getPublicCourseStats(course.id),
       curriculumService.listResourcesForCourse(course.id, { publishedOnly: true }),
       prisma.faq.findMany({ where: { isActive: true }, orderBy: { sortOrder: 'asc' }, take: 6 }),
       courseLandingService.getPublicLandingData(course.id, { includeDemo: demoShowcase }),
       courseAppearanceService.getRenderTheme(course.id),
+      require('../services/courseReviewsCarousel.service').getCourseReviewsCarousel(course.id),
     ]);
     if (landing) {
       landing.demoShowcase = demoShowcase;
-      // Client-demo showcase: demo testimonials stay visibly marked (DEMO REVIEW) and are never counted
-      // (review count / average / rating summary already exclude them).
-      // Demo VIDEO testimonials are Admin-Preview only: never shown publicly, even in showcase mode.
-      if (Array.isArray(landing.testimonials)) landing.testimonials = landing.testimonials.filter((t) => !(t.isDemo && t.hasVideo));
+      // Client-demo showcase: demo testimonials keep their DEMO REVIEW badge unless the owner also switched
+      // demo.hideBadgeInShowcase on; counts / averages / rating summary / SEO data already exclude them
+      // (computed from the DB, not from this list).
+      // Demo reviews (text AND video) reach this list only in showcase mode (getPublicLandingData filters demo rows
+      // otherwise), so a demo video review is public only while demo.showReviewsPublicly is on.
+      // Remember (before unmarking) that the showcase supplied demo cards, so the section still renders.
+      landing.showcaseHasDemo = Boolean(demoShowcase && Array.isArray(landing.testimonials) && landing.testimonials.some((t) => t.isDemo));
+      if (demoShowcase && Array.isArray(landing.testimonials) && (await require('../services/homeReviews.service').isDemoBadgeHidden())) landing.testimonials = landing.testimonials.map((t) => ({ ...t, isDemo: false }));
     }
 
     const jsonLd = {
@@ -160,6 +165,7 @@ async function getCourseDetail(req, res, next) {
       landing,
       courseTheme,
       coursePricing,
+      reviewsCarousel,
       isEnrolled,
       hasPendingRequest,
       isFree,

@@ -25,12 +25,22 @@
         <h3 style="font-size:15px;" class="mt-4">Carousel</h3>
         <div class="row g-3 mb-3">
             <div class="col-md-3">
-                <input type="hidden" name="carouselEnabled" value="false">
-                <div class="form-check form-switch">
-                    <input class="form-check-input" type="checkbox" role="switch" id="carouselEnabled" name="carouselEnabled" value="true" <%= val('carouselEnabled', true) ? 'checked' : '' %>>
-                    <label class="form-check-label" for="carouselEnabled">Carousel (slider)</label>
-                </div>
-                <div class="form-text">Off shows a static grid.</div>
+                <label class="form-label" for="carouselMode">Carousel mode</label>
+                <select class="form-select" id="carouselMode" name="carouselMode">
+                    <% [['STATIC', 'Static (no movement)'], ['SLIDE', 'Slide (pauses between moves)'], ['CONTINUOUS', 'Continuous (slow marquee)']].forEach(function (m) { %>
+                        <option value="<%= m[0] %>" <%= val('carouselMode', 'SLIDE') === m[0] ? 'selected' : '' %>><%= m[1] %></option>
+                    <% }); %>
+                </select>
+                <div class="form-text">Static shows a calm grid. Continuous slowly and smoothly revolves the cards.</div>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label" for="continuousSpeed">Continuous speed</label>
+                <select class="form-select" id="continuousSpeed" name="continuousSpeed">
+                    <% [['VERY_SLOW', 'Very slow (~45s loop)'], ['SLOW', 'Slow (~32s loop)'], ['NORMAL', 'Normal (~22s loop)']].forEach(function (s) { %>
+                        <option value="<%= s[0] %>" <%= val('continuousSpeed', 'SLOW') === s[0] ? 'selected' : '' %>><%= s[1] %></option>
+                    <% }); %>
+                </select>
+                <div class="form-text">Only used in Continuous mode.</div>
             </div>
             <div class="col-md-3">
                 <input type="hidden" name="carouselRotate" value="false">

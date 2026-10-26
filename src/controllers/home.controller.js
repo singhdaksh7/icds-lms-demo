@@ -11,6 +11,7 @@ async function getHomePage(req, res, next) {
     const isAdmin = Boolean(res.locals.currentUser && res.locals.currentUser.role === 'ADMIN');
     // Demo reviews are shown (badged) only to an admin explicitly previewing.
     const includeDemo = (isAdmin && req.query.previewDemo === '1') || (await homeReviewsService.isDemoShowcaseEnabled());
+    const hideDemoBadge = includeDemo ? await homeReviewsService.isDemoBadgeHidden() : false;
     const [categories, featuredCourses, instructors, reviews, stats, faqs, mentorInstructor, banners, homeReviewSettings, homeReviews, introVideo, homeSectionOrder] = await Promise.all([
       homeService.getActiveCategories(),
       homeService.getFeaturedCourses(),
@@ -57,9 +58,12 @@ async function getHomePage(req, res, next) {
       introVideo,
       homeSectionOrder,
       homeReviewSettings,
-      // Client-demo showcase: demo rows are shown but ALWAYS keep their DEMO REVIEW marking
-      // (isDemo stays true) and are never counted in any genuine metric.
-      homeReviews: homeReviewSettings.enabled ? homeReviews : [],
+      // Client-demo showcase: demo rows keep their DEMO REVIEW badge unless the owner also switched
+      // demo.hideBadgeInShowcase on (presentation only; never counted in any genuine metric / SEO data).
+      // An admin previewing (?previewDemo=1) always sees the badges.
+      homeReviews: homeReviewSettings.enabled
+        ? ((isAdmin && req.query.previewDemo === '1') || !hideDemoBadge ? homeReviews : homeReviews.map((r) => ({ ...r, isDemo: false })))
+        : [],
       homeReviewsPreviewDemo: includeDemo,
       stats,
       faqs,

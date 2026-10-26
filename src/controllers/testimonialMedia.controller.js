@@ -18,8 +18,10 @@ async function getTestimonialVideoSource(req, res, next) {
     const t = await prisma.courseTestimonial.findUnique({ where: { id }, include: { course: { select: { status: true } } } });
     if (!t || !t.isPublished || !t.course || t.course.status !== 'PUBLISHED' || t.reviewType === 'TEXT') return res.status(404).json({ error: 'Not found' });
     if (!t.videoObjectKey || !r2.isTestimonialObjectKey(t.videoObjectKey)) return res.status(404).json({ error: 'Not found' });
-    // Demo videos are Admin-Preview only (not even the demo-showcase switch makes them public).
-    if (t.isDemo && !(req.currentUser && req.currentUser.role === 'ADMIN')) return res.status(404).json({ error: 'Not found' });
+    // Demo videos are served only to an Admin (preview) or while the owner's demo-showcase switch is on.
+    if (t.isDemo && !(req.currentUser && req.currentUser.role === 'ADMIN') && !(await require('../services/homeReviews.service').isDemoShowcaseEnabled())) {
+      return res.status(404).json({ error: 'Not found' });
+    }
     const config = await videoStorageSettings.getR2ConfigOrNull();
     if (!config) return res.status(503).json({ error: 'Video unavailable' });
     const { url, expiresInSeconds } = await r2.signedGetUrl(config, t.videoObjectKey);

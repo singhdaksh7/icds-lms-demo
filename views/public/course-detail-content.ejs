@@ -14,6 +14,7 @@ const starIcons = (value) => {
     for (let i = 1; i <= 5; i++) out += (i <= v) ? '<i class="bi bi-star-fill"></i>' : ((i - 0.5 === v) ? '<i class="bi bi-star-half"></i>' : '<i class="bi bi-star"></i>');
     return out;
 };
+const rc = (typeof reviewsCarousel !== 'undefined' && reviewsCarousel) ? reviewsCarousel : { mode: 'SLIDE', seconds: 32, dir: 'rtl' };
 const ratingSummary = (typeof landing !== 'undefined' && landing && landing.ratingSummary && landing.ratingSummary.count > 0) ? landing.ratingSummary : null;
 const freeCourse = typeof isFree !== 'undefined' ? isFree : cp.isFree;
 const formattedPriceLabel = typeof priceLabel !== 'undefined' ? priceLabel : fmtMoney(cp.effective);
@@ -717,7 +718,7 @@ const effectiveAccessSubtitle = defaultAccessPlan ? defaultAccessPlan.label : (l
             <!-- ======================================================== -->
             <!-- 08. REVIEWS / TESTIMONIALS (Reference 2x2 Grid)          -->
             <!-- ======================================================== -->
-            <% if (sectionKey === 'REVIEWS' && (lc.reviewsEnabled === true || inPreviewMode || (demoShowcase && testimonialsList.some(function (r) { return r.isDemo; }))) && testimonialsList.length > 0) { %>
+            <% if (sectionKey === 'REVIEWS' && (lc.reviewsEnabled === true || inPreviewMode || (demoShowcase && ((typeof landing !== 'undefined' && landing && landing.showcaseHasDemo === true) || testimonialsList.some(function (r) { return r.isDemo; })))) && testimonialsList.length > 0) { %>
                 <section class="reviews-section" id="reviews">
                     <div class="wrap">
                         <div class="section-head">
@@ -743,7 +744,7 @@ const effectiveAccessSubtitle = defaultAccessPlan ? defaultAccessPlan.label : (l
                             </div>
                         <% } %>
 
-                        <div class="reviews-carousel" data-reviews-carousel data-rotate="<%= testimonialsList.length > 2 ? 'true' : 'false' %>" role="region" aria-roledescription="carousel" aria-label="Student reviews">
+                        <div class="reviews-carousel" data-reviews-carousel data-rotate="<%= (rc.mode === 'SLIDE' && testimonialsList.length > 2) ? 'true' : 'false' %>" role="region" aria-roledescription="carousel" aria-label="Student reviews" data-mode="<%= rc.mode %>" data-seconds="<%= rc.seconds %>" data-direction="<%= rc.dir %>">
                           <div class="reviews-viewport" tabindex="0" aria-label="Reviews. Use the arrow buttons or swipe to browse.">
                             <div class="reviews-track">
                             <% testimonialsList.forEach(function(rev) { %>
@@ -761,6 +762,7 @@ const effectiveAccessSubtitle = defaultAccessPlan ? defaultAccessPlan.label : (l
                                                 <span class="review-video-poster" aria-hidden="true"><i class="bi bi-camera-video"></i></span>
                                             <% } %>
                                             <span class="review-video-play" aria-hidden="true"><i class="bi bi-play-fill"></i></span>
+                                            <span class="review-video-tag" aria-hidden="true"><i class="bi bi-camera-video-fill"></i> Video review</span>
                                         </button>
                                     <% } else if (rev.hasQuote !== false) { %>
                                         <div class="review-quote-mark">&ldquo;</div>
@@ -799,6 +801,7 @@ const effectiveAccessSubtitle = defaultAccessPlan ? defaultAccessPlan.label : (l
                           <button type="button" class="reviews-arrow reviews-next" aria-label="Next reviews" hidden><i class="bi bi-chevron-right" aria-hidden="true"></i></button>
                           <div class="reviews-dots" aria-label="Review pages" hidden></div>
                         </div>
+                        <% if (rc.mode === 'CONTINUOUS') { %><script src="/js/review-marquee.js" defer></script><% } %>
                         <script src="/js/course-reviews-carousel.js" defer></script>
                         <% if (testimonialsList.some(function (r) { return r.hasVideo; })) { %>
                             <script src="/js/testimonial-player.js" defer></script>

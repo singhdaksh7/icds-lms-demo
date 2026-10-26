@@ -16,6 +16,8 @@
             --accent-gold: #c28e34;
             --accent-gold-light: #fdf8ee;
             --accent-orange: #ea580c;
+            --accent-amber: #f59e0b;
+            --cta-ink: #1c1204; /* dark warm text on the orange CTA: 5:1+ contrast */
             --accent-gradient: linear-gradient(135deg, #c28e34 0%, #d97706 50%, #ea580c 100%);
             --accent-glow: rgba(217, 119, 6, 0.25);
             --navy-gradient: linear-gradient(180deg, #090e17 0%, #0d1524 100%);
@@ -899,21 +901,64 @@
             margin-left: 5px;
         }
 
+        /* "View Course" CTA: warm orange -> amber pill, soft glow, hover shine (homepage + /courses). */
+        .course-view-btn {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            border-radius: 9999px;
+            overflow: hidden;
+            background: linear-gradient(135deg, var(--accent-orange) 0%, var(--accent-amber) 100%);
+            box-shadow: 0 6px 16px rgba(234, 88, 12, 0.28);
+            transition: transform .25s ease, box-shadow .25s ease, filter .25s ease;
+        }
+
+        .course-view-btn::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: -70%;
+            width: 45%;
+            height: 100%;
+            background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.55), transparent);
+            transform: skewX(-20deg);
+            transition: left .6s ease;
+            pointer-events: none;
+        }
+
+        .course-view-btn:hover::after,
+        .course-card:hover .course-view-btn::after {
+            left: 130%;
+        }
+
+        .course-view-btn:hover,
+        .course-card:hover .course-view-btn {
+            transform: translateY(-1px);
+            box-shadow: 0 10px 24px rgba(234, 88, 12, 0.38);
+            filter: saturate(1.08);
+        }
+
         .course-view-btn,
         .course-view-btn:hover,
         .course-view-btn:focus,
         .course-view-btn:visited,
         .course-view-btn:active {
-            color: var(--primary-color);
+            color: var(--cta-ink) !important;
             font-size: 13px;
             font-weight: 800;
             text-decoration: none;
         }
 
         .course-view-btn:focus-visible {
-            outline: 2px solid var(--primary-color);
-            outline-offset: 2px;
-            border-radius: 2px;
+            outline: 3px solid var(--cta-ink);
+            outline-offset: 3px;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .course-view-btn,
+            .course-view-btn::after { transition: none; }
         }
 
         .course-view-btn i {

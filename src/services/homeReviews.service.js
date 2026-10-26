@@ -1,5 +1,6 @@
 const { prisma } = require('../config/db');
 const tv = require('../lib/testimonialVideo');
+const carouselOpts = require('../lib/carouselOptions');
 
 // Homepage reviews section: which reviews appear is decided ONLY by Admin
 // (featuredOnHome + homeSortOrder on each genuine review); how the section looks
@@ -12,6 +13,8 @@ const KEYS = {
   heading: 'homeReviews.heading',
   subheading: 'homeReviews.subheading',
   carouselEnabled: 'homeReviews.carouselEnabled',
+  carouselMode: 'homeReviews.carouselMode',
+  continuousSpeed: 'homeReviews.continuousSpeed',
   carouselRotate: 'homeReviews.autoplay',
   autoplayInterval: 'homeReviews.autoplayInterval',
   direction: 'homeReviews.direction',
@@ -30,6 +33,9 @@ const DEFAULTS = {
   heading: 'What our learners say',
   subheading: '',
   carouselEnabled: true,
+  carouselMode: 'SLIDE',
+  continuousSpeed: 'SLOW',
+  continuousSeconds: 32, // derived from continuousSpeed (carouselOptions.SPEED_SECONDS)
   carouselRotate: true,
   autoplayInterval: 6000,
   direction: 'LEFT_TO_RIGHT',
@@ -82,6 +88,12 @@ function normalizeSettings(raw = {}) {
     showDots: parseBool(raw.showDots, DEFAULTS.showDots),
     backgroundStyle: BACKGROUNDS.includes(raw.backgroundStyle) ? raw.backgroundStyle : DEFAULTS.backgroundStyle,
   };
+  // Carousel mode (STATIC | SLIDE | CONTINUOUS) wins over the legacy on/off flag; a never-saved mode is
+  // derived from it, so existing sites keep behaving exactly as before until an admin picks a mode.
+  out.carouselMode = carouselOpts.MODES.includes(raw.carouselMode) ? raw.carouselMode : (out.carouselEnabled ? 'SLIDE' : 'STATIC');
+  out.carouselEnabled = out.carouselMode !== 'STATIC';
+  out.continuousSpeed = carouselOpts.SPEEDS.includes(raw.continuousSpeed) ? raw.continuousSpeed : DEFAULTS.continuousSpeed;
+  out.continuousSeconds = carouselOpts.SPEED_SECONDS[out.continuousSpeed];
   return out;
 }
 
@@ -91,6 +103,18 @@ function normalizeSettings(raw = {}) {
 async function isDemoShowcaseEnabled() {
   try {
     const row = await prisma.siteSetting.findUnique({ where: { key: 'demo.showReviewsPublicly' } });
+    return Boolean(row && String(row.value).trim().toLowerCase() === 'true');
+  } catch (_err) {
+    return false;
+  }
+}
+
+// Optional second switch (SiteSetting demo.hideBadgeInShowcase = "true"): while the showcase is on, present
+// demo reviews WITHOUT the DEMO REVIEW badge. Off by default => demo reviews are always visibly marked.
+// Presentation only: demo reviews never count in any genuine metric either way.
+async function isDemoBadgeHidden() {
+  try {
+    const row = await prisma.siteSetting.findUnique({ where: { key: 'demo.hideBadgeInShowcase' } });
     return Boolean(row && String(row.value).trim().toLowerCase() === 'true');
   } catch (_err) {
     return false;
@@ -124,6 +148,8 @@ function validateHomeReviewSettings(input = {}) {
   if (eyebrow.length > MAX_EYEBROW) errors.push(`Eyebrow must be ${MAX_EYEBROW} characters or fewer.`);
   if (has('direction') && !DIRECTIONS.includes(last(input.direction))) errors.push('Direction must be LEFT_TO_RIGHT or RIGHT_TO_LEFT.');
   if (has('backgroundStyle') && !BACKGROUNDS.includes(last(input.backgroundStyle))) errors.push('Background style is not an allowed option.');
+  if (has('carouselMode') && !carouselOpts.MODES.includes(last(input.carouselMode))) errors.push('Carousel mode is not an allowed option.');
+  if (has('continuousSpeed') && !carouselOpts.SPEEDS.includes(last(input.continuousSpeed))) errors.push('Continuous speed is not an allowed option.');
   if (has('autoplayInterval')) {
     const n = parseInt(last(input.autoplayInterval), 10);
     if (!Number.isFinite(n) || n < MIN_INTERVAL || n > MAX_INTERVAL) errors.push(`Autoplay interval must be between ${MIN_INTERVAL} and ${MAX_INTERVAL} milliseconds.`);
@@ -178,8 +204,8 @@ function selectHomeReviews(rows, _settings, { includeDemo = false, limit = HOME_
     // Genuine reviews need an explicit Admin selection; demo reviews only appear in showcase mode.
     if (!r.featuredOnHome && !(includeDemo && r.isDemo)) return false;
     const pub = tv.toPublicTestimonial(r);
-    // Demo video testimonials are Admin-Preview only - never public, not even in demo-showcase mode.
-    if (r.isDemo && pub.hasVideo) return false;
+    // Demo rows only reach this point in showcase/preview mode (see the includeDemo filter below), so a demo
+    // VIDEO review is shown only while the owner's demo.showReviewsPublicly switch is on.
     return pub.hasVideo || (pub.reviewType !== 'VIDEO' && pub.hasQuote);
   });
   if (!includeDemo) list = list.filter((r) => !r.isDemo);
@@ -231,6 +257,7 @@ async function getHomeReviews({ includeDemo = false, settings = null } = {}) {
 
 module.exports = {
   isDemoShowcaseEnabled,
+  isDemoBadgeHidden,
   getHomeReviewSettings,
   saveHomeReviewSettings,
   validateHomeReviewSettings,
@@ -240,5 +267,8 @@ module.exports = {
   DEFAULTS,
   DIRECTIONS,
   BACKGROUNDS,
+  MODES: carouselOpts.MODES,
+  SPEEDS: carouselOpts.SPEEDS,
+  SPEED_SECONDS: carouselOpts.SPEED_SECONDS,
   KEYS,
 };

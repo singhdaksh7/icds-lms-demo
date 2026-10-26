@@ -513,25 +513,13 @@
   color: var(--hp-charcoal);
 }
 
+/* Card CTA: the orange -> amber pill is defined once in main.css (.course-view-btn). */
 .course-card .course-view-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 9px 18px;
-  border-radius: 9999px;
-  background: #fef3c7;
-  color: #b45309;
+  gap: 8px;
+  padding: 10px 20px;
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 800;
   text-decoration: none;
-  transition: all 0.2s ease;
-}
-
-.course-card .course-view-btn:hover,
-.course-card:hover .course-view-btn {
-  background: var(--hp-gold-gradient);
-  color: #ffffff !important;
-  box-shadow: 0 4px 14px rgba(217, 119, 6, 0.35);
 }
 
 /* ---------- Mentor Section (Homepage) ---------- */

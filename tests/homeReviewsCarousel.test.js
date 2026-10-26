@@ -74,9 +74,10 @@ test('text, video (hosted + link) and text+video reviews are all supported', () 
   assert.ok(!JSON.stringify(out).includes('courses/5/testimonials'), 'object key never reaches a template');
 });
 
-test('a demo VIDEO review is never public, even in demo-showcase mode', () => {
+test('a demo VIDEO review is shown only while the demo-showcase switch is on', () => {
   const rows = [rv(1, { isDemo: true, reviewType: 'VIDEO', quote: '', videoObjectKey: KEY(5, 1) }), rv(2, { isDemo: true })];
-  assert.deepEqual(ids(rows, { includeDemo: true }), [2]);
+  assert.deepEqual(ids(rows, { includeDemo: true }).sort(), [1, 2]);
+  assert.deepEqual(ids(rows, { includeDemo: false }), []);
 });
 
 test('rating is the saved rating, clamped; the card limit applies', () => {
@@ -131,7 +132,7 @@ test('defaults: enabled slow carousel, 3/2/1 cards, arrows + dots, left to right
   try {
     const s = await reviews.getHomeReviewSettings();
     assert.deepEqual(s, {
-      enabled: true, eyebrow: 'Learner stories', heading: 'What our learners say', subheading: '', carouselEnabled: true, carouselRotate: true,
+      enabled: true, eyebrow: 'Learner stories', heading: 'What our learners say', subheading: '', carouselEnabled: true, carouselMode: 'SLIDE', continuousSpeed: 'SLOW', continuousSeconds: 32, carouselRotate: true,
       autoplayInterval: 6000, direction: 'LEFT_TO_RIGHT', cardsDesktop: 3, cardsTablet: 2, showArrows: true, showDots: true, backgroundStyle: 'CREAM',
     });
   } finally { db.restore(); }
@@ -242,7 +243,7 @@ test('admin reviews page: carousel controls, featuring + explicit order; no "whi
     ],
     demo: [{ id: 3, reviewerName: 'D', course: { title: 'C' } }],
   });
-  for (const n of ['enabled', 'eyebrow', 'heading', 'subheading', 'carouselEnabled', 'carouselRotate', 'autoplayInterval', 'direction', 'cardsDesktop', 'cardsTablet', 'showArrows', 'showDots', 'backgroundStyle']) {
+  for (const n of ['enabled', 'eyebrow', 'heading', 'subheading', 'carouselMode', 'continuousSpeed', 'carouselRotate', 'autoplayInterval', 'direction', 'cardsDesktop', 'cardsTablet', 'showArrows', 'showDots', 'backgroundStyle']) {
     assert.match(html, new RegExp(`name="${n}"`), n);
   }
   assert.doesNotMatch(html, /name="sourceMode"/);
@@ -385,7 +386,7 @@ test('source-of-truth: every value the reviews partial reads comes from the sett
   const usedCfg = new Set([...partial.matchAll(/\bhrCfg\.(\w+)/g)].map((m) => m[1]));
   for (const k of usedCfg) assert.ok(k in reviews.DEFAULTS, `hrCfg.${k} is a real setting`);
   const adminView = read('views/admin/homepage/reviews-content.ejs');
-  for (const k of usedCfg) assert.match(adminView, new RegExp(`name="${k}"`), `admin input for ${k}`);
+  for (const k of usedCfg) { if (!['continuousSeconds', 'carouselEnabled'].includes(k)) assert.match(adminView, new RegExp(`name="${k}"`), `admin input for ${k}`); } // continuousSeconds / carouselEnabled are derived from the mode + speed presets
   const shape = Object.keys(reviews.selectHomeReviews([rv(1)], {})[0]);
   const usedRow = new Set([...partial.matchAll(/\br\.(\w+)/g)].map((m) => m[1]));
   assert.deepEqual([...usedRow].filter((k) => !shape.includes(k)), []);
