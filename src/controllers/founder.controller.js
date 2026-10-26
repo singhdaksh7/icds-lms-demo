@@ -1,6 +1,7 @@
 const site = require('../config/site');
 const { buildSeo, pageSeoText, PUBLIC_ROBOTS } = require('../lib/seo');
 const { getFounderPageData, buildFounderViewModel, buildFaqJsonLd } = require('../services/founder.service');
+const doctorMediaService = require('../services/doctorMedia.service');
 
 async function founderPage(req, res, next) {
   try {
@@ -10,6 +11,8 @@ async function founderPage(req, res, next) {
       return res.status(404).render('public/404', { pageTitle: 'Page Not Found' });
     }
     const i = vm.instructor;
+    // Admin-chosen photo / video (null => the hero keeps its existing portrait markup).
+    const doctorMedia = await doctorMediaService.getPublicDoctorMedia(i.photoUrl, i.name);
     const fallbackDesc = (i.founderIntro || '').trim().slice(0, 300)
       || `${i.name}${i.title ? `, ${i.title}` : ''} - ${site.name}.`;
     const { title, description } = pageSeoText(res.locals.settings, 'founder', {
@@ -37,6 +40,7 @@ async function founderPage(req, res, next) {
         jsonLd: faqLd ? [personLd, faqLd] : personLd,
       }),
       vm,
+      doctorMedia,
     });
   } catch (e) {
     next(e);

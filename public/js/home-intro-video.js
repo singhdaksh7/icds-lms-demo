@@ -11,6 +11,9 @@
  *   re-checked against an origin allowlist before it is ever put in an iframe. */
 (function () {
   'use strict';
+  // The intro video block and the doctor video card both load this file: initialise only once per page.
+  if (window.__introReelInit) return;
+  window.__introReelInit = true;
 
   var EMBED_ORIGINS = ['https://www.youtube.com', 'https://www.youtube-nocookie.com', 'https://player.vimeo.com'];
 

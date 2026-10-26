@@ -5,13 +5,18 @@
     <div class="container">
         <div class="row align-items-center g-5">
             <div class="col-lg-5 text-center text-lg-start">
+                <% const dmM = (typeof doctorMedia !== 'undefined' && doctorMedia) ? doctorMedia : null; %>
                 <div class="mentor-portrait-wrap reveal-element position-relative d-inline-block">
+                    <% if (dmM && dmM.mode === 'VIDEO' && dmM.video) { %>
+                        <%- include('./doctor-media', { dm: dmM, variant: 'mentor', name: mentorInstructor.name }) %>
+                    <% } else { %>
                     <img
                         class="mentor-portrait-img img-fluid"
-                        src="<%= mentorInstructor.photoUrl || (typeof cms !== 'undefined' && cms.brand ? cms.brand.defaultInstructorImageUrl : '') || '/assets/images/instructor-placeholder.svg' %>"
+                        src="<%= (dmM && dmM.photoUrl) || mentorInstructor.photoUrl || (typeof cms !== 'undefined' && cms.brand ? cms.brand.defaultInstructorImageUrl : '') || '/assets/images/instructor-placeholder.svg' %>"
                         alt="<%= mentorInstructor.name %>"
                         loading="lazy"
                         data-fallback-src="/assets/images/instructor-placeholder.svg">
+                    <% } %>
 
                     <% if (mentorInstructor.experienceLabel) { %>
                         <div class="mentor-experience-badge">

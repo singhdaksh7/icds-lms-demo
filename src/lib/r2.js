@@ -51,12 +51,25 @@ function buildPromoObjectKey(extension) {
   return `site/promo/${crypto.randomUUID()}${extension}`;
 }
 
+// site/doctor/<uuid>.<mp4|webm> - PUBLIC "about the doctor" video (marketing media). Its own prefix so the
+// public doctor-video source endpoint signs ONLY this shape (never lesson / testimonial / promo keys).
+const DOCTOR_KEY_RE = /^site\/doctor\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.(?:mp4|webm)$/;
+
+function isDoctorObjectKey(key) {
+  return typeof key === 'string' && key.length <= 200 && DOCTOR_KEY_RE.test(key);
+}
+
+function buildDoctorObjectKey(extension) {
+  if (extension !== '.mp4' && extension !== '.webm') throw new Error('Unsupported video extension.');
+  return `site/doctor/${crypto.randomUUID()}${extension}`;
+}
+
 function isTestimonialObjectKey(key) {
   return typeof key === 'string' && key.length <= 200 && TESTIMONIAL_KEY_RE.test(key);
 }
 
 function isOwnedObjectKey(key) {
-  return typeof key === 'string' && key.length <= 200 && (OBJECT_KEY_RE.test(key) || RESOURCE_KEY_RE.test(key) || TESTIMONIAL_KEY_RE.test(key) || PROMO_KEY_RE.test(key));
+  return typeof key === 'string' && key.length <= 200 && (OBJECT_KEY_RE.test(key) || RESOURCE_KEY_RE.test(key) || TESTIMONIAL_KEY_RE.test(key) || PROMO_KEY_RE.test(key) || DOCTOR_KEY_RE.test(key));
 }
 
 function buildTestimonialObjectKey(courseId, testimonialId, extension) {
@@ -255,6 +268,8 @@ module.exports = {
   isTestimonialObjectKey,
   isPromoObjectKey,
   buildPromoObjectKey,
+  isDoctorObjectKey,
+  buildDoctorObjectKey,
   buildTestimonialObjectKey,
   buildObjectKey,
   buildResourceObjectKey,

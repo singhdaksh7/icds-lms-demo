@@ -382,5 +382,6 @@ router.post('/messages/:id/delete', doubleCsrfProtection, engagementController.d
 router.use(require('./adminPlayer.routes'));
 router.use(require('./adminHomeMedia.routes'));
 router.use(require('./adminPages.routes'));
+router.use(require('./adminDoctorMedia.routes'));
 
 module.exports = router;

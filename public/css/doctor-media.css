@@ -1,0 +1,49 @@
+/* Doctor video card (homepage mentor block, /founder hero, /about founder card).
+   Builds on the shared reel player styles in home-intro-video.css (.intro-reel*). */
+.doctor-media { margin: 0; width: 100%; }
+.doctor-media-card {
+  position: relative;
+  width: 100%;
+  margin: 0 auto;
+  aspect-ratio: 4 / 5;           /* matches the portrait photo slot it replaces */
+  border-radius: 24px;
+  overflow: hidden;
+  background: #0b1325;
+  box-shadow: 0 24px 60px rgba(11, 19, 37, 0.22), 0 0 0 1px rgba(194, 142, 52, 0.28);
+}
+/* The mentor photo wrapper is an inline-block that shrinks to its content, so give the figure an explicit width. */
+.doctor-media--mentor { width: min(420px, calc(100vw - 48px)); }
+.doctor-media--mentor .doctor-media-card { max-width: 420px; }
+.doctor-media--founder .doctor-media-card { max-width: 520px; }
+.doctor-media--about { flex: 0 0 min(260px, 100%); }
+.doctor-media--about .doctor-media-card { max-width: 260px; border-radius: 20px; }
+/* A landscape / vertical source keeps its full frame inside the portrait card. */
+.doctor-media-card video { object-fit: contain; background: #000; }
+.doctor-media-caption {
+  margin: 12px auto 0;
+  max-width: 420px;
+  text-align: center;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #5b6475;
+}
+.doctor-media--about .doctor-media-caption { max-width: 260px; font-size: 13px; }
+
+@media (max-width: 767.98px) {
+  .doctor-media--mentor { width: min(360px, calc(100vw - 48px)); }
+  .doctor-media--mentor .doctor-media-card,
+  .doctor-media--founder .doctor-media-card { max-width: 360px; }
+  .doctor-media--about { flex: 1 1 100%; }
+  .doctor-media--about .doctor-media-card { max-width: 320px; }
+}
+
+/* Homepage mentor: the experience badge normally overlays the photo; below a video card it flows underneath
+   (so it never covers the player controls or the caption). The partial emits <link>/<script> around the
+   figure, so the general-sibling combinator is used. */
+.mentor-portrait-wrap .doctor-media ~ .mentor-experience-badge {
+  position: static !important;
+  transform: none !important;
+  display: flex !important;
+  width: fit-content;
+  margin: 14px auto 0 !important;
+}

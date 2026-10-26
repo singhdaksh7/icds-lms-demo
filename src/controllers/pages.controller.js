@@ -32,6 +32,8 @@ async function aboutPage(req, res, next) {
         .findFirst({ where: { isFounder: true, status: 'ACTIVE' }, orderBy: { id: 'asc' }, select: { name: true, title: true, designation: true, photoUrl: true, shortBio: true, founderIntro: true } })
         .catch(() => null),
     ]);
+    // Admin-chosen photo / video for the founder card (null => the card keeps its existing photo markup).
+    const doctorMedia = await require('../services/doctorMedia.service').getPublicDoctorMedia(founder && founder.photoUrl, founder && founder.name);
     const { title, description } = seoFor(res, 'about', page, `${page.heading || 'About'} | ${site.name}`, plain(page.intro, 160) || `About ${site.name}.`);
     res.render('public/about', {
       pageTitle: title,
@@ -41,6 +43,7 @@ async function aboutPage(req, res, next) {
       sections,
       courses,
       founder,
+      doctorMedia,
     });
   } catch (err) {
     next(err);

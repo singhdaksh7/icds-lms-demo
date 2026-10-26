@@ -3,6 +3,7 @@ const homeReviewsService = require('../services/homeReviews.service');
 const faqService = require('../services/faq.service');
 const homeIntroVideoService = require('../services/homeIntroVideo.service');
 const homeSectionsService = require('../services/homeSections.service');
+const doctorMediaService = require('../services/doctorMedia.service');
 const site = require('../config/site');
 const { buildSeo, pageSeoText, PUBLIC_ROBOTS } = require('../lib/seo');
 
@@ -26,6 +27,9 @@ async function getHomePage(req, res, next) {
       homeIntroVideoService.getPublicIntroVideo(),
       homeSectionsService.getRenderOrder().catch(() => undefined),
     ]);
+
+    // Admin-chosen photo / video for the doctor block (null => the mentor block keeps its existing photo markup).
+    const doctorMedia = await doctorMediaService.getPublicDoctorMedia(mentorInstructor && mentorInstructor.photoUrl, mentorInstructor && mentorInstructor.name);
 
     const { title, description } = pageSeoText(res.locals.settings, 'home', {
       title: `${site.name} | Courses & Training`,
@@ -53,6 +57,7 @@ async function getHomePage(req, res, next) {
       featuredCourses,
       instructors,
       mentorInstructor,
+      doctorMedia,
       reviews,
       banners,
       introVideo,

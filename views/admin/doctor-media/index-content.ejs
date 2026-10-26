@@ -1,0 +1,100 @@
+<%
+    const hasHosted = media.videoType === 'UPLOAD' && media.videoObjectKey;
+    const hasLink = (media.videoType === 'YOUTUBE' || media.videoType === 'VIMEO') && media.videoUrl;
+    const hasVideo = Boolean(hasHosted || hasLink);
+    const videoMode = media.mediaMode === 'VIDEO';
+%>
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+    <h1 style="font-size:24px;" class="mb-0">Doctor Photo / Video</h1>
+    <div class="d-flex gap-2 flex-wrap">
+        <a href="/#mentor" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-primary"><i class="bi bi-box-arrow-up-right me-1"></i> Homepage</a>
+        <a href="/founder" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-primary"><i class="bi bi-box-arrow-up-right me-1"></i> Founder page</a>
+        <a href="/about" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-primary"><i class="bi bi-box-arrow-up-right me-1"></i> About page</a>
+    </div>
+</div>
+<p class="text-muted small mb-4">Choose whether the &ldquo;about the doctor&rdquo; blocks show a <strong>photo</strong> or a <strong>video</strong>. It appears in three places: the homepage <em>Meet Your Mentor</em> section, the <em>Founder</em> page and the <em>About</em> page. The doctor&rsquo;s name, title and biography are still edited under <a href="/admin/instructors">Instructors</a> and <a href="/admin/founder">Founder Page</a>. Saving this page changes nothing else.</p>
+
+<% if (videoMode && !preview) { %>
+    <div class="alert alert-warning small">Video is selected but there is no playable video yet, so the pages keep showing the photo. Upload a video or paste a YouTube / Vimeo link below.</div>
+<% } %>
+
+<form method="POST" action="/admin/doctor-media" enctype="multipart/form-data" class="admin-card mb-4" id="doctorMediaForm">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+    <h2 style="font-size:17px;" class="mb-3">What to show</h2>
+    <div class="row g-3 mb-4">
+        <div class="col-md-5">
+            <label class="form-label" for="mediaMode">Display</label>
+            <select class="form-select" id="mediaMode" name="mediaMode">
+                <option value="PHOTO" <%= !videoMode ? 'selected' : '' %>>Photo (default)</option>
+                <option value="VIDEO" <%= videoMode ? 'selected' : '' %>>Video (click to play)</option>
+            </select>
+            <div class="form-text">Photo keeps today&rsquo;s look. Video shows a poster with a play button; nothing plays with sound on its own.</div>
+        </div>
+        <div class="col-md-7">
+            <label class="form-label" for="caption">Caption (optional)</label>
+            <input class="form-control" id="caption" name="caption" maxlength="200" value="<%= media.caption || '' %>" placeholder="e.g. A message from our founder">
+            <div class="form-text">Shown under the video. Leave blank to hide it.</div>
+        </div>
+    </div>
+
+    <h2 style="font-size:17px;" class="mb-3">Photo</h2>
+    <div class="row g-3 mb-4">
+        <div class="col-md-6">
+            <label class="form-label" for="photo">Photo (JPG, PNG or WEBP, max 5MB)</label>
+            <input class="form-control" type="file" id="photo" name="photo" accept="image/jpeg,image/png,image/webp">
+            <div class="form-text">Optional. Leave empty to keep using the doctor&rsquo;s own photo from the Instructor record.</div>
+        </div>
+        <div class="col-md-6">
+            <% if (media.photoUrl) { %>
+                <div class="d-flex align-items-center gap-3">
+                    <img src="<%= media.photoUrl %>" alt="Current photo" style="height:84px; width:auto; border-radius:10px; border:1px solid #e2e8f0;">
+                    <div class="form-check"><input class="form-check-input" type="checkbox" id="removePhoto" name="removePhoto" value="true"><label class="form-check-label" for="removePhoto">Remove this photo (go back to the Instructor photo)</label></div>
+                </div>
+            <% } else { %>
+                <div class="small text-muted pt-4">Using the doctor&rsquo;s own photo.</div>
+            <% } %>
+        </div>
+    </div>
+
+    <h2 style="font-size:17px;" class="mb-3">Video</h2>
+    <div class="row g-3 mb-4">
+        <div class="col-12">
+            <% if (hasVideo) { %>
+                <div class="alert alert-light border small mb-2">
+                    <i class="bi bi-film me-1"></i> Current video:
+                    <% if (hasHosted) { %><strong>Uploaded file</strong><% } else { %><strong><%= media.videoType === 'VIMEO' ? 'Vimeo' : 'YouTube' %></strong> &middot; <span class="text-break"><%= media.videoUrl %></span><% } %>
+                    <div class="form-check mt-2">
+                        <input class="form-check-input" type="checkbox" id="removeVideo" name="removeVideo" value="true">
+                        <label class="form-check-label" for="removeVideo">Remove the current video</label>
+                    </div>
+                </div>
+            <% } else { %>
+                <div class="alert alert-light border small mb-2">No video yet.</div>
+            <% } %>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label" for="video">Upload video (MP4 or WebM)</label>
+            <input class="form-control" type="file" id="video" name="video" accept="video/mp4,video/webm,.mp4,.webm" <%= r2Configured ? '' : 'disabled' %>>
+            <div class="form-text"><% if (r2Configured) { %>Uploading replaces the current video. Stored on Cloudflare R2 and played through a short-lived link.<% } else { %>Cloudflare R2 is not configured (<a href="/admin/video-storage">Video Storage</a>). Use a YouTube / Vimeo link instead.<% } %></div>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label" for="videoUrl">&hellip;or YouTube / Vimeo link</label>
+            <input class="form-control" type="url" id="videoUrl" name="videoUrl" maxlength="500" placeholder="https://www.youtube.com/watch?v=..." value="<%= hasLink ? media.videoUrl : '' %>">
+            <div class="form-text">Pasting a link replaces an uploaded video. Clearing the box removes a link-based video.</div>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label" for="poster">Poster / thumbnail (JPG, PNG or WEBP, max 5MB)</label>
+            <input class="form-control" type="file" id="poster" name="poster" accept="image/jpeg,image/png,image/webp">
+            <div class="form-text">Shown before play. If empty, the doctor&rsquo;s photo is used as the poster.</div>
+            <% if (media.posterUrl) { %>
+                <div class="d-flex align-items-center gap-3 mt-2">
+                    <img src="<%= media.posterUrl %>" alt="Current poster" style="height:72px; width:auto; border-radius:8px; border:1px solid #e2e8f0;">
+                    <div class="form-check"><input class="form-check-input" type="checkbox" id="removePoster" name="removePoster" value="true"><label class="form-check-label" for="removePoster">Remove poster</label></div>
+                </div>
+            <% } %>
+        </div>
+    </div>
+
+    <button type="submit" class="btn" style="background:var(--primary-color); color:#fff;">Save doctor photo / video</button>
+</form>

@@ -1333,6 +1333,25 @@ model HomeIntroVideo {
   @@map("home_intro_video")
 }
 
+// Doctor photo / video for the "about the doctor" blocks (homepage Meet Your Mentor, /founder, /about).
+// Single row (id = 1). mediaMode PHOTO (default) keeps today's rendering - optionally with an uploaded
+// photo override; VIDEO shows a click-to-play card (uploaded R2 video or a YouTube / Vimeo link).
+model DoctorMedia {
+  id             Int     @id @default(1)
+  mediaMode      String  @default("PHOTO") @db.VarChar(10)
+  photoUrl       String? @db.VarChar(500)
+  videoType      String? @db.VarChar(10)
+  videoUrl       String? @db.VarChar(500)
+  videoObjectKey String? @db.VarChar(255)
+  posterUrl      String? @db.VarChar(500)
+  caption        String? @db.VarChar(200)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("doctor_media")
+}
+
 // ---------------------------------------------------------------------------
 // Home banners (hero slider on the public homepage)
 // ---------------------------------------------------------------------------

@@ -38,7 +38,9 @@
 <section class="section-space sp-founder">
     <div class="container">
         <div class="sp-founder-card">
-            <% if (founder.photoUrl) { %><img src="<%= founder.photoUrl %>" alt="<%= founder.name %>" loading="lazy" width="120" height="120" data-fallback-src="/assets/images/instructor-placeholder.svg"><% } %>
+            <% const dmA = (typeof doctorMedia !== 'undefined' && doctorMedia) ? doctorMedia : null; %>
+            <% const aboutPhoto = (dmA && dmA.photoUrl) || founder.photoUrl; %>
+            <% if (dmA && dmA.mode === 'VIDEO' && dmA.video) { %><%- include('../partials/doctor-media', { dm: dmA, variant: 'about', name: founder.name }) %><% } else if (aboutPhoto) { %><img src="<%= aboutPhoto %>" alt="<%= founder.name %>" loading="lazy" width="120" height="120" data-fallback-src="/assets/images/instructor-placeholder.svg"><% } %>
             <div>
                 <div class="section-tag">Meet the founder</div>
                 <h2><%= founder.name %></h2>

@@ -15,7 +15,7 @@
         case 'INTRO_VIDEO': %><%- include('../partials/home-intro-video', { introVideo: (typeof introVideo !== 'undefined' ? introVideo : null) }) %><% break;
         case 'ABOUT': %><%- include('../partials/about') %><% break;
         case 'PROCESS': %><%- include('../partials/process') %><% break;
-        case 'MENTOR': %><%- include('../partials/mentor', { mentorInstructor: (typeof mentorInstructor !== 'undefined' ? mentorInstructor : null) }) %><% break;
+        case 'MENTOR': %><%- include('../partials/mentor', { mentorInstructor: (typeof mentorInstructor !== 'undefined' ? mentorInstructor : null), doctorMedia: (typeof doctorMedia !== 'undefined' ? doctorMedia : null) }) %><% break;
         case 'HOME_REVIEWS': %><%- include('../partials/home-reviews', {
             homeReviews: (typeof homeReviews !== 'undefined' ? homeReviews : []),
             homeReviewSettings: (typeof homeReviewSettings !== 'undefined' ? homeReviewSettings : null)

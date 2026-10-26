@@ -7,8 +7,12 @@
         <div class="container">
             <div class="fp-hero-grid">
                 <div class="fp-portrait-wrap">
-                    <% if (i.photoUrl) { %>
-                        <img class="fp-portrait" src="<%= i.photoUrl %>" alt="<%= i.name %>" width="520" height="640" fetchpriority="high">
+                    <% const dmF = (typeof doctorMedia !== 'undefined' && doctorMedia) ? doctorMedia : null; %>
+                    <% const founderPhoto = (dmF && dmF.photoUrl) || i.photoUrl; %>
+                    <% if (dmF && dmF.mode === 'VIDEO' && dmF.video) { %>
+                        <%- include('../partials/doctor-media', { dm: dmF, variant: 'founder', name: i.name }) %>
+                    <% } else if (founderPhoto) { %>
+                        <img class="fp-portrait" src="<%= founderPhoto %>" alt="<%= i.name %>" width="520" height="640" fetchpriority="high">
                     <% } else { %>
                         <div class="fp-portrait fp-portrait-initials" aria-hidden="true"><%= i.name.replace(/^Dr\.?\s*/i, '').split(/\s+/).map(function (w) { return w.charAt(0); }).slice(0, 2).join('').toUpperCase() %></div>
                     <% } %>
