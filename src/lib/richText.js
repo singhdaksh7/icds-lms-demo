@@ -17,8 +17,27 @@ const MAX_SIZE = 96;
 
 const ANY_TOKEN = /\[(?:\/?(?:b|i|u|s|size|color)|(?:size=\d{1,3})|(?:color=#[0-9a-fA-F]{3,8}))\]/g;
 
+// An old toolbar bug inserted the literal word "text" when a format button was pressed with nothing selected,
+// e.g. "STAY UPDATED [color=#fafafa]text[/color]". Such empty placeholders are never real content: they are
+// dropped on render (and repaired in stored values by fixStoredPlaceholders).
+const PLACEHOLDER = /[ \t]*\[(?:b|i|u|s|size=\d{1,3}|color=#[0-9a-fA-F]{3,8})\]text\[\/(?:b|i|u|s|size|color)\]/g;
+const PLACEHOLDER_OPEN = /\[(b|i|u|s|size=\d{1,3}|color=#[0-9a-fA-F]{3,8})\]text\[\/(b|i|u|s|size|color)\]/;
+
+// Repairs a STORED value: removes the placeholder and, to keep the author's intent, applies that same
+// formatting to the rest of the text ("STAY UPDATED [color=#fafafa]text[/color]" -> "[color=#fafafa]STAY UPDATED[/color]").
+function fixStoredPlaceholders(value) {
+  if (typeof value !== 'string' || value.indexOf(']text[/') === -1) return value;
+  const first = PLACEHOLDER_OPEN.exec(value);
+  if (!first) return value;
+  const rest = value.replace(PLACEHOLDER, '').trim();
+  if (!rest) return '';
+  if (ANY_TOKEN.test(rest)) { ANY_TOKEN.lastIndex = 0; return rest; } // already formatted: just drop the placeholder
+  ANY_TOKEN.lastIndex = 0;
+  return `[${first[1]}]${rest}[/${first[2]}]`;
+}
+
 function applyTokens(text) {
-  let out = text;
+  let out = text.replace(PLACEHOLDER, '');
   // Innermost-first single passes; repeated so nesting like
   // [b][u]x[/u][/b] resolves, bounded to stay cheap on hostile input.
   for (let pass = 0; pass < 4; pass += 1) {
@@ -98,4 +117,4 @@ function middleware(req, res, next) {
   return next();
 }
 
-module.exports = { renderMarkup, middleware, MIN_SIZE, MAX_SIZE };
+module.exports = { renderMarkup, middleware, fixStoredPlaceholders, MIN_SIZE, MAX_SIZE };

@@ -212,6 +212,8 @@
 
     build();
     raf = window.requestAnimationFrame(frame);
+    // read-only diagnostics (why is it paused?) for support / QA
+    root.__rmState = function () { return { hovering: hovering, focusInside: focusInside, dragging: dragging, modal: modalOpen(), hidden: document.hidden, onScreen: onScreen, held: Date.now() < holdUntil, tween: !!tween, factor: factor, speed: speed, offset: offset, setWidth: setWidth }; };
 
     return {
       destroy: function () {

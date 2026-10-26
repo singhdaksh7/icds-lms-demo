@@ -36,3 +36,35 @@ test('unbalanced tags are dropped; attributes, title, scripts and textareas are 
   assert.ok(out.includes('<textarea>[b]raw[/b]</textarea>'));
   assert.ok(out.includes('<p><strong>ok</strong></p>'));
 });
+
+// ---- "text" placeholder bug: toolbar used to insert a literal word when nothing was selected ----
+const { fixStoredPlaceholders } = require('../src/lib/richText');
+const fs = require('node:fs');
+const path = require('node:path');
+
+test('render drops an empty "text" placeholder instead of showing the word', () => {
+  const out = renderMarkup('<div class="section-tag">STAY UPDATED [color=#fafafa]text[/color]</div>');
+  assert.equal(out, '<div class="section-tag">STAY UPDATED</div>');
+  assert.equal(renderMarkup('<p>Hi [b]text[/b]</p>'), '<p>Hi</p>');
+  assert.equal(renderMarkup('<p>[size=24]text[/size] Real</p>'), '<p> Real</p>');
+  // genuine formatted text that merely contains the word is untouched
+  assert.equal(renderMarkup('<p>[b]some text here[/b]</p>'), '<p><strong>some text here</strong></p>');
+  assert.equal(renderMarkup('<p>[color=#fafafa]STAY UPDATED[/color]</p>'), '<p><span style="color:#fafafa">STAY UPDATED</span></p>');
+});
+
+test('stored values are repaired and keep the intended formatting', () => {
+  assert.equal(fixStoredPlaceholders('STAY UPDATED [color=#fafafa]text[/color]'), '[color=#fafafa]STAY UPDATED[/color]');
+  assert.equal(fixStoredPlaceholders('Hello [b]text[/b]'), '[b]Hello[/b]');
+  assert.equal(fixStoredPlaceholders('[color=#fafafa]text[/color]'), '');
+  assert.equal(fixStoredPlaceholders('[b]Keep[/b] this [i]text[/i]'), '[b]Keep[/b] this', 'already-formatted text only loses the placeholder');
+  assert.equal(fixStoredPlaceholders('Plain value'), 'Plain value');
+  assert.equal(fixStoredPlaceholders('[b]some text[/b]'), '[b]some text[/b]', 'real content untouched');
+  const again = fixStoredPlaceholders(fixStoredPlaceholders('A [u]text[/u]'));
+  assert.equal(again, '[u]A[/u]', 'idempotent');
+});
+
+test('admin format toolbar never inserts a placeholder word', () => {
+  const js = fs.readFileSync(path.join(__dirname, '..', 'public/js/admin-format.js'), 'utf8');
+  assert.doesNotMatch(js, /\|\|\s*'text'/);
+  assert.match(js, /format the whole field/i);
+});

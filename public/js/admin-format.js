@@ -16,7 +16,13 @@
     var end = field.selectionEnd;
     if (start == null) return;
     var value = field.value;
-    var selected = value.slice(start, end) || 'text';
+    // Nothing selected: format the whole field (never insert a placeholder word). Empty field: nothing to format.
+    if (start === end) {
+      if (!value) return;
+      start = 0;
+      end = value.length;
+    }
+    var selected = value.slice(start, end);
     field.value = value.slice(0, start) + open + selected + close + value.slice(end);
     field.focus();
     field.setSelectionRange(start + open.length, start + open.length + selected.length);
