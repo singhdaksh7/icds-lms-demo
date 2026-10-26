@@ -2417,3 +2417,28 @@ html.tv-modal-open { overflow: hidden; }
 .tv-modal-close { position: absolute; top: -14px; right: -6px; z-index: 2; width: 38px; height: 38px; border: 0; border-radius: 50%; background: #fff; color: #111; font-size: 24px; line-height: 1; cursor: pointer; box-shadow: 0 6px 18px rgba(0, 0, 0, .35); }
 .tv-modal-close:focus-visible { outline: 3px solid #8ab4ff; outline-offset: 2px; }
 @media (max-width: 575.98px) { .tv-modal { padding: 10px; } .tv-modal-close { top: -12px; right: 2px; } }
+
+        /* Developer credit line at the very end of the footer */
+        .footer-credit {
+            margin-top: 18px;
+            padding-top: 16px;
+            border-top: 1px dashed rgba(255,255,255,.12);
+            font-size: 13px;
+            color: rgba(255,255,255,.6);
+        }
+
+        .footer-credit .bi-heart-fill {
+            color: #e11d48;
+            margin: 0 4px;
+        }
+
+        .footer-credit a {
+            color: var(--accent-amber, #f59e0b);
+            font-weight: 700;
+            text-decoration: none;
+        }
+
+        .footer-credit a:hover,
+        .footer-credit a:focus-visible {
+            text-decoration: underline;
+        }
