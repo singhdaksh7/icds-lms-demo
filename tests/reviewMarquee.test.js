@@ -133,6 +133,8 @@ test('marquee engine: continuous rAF motion, seamless clone loop, pauses, reduce
   for (const pause of ['hovering', 'focusInside', 'dragging', 'modalOpen()', 'document.hidden', 'onScreen']) assert.ok(js.includes(pause), `pauses on ${pause}`);
   assert.match(js, /tv-modal-open/, 'pauses while a review video modal is open');
   assert.match(js, /reduced\(\)\) return null/, 'never starts for prefers-reduced-motion');
+  assert.match(js, /getBoundingClientRect\(\)/, 'on-screen check is geometric, not IntersectionObserver');
+  assert.doesNotMatch(js, /new IntersectionObserver/);
   assert.match(js, /MIN_SPEED = 18/);
   assert.match(js, /MAX_SPEED = 80/);
   assert.match(js, /aria-hidden', 'true'/);

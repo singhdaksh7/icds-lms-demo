@@ -124,6 +124,7 @@
 
     function frame(ts) {
       raf = window.requestAnimationFrame(frame);
+      checkOnScreen(ts);
       var dt = last ? Math.min(0.05, (ts - last) / 1000) : 0;
       last = ts;
       if (tween) {
@@ -200,8 +201,14 @@
     }, true);
     viewport.addEventListener('dragstart', function (e) { e.preventDefault(); });
 
-    if ('IntersectionObserver' in window) {
-      new IntersectionObserver(function (entries) { onScreen = entries[0].isIntersecting; }, { threshold: 0.05 }).observe(root);
+    // On-screen test by geometry (robust everywhere; IntersectionObserver reported false for visible carousels on
+    // some layouts and left the marquee paused). Checked a few times per second, not per frame.
+    var lastVisCheck = 0;
+    function checkOnScreen(ts) {
+      if (ts - lastVisCheck < 250) return;
+      lastVisCheck = ts;
+      var r = root.getBoundingClientRect();
+      onScreen = r.width > 0 && r.bottom > -80 && r.top < (window.innerHeight || 800) + 80;
     }
 
     var rt = null;
