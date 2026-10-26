@@ -1022,9 +1022,21 @@ const effectiveAccessSubtitle = defaultAccessPlan ? defaultAccessPlan.label : (l
                         </div>
 
                         <div class="mentor-layout">
-                            <!-- Left: Mentor Photo Card -->
+                            <!-- Left: Mentor Photo / Video (per-course option: Admin > Landing Page > Mentor Display) -->
+                            <% const cmm = (typeof courseMentorMedia !== 'undefined' && courseMentorMedia) ? courseMentorMedia : null; %>
+                            <% if (cmm && cmm.mode === 'VIDEO' && cmm.video) { %>
+                                <div class="mentor-media-video">
+                                    <%- include('../partials/doctor-media', { dm: cmm, variant: 'course', name: inst.name, sourceUrl: cmm.sourceUrl }) %>
+                                    <% if (inst.experienceLabel) { %>
+                                        <div class="mentor-exp-badge">
+                                            <i class="bi bi-award-fill text-warning"></i>
+                                            <span><%= inst.experienceLabel %></span>
+                                        </div>
+                                    <% } %>
+                                </div>
+                            <% } else { %>
                             <div class="mentor-portrait-card">
-                                <img src="<%= inst.photoUrl || (typeof cms !== 'undefined' && cms.brand ? cms.brand.defaultInstructorImageUrl : '') || '/assets/images/instructor-placeholder.svg' %>"
+                                <img src="<%= (cmm && cmm.photoUrl) || inst.photoUrl || (typeof cms !== 'undefined' && cms.brand ? cms.brand.defaultInstructorImageUrl : '') || '/assets/images/instructor-placeholder.svg' %>"
                                      alt="<%= inst.name %>"
                                      loading="lazy"
                                      data-fallback-src="/assets/images/instructor-placeholder.svg">
@@ -1035,6 +1047,7 @@ const effectiveAccessSubtitle = defaultAccessPlan ? defaultAccessPlan.label : (l
                                     </div>
                                 <% } %>
                             </div>
+                            <% } %>
 
                             <!-- Right: Mentor Details -->
                             <div class="mentor-details">

@@ -112,7 +112,7 @@ async function getCourseDetail(req, res, next) {
     const price = getCoursePurchasePrice(course);
     const curriculumService = require('../services/curriculum.service');
     const demoShowcase = await require('../services/homeReviews.service').isDemoShowcaseEnabled();
-    const [curriculum, stats, resources, globalFaqs, landing, courseTheme, reviewsCarousel] = await Promise.all([
+    const [curriculum, stats, resources, globalFaqs, landing, courseTheme, reviewsCarousel, courseMentorMedia] = await Promise.all([
       curriculumService.getPublishedCurriculum(course.id),
       curriculumService.getPublicCourseStats(course.id),
       curriculumService.listResourcesForCourse(course.id, { publishedOnly: true }),
@@ -120,6 +120,8 @@ async function getCourseDetail(req, res, next) {
       courseLandingService.getPublicLandingData(course.id, { includeDemo: demoShowcase }),
       courseAppearanceService.getRenderTheme(course.id),
       require('../services/courseReviewsCarousel.service').getCourseReviewsCarousel(course.id),
+      // Per-course mentor photo/video (null => today's mentor photo markup)
+      require('../services/courseMentorMedia.service').getPublicCourseMentorMedia(course.id, course.instructor && course.instructor.photoUrl, course.instructor && course.instructor.name),
     ]);
     if (landing) {
       landing.demoShowcase = demoShowcase;
@@ -166,6 +168,7 @@ async function getCourseDetail(req, res, next) {
       courseTheme,
       coursePricing,
       reviewsCarousel,
+      courseMentorMedia,
       isEnrolled,
       hasPendingRequest,
       isFree,

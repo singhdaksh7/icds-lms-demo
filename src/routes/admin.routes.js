@@ -383,5 +383,6 @@ router.use(require('./adminPlayer.routes'));
 router.use(require('./adminHomeMedia.routes'));
 router.use(require('./adminPages.routes'));
 router.use(require('./adminDoctorMedia.routes'));
+router.use(require('./adminCourseMentorMedia.routes'));
 
 module.exports = router;

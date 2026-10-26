@@ -16,7 +16,7 @@
     <div class="intro-reel doctor-media-card"
          data-intro-reel
          data-kind="<%= dmv.video.kind %>"
-         <% if (dmv.video.kind === 'hosted') { %>data-source-url="/api/home/doctor-video/source"<% } else { %>data-embed="<%= dmv.video.embedUrl %>" data-provider="<%= dmv.video.provider %>"<% } %>
+         <% if (dmv.video.kind === 'hosted') { %>data-source-url="<%= (typeof sourceUrl !== 'undefined' && sourceUrl) ? sourceUrl : '/api/home/doctor-video/source' %>"<% } else { %>data-embed="<%= dmv.video.embedUrl %>" data-provider="<%= dmv.video.provider %>"<% } %>
          data-muted-start="<%= dmv.video.autoplayMuted ? '1' : '0' %>"
          data-autoplay-mobile="1"
          data-loop="<%= dmv.video.loop ? '1' : '0' %>"

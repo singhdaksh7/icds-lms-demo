@@ -11,11 +11,16 @@ async function getLandingEditor(req, res, next) {
     const playerSettings = await require('../../services/coursePlayerSettings.service').getPlayerSettings(courseId);
     const reviewsCarousel = await require('../../services/courseReviewsCarousel.service').getCourseReviewsCarousel(courseId);
     const appearanceView = await courseAppearanceService.getAdminView(courseId);
+    const mentorMediaView = {
+      media: await require('../../services/courseMentorMedia.service').getCourseMentorMedia(courseId),
+      r2Configured: Boolean(await require('../../services/videoStorageSettings.service').getR2ConfigOrNull().catch(() => null)),
+    };
 
     res.render('admin/courses/landing-page', {
       playerSettings,
       reviewsCarousel,
       appearanceView,
+      mentorMediaView,
       pageTitle: `Landing Page: ${data.course.title} | Admin`,
       metaDescription: `Manage dynamic marketing and landing content for ${data.course.title}`,
       activeNav: 'courses',
@@ -827,6 +832,8 @@ async function previewLanding(req, res, next) {
     // Preview renders with the course's saved appearance, exactly like the public page.
     const courseTheme = await courseAppearanceService.getRenderTheme(course.id);
     const reviewsCarousel = await require('../../services/courseReviewsCarousel.service').getCourseReviewsCarousel(course.id);
+    // Admin preview uses the course's saved mentor photo/video exactly like the public page.
+    const courseMentorMedia = await require('../../services/courseMentorMedia.service').getPublicCourseMentorMedia(course.id, course.instructor && course.instructor.photoUrl, course.instructor && course.instructor.name);
 
     const coursePricing = getEffectiveCoursePrice(course);
     const isFree = coursePricing.isFree;
@@ -857,6 +864,7 @@ async function previewLanding(req, res, next) {
       paymentsEnabled: true,
       coursePricing,
       reviewsCarousel,
+      courseMentorMedia,
       priceLabel: isFree ? 'Free' : coursePricing.effectiveLabel,
       gstNote: 'Incl. applicable taxes',
       isPreview: true,

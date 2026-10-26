@@ -64,6 +64,24 @@ function buildDoctorObjectKey(extension) {
   return `site/doctor/${crypto.randomUUID()}${extension}`;
 }
 
+// courses/<courseId>/mentor/<uuid>.<mp4|webm> - PUBLIC per-course mentor video (marketing media). Its own prefix,
+// deliberately NOT part of isOwnedObjectKey(): it can never be attached to a lesson, and the public mentor-video
+// source endpoint signs ONLY this shape (and only for the key's own course).
+const MENTOR_KEY_RE = /^courses\/(\d{1,10})\/mentor\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.(?:mp4|webm)$/;
+
+function isMentorObjectKey(key, courseId) {
+  if (typeof key !== 'string' || key.length > 200) return false;
+  const m = MENTOR_KEY_RE.exec(key);
+  if (!m) return false;
+  return courseId === undefined || String(courseId) === m[1];
+}
+
+function buildMentorObjectKey(courseId, extension) {
+  if (!Number.isInteger(courseId) || courseId < 1) throw new Error('Invalid course id.');
+  if (extension !== '.mp4' && extension !== '.webm') throw new Error('Unsupported video extension.');
+  return `courses/${courseId}/mentor/${crypto.randomUUID()}${extension}`;
+}
+
 function isTestimonialObjectKey(key) {
   return typeof key === 'string' && key.length <= 200 && TESTIMONIAL_KEY_RE.test(key);
 }
@@ -270,6 +288,8 @@ module.exports = {
   buildPromoObjectKey,
   isDoctorObjectKey,
   buildDoctorObjectKey,
+  isMentorObjectKey,
+  buildMentorObjectKey,
   buildTestimonialObjectKey,
   buildObjectKey,
   buildResourceObjectKey,

@@ -29,6 +29,7 @@ const healthRoutes = require('./src/routes/api/health.routes');
 const lessonApiRoutes = require('./src/routes/api/lessons.routes');
 const testimonialApiRoutes = require('./src/routes/api/testimonials.routes');
 const homeApiRoutes = require('./src/routes/api/home.routes');
+const courseMediaApiRoutes = require('./src/routes/api/courseMedia.routes');
 const notFound = require('./src/middleware/notFound');
 const errorHandler = require('./src/middleware/errorHandler');
 
@@ -200,6 +201,7 @@ app.use('/api/health', healthRoutes);
 app.use('/api/lessons', lessonApiRoutes);
 app.use('/api/testimonials', testimonialApiRoutes);
 app.use('/api/home', homeApiRoutes);
+app.use('/api/courses', courseMediaApiRoutes);
 app.use('/', authRoutes);
 app.use('/', courseRoutes);
 app.use('/', checkoutRoutes);

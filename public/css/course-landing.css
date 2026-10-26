@@ -2137,3 +2137,36 @@
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
+
+/* ---- Mentor section: per-course photo / video card (uses the course theme variables) ---- */
+.course-landing-page .mentor-media-video {
+  width: 100%;
+}
+
+.course-landing-page .doctor-media--course {
+  width: 100%;
+}
+
+.course-landing-page .doctor-media--course .doctor-media-card {
+  max-width: 520px;
+  margin: 0 auto;
+  border-radius: calc(var(--course-card-radius) + 4px);
+  background: var(--course-secondary-dark);
+  box-shadow: var(--course-shadow-lg), 0 0 0 1px color-mix(in srgb, var(--course-accent) 35%, transparent);
+}
+
+.course-landing-page .doctor-media--course .doctor-media-caption {
+  max-width: 520px;
+  color: var(--course-muted);
+}
+
+/* The experience badge normally overlays the photo card; below a video card it flows underneath. */
+.course-landing-page .mentor-media-video .mentor-exp-badge {
+  position: static;
+  width: fit-content;
+  margin: 14px auto 0;
+}
+
+@media (max-width: 767.98px) {
+  .course-landing-page .doctor-media--course .doctor-media-card { max-width: 360px; }
+}
