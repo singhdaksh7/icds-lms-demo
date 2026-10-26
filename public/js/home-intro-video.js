@@ -129,17 +129,34 @@
     if (trigger) trigger.addEventListener('click', function () { start(card, { muted: false }); });
 
     // Optional Admin-enabled muted autoplay (never with sound).
-    if (card.getAttribute('data-muted-start') === '1' && 'IntersectionObserver' in window
-        && !reducedMotion() && !saveData() && !smallScreen()) {
-      var io = new IntersectionObserver(function (entries) {
-        entries.forEach(function (e) {
-          if (e.isIntersecting && e.intersectionRatio >= 0.6) {
-            io.disconnect();
-            start(card, { muted: true });
-          }
-        });
-      }, { threshold: [0.6] });
-      io.observe(card);
+    // data-autoplay-mobile="1" (doctor video) also allows it on phones: muted inline autoplay is permitted there.
+    var allowSmall = card.getAttribute('data-autoplay-mobile') === '1';
+    if (card.getAttribute('data-muted-start') === '1' && !reducedMotion() && !saveData() && (allowSmall || !smallScreen())) {
+      var started = false;
+      var go = function () {
+        if (started) return;
+        started = true;
+        window.removeEventListener('scroll', check);
+        window.removeEventListener('resize', check);
+        start(card, { muted: true });
+      };
+      // Geometry check (robust on every layout) + IntersectionObserver when available.
+      var check = function () {
+        if (started) return;
+        var r = card.getBoundingClientRect();
+        var h = window.innerHeight || document.documentElement.clientHeight;
+        var visible = Math.max(0, Math.min(r.bottom, h) - Math.max(r.top, 0));
+        if (r.height > 0 && visible / r.height >= 0.5) go();
+      };
+      window.addEventListener('scroll', check, { passive: true });
+      window.addEventListener('resize', check);
+      if ('IntersectionObserver' in window) {
+        var io = new IntersectionObserver(function (entries) {
+          entries.forEach(function (e) { if (e.isIntersecting && e.intersectionRatio >= 0.5) { io.disconnect(); go(); } });
+        }, { threshold: [0.5] });
+        io.observe(card);
+      }
+      setTimeout(check, 400);
     }
   }
 

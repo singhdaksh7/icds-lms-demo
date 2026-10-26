@@ -21,6 +21,8 @@ const DEFAULTS = Object.freeze({
   videoObjectKey: null,
   posterUrl: '',
   caption: '',
+  autoplayMuted: true, // starts muted when scrolled into view; the visitor can unmute
+  loopVideo: false,
 });
 
 class DoctorMediaError extends Error {
@@ -87,6 +89,10 @@ async function saveDoctorMedia(input = {}, media = {}) {
   if (mode !== undefined) data.mediaMode = mode;
   const caption = cleanText(input.caption, CAPTION_MAX, 'Caption');
   if (caption !== undefined) data.caption = caption || null;
+  const autoplayMuted = parseBool(input.autoplayMuted);
+  if (autoplayMuted !== undefined) data.autoplayMuted = autoplayMuted;
+  const loopVideo = parseBool(input.loopVideo);
+  if (loopVideo !== undefined) data.loopVideo = loopVideo;
 
   // ---- video source ---------------------------------------------------------
   let videoType = cur.videoType;
@@ -178,6 +184,8 @@ function toPublicDoctorMedia(row, fallbackPhotoUrl = '', fallbackAlt = '') {
           embedUrl: embed ? embed.embedUrl : null,
           provider: embed ? embed.provider : null,
           posterUrl: v.posterUrl || '',
+          autoplayMuted: v.autoplayMuted !== false,
+          loop: v.loopVideo === true,
         }
       : null,
   };

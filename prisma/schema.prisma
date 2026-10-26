@@ -1345,6 +1345,9 @@ model DoctorMedia {
   videoObjectKey String? @db.VarChar(255)
   posterUrl      String? @db.VarChar(500)
   caption        String? @db.VarChar(200)
+  // Muted autoplay when the card scrolls into view (never with sound; visitor can unmute) and optional loop.
+  autoplayMuted  Boolean @default(true)
+  loopVideo      Boolean @default(false)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

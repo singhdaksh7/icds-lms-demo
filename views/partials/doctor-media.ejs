@@ -1,7 +1,8 @@
 <%# Doctor VIDEO card used by the homepage mentor block, the /founder hero and the /about founder card.
    Inputs: dm (view-model from doctorMedia.service.toPublicDoctorMedia, mode VIDEO), variant ('mentor'|'founder'|'about'), name.
-   Nothing plays until the visitor presses play (the shared reel player builds the iframe / <video> only after the click),
-   so the initial HTML has no iframe, no <video> and no autoplay. The object key never reaches the page. #%>
+   The shared reel player builds the iframe / <video> only when it starts: on the visitor's click, or - when the Admin option
+   'Autoplay muted' is on (default) - automatically, always MUTED, once the card is scrolled into view (the visitor can unmute).
+   The initial HTML has no iframe and no <video>. The object key never reaches the page. #%>
 <% const dmv = (typeof dm !== 'undefined' && dm && dm.mode === 'VIDEO' && dm.video) ? dm : null; %>
 <% if (dmv) { %>
 <%
@@ -16,8 +17,9 @@
          data-intro-reel
          data-kind="<%= dmv.video.kind %>"
          <% if (dmv.video.kind === 'hosted') { %>data-source-url="/api/home/doctor-video/source"<% } else { %>data-embed="<%= dmv.video.embedUrl %>" data-provider="<%= dmv.video.provider %>"<% } %>
-         data-muted-start="0"
-         data-loop="0"
+         data-muted-start="<%= dmv.video.autoplayMuted ? '1' : '0' %>"
+         data-autoplay-mobile="1"
+         data-loop="<%= dmv.video.loop ? '1' : '0' %>"
          data-title="Video: <%= dmName %>">
         <button type="button" class="intro-reel-play" data-intro-reel-play aria-label="Play video: <%= dmName %>">
             <% if (dmPoster) { %><img class="intro-reel-poster" src="<%= dmPoster %>" alt="" loading="lazy"><% } else { %><span class="intro-reel-poster is-empty" aria-hidden="true"><i class="bi bi-camera-video"></i></span><% } %>

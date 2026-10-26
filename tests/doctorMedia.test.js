@@ -129,7 +129,7 @@ test('PHOTO with an uploaded override replaces the instructor photo in all three
   }
 });
 
-test('VIDEO mode renders the card in all three places: poster + play button, nothing loaded before the click, never autoplay', async () => {
+test('VIDEO mode renders the card in all three places: poster + play button, nothing loaded in the initial HTML, muted autoplay on by default', async () => {
   const dm = svc.toPublicDoctorMedia({ mediaMode: 'VIDEO', videoType: 'YOUTUBE', videoUrl: YT, caption: 'A message from our founder', posterUrl: '/uploads/thumbnails/poster.jpg' }, '/uploads/thumbnails/doctor-own.jpg', 'Dr. Tanu Raghav');
   for (const [name, render] of PLACES) {
     const html = await render({ doctorMedia: dm });
@@ -140,8 +140,10 @@ test('VIDEO mode renders the card in all three places: poster + play button, not
     assert.ok(html.includes('/uploads/thumbnails/poster.jpg'), `${name}: poster`);
     assert.match(html, /A message from our founder/, `${name}: caption`);
     assert.doesNotMatch(html, /<iframe|<video\b/i, `${name}: no iframe / video element before the click`);
-    assert.doesNotMatch(html, /\bautoplay\b/i, `${name}: no autoplay`);
-    assert.match(html, /data-muted-start="0"/);
+    assert.doesNotMatch(html, /autoplay=/i, `${name}: no autoplay attribute in the initial HTML (the player builds it muted)`);
+    assert.match(html, /data-muted-start="1"/, `${name}: muted autoplay on by default`);
+    assert.match(html, /data-autoplay-mobile="1"/);
+    assert.match(html, /data-loop="0"/);
     assert.match(html, /\/js\/home-intro-video\.js/);
     assert.ok(!html.includes('doctor-own.jpg') || name === 'x', `${name}: poster set explicitly, instructor photo not used as poster`);
   }
@@ -436,4 +438,25 @@ test('migration is a single additive CREATE TABLE', () => {
   const sql = read('prisma/migrations', dirs[0], 'migration.sql');
   assert.match(sql, /CREATE TABLE `doctor_media`/);
   assert.doesNotMatch(sql, /\bDROP\b|\bALTER TABLE\b|\bDELETE\b|\bUPDATE\b|TRUNCATE/i);
+});
+
+test('autoplay (muted) and loop are Admin options: default on / off, saved patch-style, rendered into the card', async () => {
+  const on = svc.toPublicDoctorMedia({ mediaMode: 'VIDEO', videoType: 'YOUTUBE', videoUrl: YT }, '', 'Dr');
+  assert.equal(on.video.autoplayMuted, true);
+  assert.equal(on.video.loop, false);
+  const off = svc.toPublicDoctorMedia({ mediaMode: 'VIDEO', videoType: 'YOUTUBE', videoUrl: YT, autoplayMuted: false, loopVideo: true }, '', 'Dr');
+  const html = await renderMentor({ doctorMedia: off });
+  assert.match(html, /data-muted-start="0"/);
+  assert.match(html, /data-loop="1"/);
+  assert.equal(svc.DEFAULTS.autoplayMuted, true);
+  // the shared player only ever autoplays MUTED and honours reduced motion / data saver
+  const js = fs.readFileSync(path.join(__dirname, '..', 'public/js/home-intro-video.js'), 'utf8');
+  assert.match(js, /start\(card, \{ muted: true \}\)/);
+  assert.match(js, /!reducedMotion\(\) && !saveData\(\)/);
+  assert.match(js, /data-autoplay-mobile/);
+  // admin form exposes both switches (hidden false + checkbox true)
+  const form = fs.readFileSync(path.join(__dirname, '..', 'views/admin/doctor-media/index-content.ejs'), 'utf8');
+  assert.match(form, /name="autoplayMuted" value="false"/);
+  assert.match(form, /name="autoplayMuted" value="true"/);
+  assert.match(form, /name="loopVideo" value="true"/);
 });

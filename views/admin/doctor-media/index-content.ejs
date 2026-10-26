@@ -27,14 +27,29 @@
             <label class="form-label" for="mediaMode">Display</label>
             <select class="form-select" id="mediaMode" name="mediaMode">
                 <option value="PHOTO" <%= !videoMode ? 'selected' : '' %>>Photo (default)</option>
-                <option value="VIDEO" <%= videoMode ? 'selected' : '' %>>Video (click to play)</option>
+                <option value="VIDEO" <%= videoMode ? 'selected' : '' %>>Video</option>
             </select>
-            <div class="form-text">Photo keeps today&rsquo;s look. Video shows a poster with a play button; nothing plays with sound on its own.</div>
+            <div class="form-text">Photo keeps today&rsquo;s look. Video shows a poster and (with the option below) starts playing by itself, muted, when it scrolls into view; visitors can unmute. Nothing ever plays with sound on its own.</div>
         </div>
         <div class="col-md-7">
             <label class="form-label" for="caption">Caption (optional)</label>
             <input class="form-control" id="caption" name="caption" maxlength="200" value="<%= media.caption || '' %>" placeholder="e.g. A message from our founder">
             <div class="form-text">Shown under the video. Leave blank to hide it.</div>
+        </div>
+        <div class="col-md-6">
+            <input type="hidden" name="autoplayMuted" value="false">
+            <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" role="switch" id="autoplayMuted" name="autoplayMuted" value="true" <%= media.autoplayMuted !== false ? 'checked' : '' %>>
+                <label class="form-check-label" for="autoplayMuted">Autoplay (muted) when scrolled into view</label>
+            </div>
+            <div class="form-text">Browsers only allow automatic playback without sound, so it starts muted and shows an unmute button. Visitors who prefer reduced motion or data saving still get the play button.</div>
+        </div>
+        <div class="col-md-6">
+            <input type="hidden" name="loopVideo" value="false">
+            <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" role="switch" id="loopVideo" name="loopVideo" value="true" <%= media.loopVideo === true ? 'checked' : '' %>>
+                <label class="form-check-label" for="loopVideo">Loop the video</label>
+            </div>
         </div>
     </div>
 
